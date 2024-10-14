@@ -1,9 +1,9 @@
 {
-  "name": "astro-theme-typography",
+  "name": "assembly.rip",
   "type": "module",
   "version": "0.1.0",
   "packageManager": "pnpm@9.10.0",
-  "repository": "https://github.com/moeyua/astro-theme-typography",
+  "repository": "https://github.com/CuB3y0nd/assembly.rip",
   "scripts": {
     "astro": "astro",
     "build": "astro check && astro build",
