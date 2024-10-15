@@ -5,6 +5,8 @@ import { defineConfig } from 'astro/config'
 import robotsTxt from 'astro-robots-txt'
 import UnoCSS from 'unocss/astro'
 import { themeConfig } from './src/.config'
+import remarkToc from 'remark-toc'
+import remarkCollapse from 'remark-collapse'
 import { remarkAlert } from 'remark-github-blockquote-alert'
 
 // https://astro.build/config
@@ -14,6 +16,13 @@ export default defineConfig({
   base: '/',
   markdown: {
     remarkPlugins: [
+      remarkToc,
+      [
+        remarkCollapse,
+        {
+          test: "Table of contents",
+        },
+      ],
       remarkAlert,
     ],
     rehypePlugins: [],
@@ -26,7 +35,14 @@ export default defineConfig({
     UnoCSS({ injectReset: true }),
     mdx({
       recmaPlugins: [
-        remarkAlert
+        remarkToc,
+        [
+          remarkCollapse,
+          {
+            test: "Table of contents",
+          },
+        ],
+        remarkAlert,
       ],
       rehypePlugins: [],
       shikiConfig: {
