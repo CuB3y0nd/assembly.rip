@@ -5,6 +5,7 @@ import { defineConfig } from 'astro/config'
 import robotsTxt from 'astro-robots-txt'
 import UnoCSS from 'unocss/astro'
 import { themeConfig } from './src/.config'
+import { remarkAlert } from 'remark-github-blockquote-alert'
 
 // https://astro.build/config
 export default defineConfig({
@@ -12,16 +13,27 @@ export default defineConfig({
   prefetch: true,
   base: '/',
   markdown: {
-    remarkPlugins: [],
+    remarkPlugins: [
+      remarkAlert,
+    ],
     rehypePlugins: [],
     shikiConfig: {
-      theme: 'dracula',
+      theme: 'catppuccin-mocha',
       wrap: true,
     },
   },
   integrations: [
     UnoCSS({ injectReset: true }),
-    mdx(),
+    mdx({
+      recmaPlugins: [
+        remarkAlert
+      ],
+      rehypePlugins: [],
+      shikiConfig: {
+        theme: 'catppuccin-mocha',
+        wrap: true,
+      },
+    }),
     robotsTxt(),
     sitemap(),
     swup({

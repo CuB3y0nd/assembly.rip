@@ -38,6 +38,9 @@ importers:
       giscus:
         specifier: ^1.5.0
         version: 1.5.0
+      remark-github-blockquote-alert:
+        specifier: ^1.2.1
+        version: 1.2.1
       typescript:
         specifier: ~5.5.4
         version: 5.5.4
@@ -4523,6 +4526,10 @@ packages:
 
   remark-gfm@4.0.0:
     resolution: {integrity: sha512-U92vJgBPkbw4Zfu/IiW2oTZLSL3Zpv+uI7My2eq8JxKgqraFdU8YUGicEJCEgSbeaG+QDFqIcwwfMTOEelPxuA==}
+
+  remark-github-blockquote-alert@1.2.1:
+    resolution: {integrity: sha512-qNf2mSAoZgh3Cl23/9Y1L7S4Kbf9NsdHvYK398ab/52yEsDPDU5I4cuTcgDRrdIX7Ltc6RK+KCLRtWkbFnL6Dg==}
+    engines: {node: '>=16'}
 
   remark-mdx@3.0.1:
     resolution: {integrity: sha512-3Pz3yPQ5Rht2pM5R+0J2MrGoBSrzf+tJG94N+t/ilfdh8YLyyKYtidAYwTveB20BoHAcwIopOUqhcmh2F7hGYA==}
@@ -10862,6 +10869,10 @@ snapshots:
       unified: 11.0.5
     transitivePeerDependencies:
       - supports-color
+
+  remark-github-blockquote-alert@1.2.1:
+    dependencies:
+      unist-util-visit: 5.0.0
 
   remark-mdx@3.0.1:
     dependencies:
