@@ -8,6 +8,8 @@ import { themeConfig } from './src/.config'
 import remarkToc from 'remark-toc'
 import remarkCollapse from 'remark-collapse'
 import { remarkAlert } from 'remark-github-blockquote-alert'
+import { rehypeHeadingIds } from '@astrojs/markdown-remark'
+import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 
 // https://astro.build/config
 export default defineConfig({
@@ -25,7 +27,15 @@ export default defineConfig({
       ],
       remarkAlert,
     ],
-    rehypePlugins: [],
+    rehypePlugins: [
+      rehypeHeadingIds,
+      [
+        rehypeAutolinkHeadings,
+        {
+          behavior: 'wrap',
+        },
+      ],
+    ],
     shikiConfig: {
       theme: 'catppuccin-mocha',
       wrap: true,
@@ -44,7 +54,15 @@ export default defineConfig({
         ],
         remarkAlert,
       ],
-      rehypePlugins: [],
+      rehypePlugins: [
+        rehypeHeadingIds,
+        [
+          rehypeAutolinkHeadings,
+          {
+            behavior: 'wrap',
+          },
+        ],
+      ],
       shikiConfig: {
         theme: 'catppuccin-mocha',
         wrap: true,
