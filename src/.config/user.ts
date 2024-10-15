@@ -4,7 +4,7 @@ export const userConfig: Partial<UserConfig> = {
   // Override the default config here
   site: {
     title: '活版印字',
-    subtitle: 'Typography',
+    subtitle: '一片没有知识的荒原',
     author: 'CuB3y0nd',
     description: '一片没有知识的荒原',
     website: 'https://assembly.rip/',
