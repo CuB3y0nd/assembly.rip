@@ -9,8 +9,6 @@ import remarkToc from 'remark-toc'
 import remarkCollapse from 'remark-collapse'
 import { remarkAlert } from 'remark-github-blockquote-alert'
 import remarkMath from 'remark-math'
-import { rehypeHeadingIds } from '@astrojs/markdown-remark'
-import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import rehypeKatex from 'rehype-katex'
 
 // https://astro.build/config
@@ -31,13 +29,6 @@ export default defineConfig({
       remarkMath,
     ],
     rehypePlugins: [
-      rehypeHeadingIds,
-      [
-        rehypeAutolinkHeadings,
-        {
-          behavior: 'wrap',
-        },
-      ],
       rehypeKatex,
     ],
     shikiConfig: {
@@ -60,13 +51,6 @@ export default defineConfig({
         remarkMath,
       ],
       rehypePlugins: [
-        rehypeHeadingIds,
-        [
-          rehypeAutolinkHeadings,
-          {
-            behavior: 'wrap',
-          },
-        ],
         rehypeKatex,
       ],
       shikiConfig: {
