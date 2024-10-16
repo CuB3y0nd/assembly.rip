@@ -13,7 +13,8 @@
     "preview": "astro preview",
     "theme:release": "esno scripts/release-theme.ts",
     "theme:create": "esno scripts/create-post.ts",
-    "theme:update": "esno scripts/update-theme.ts"
+    "theme:update": "esno scripts/update-theme.ts",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",

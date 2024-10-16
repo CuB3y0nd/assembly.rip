@@ -1,42 +1,19 @@
-# Changelog
+# 0.1.0 (2024-10-16)
 
-All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+### Bug Fixes
 
-## [Unreleased]
-### Added
-- 添加视图过渡动画。
-- 支持配置颜色。
-- 支持 RSS 全文输出与 follow 配置。
-- 支持配置字体。
-- 支持添加自定义 SEO 链接。
-- 添加 release 脚本与 CHANGELOG
-- 支持 Google Analytics 配置。
-- 添加自定义主题模块。
+* temporary remove autolink headings ([443e266](https://github.com/CuB3y0nd/assembly.rip/commit/443e26699af4a7809f1282daac825bc7ffe795d8))
 
-### Changed
-- 扩大标题点击区域。
-- 重新设计配置文件。
-- 重新设计布局。
-- 调整组件结构。
-- 优化整体样式。
-- 设置文章分页为首页。
 
-### Fixed
-- 修正在移动端时标题的动画错误。
-- 修正侧边栏抖动的问题。
-- 在主页滚动条错误展示的问题。
-- 代码块被添加背景色的问题。
-- 修复主题副标题错误取值的问题
-- 防止 Safari 中 main 元素自动获得焦点
+### Features
 
-### Chore
-- 使用 ESLint 格式化代码。
-- presetTypography 替换 heti。
-- 重写主题更新脚本。
+* added auto link headings ([2a6853c](https://github.com/CuB3y0nd/assembly.rip/commit/2a6853c27aa993dc497cbd086cc8f4dcd3e4141d))
+* added friends link ([36c407b](https://github.com/CuB3y0nd/assembly.rip/commit/36c407b5827c88f0e26789ac3851f5adc67e9c9a))
+* added github style blockquote alert ([539f1c6](https://github.com/CuB3y0nd/assembly.rip/commit/539f1c6096c4a0ade970d24ecb974078043e9048))
+* added table of contents ([e4027f8](https://github.com/CuB3y0nd/assembly.rip/commit/e4027f8e8d7f0d54909d2be5e90fd5d4e0db8f4c))
+* hope this autolink headings good now ([dd26b7a](https://github.com/CuB3y0nd/assembly.rip/commit/dd26b7ab43995d872c6f88fec731c057e293e9d9))
+* latex support ([55d9cb0](https://github.com/CuB3y0nd/assembly.rip/commit/55d9cb01e0398f2c2ea0713552db601863fe72b4))
 
-## [0.1.0] - 2024-04-10
-### Added
-- Publish the first version of the theme.
+
+
