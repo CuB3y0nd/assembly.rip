@@ -1,0 +1,21 @@
+---
+interface Props {
+  id: string
+}
+
+const { id } = Astro.props
+
+const umamiUrl = `https://analytics.cubeyond.net/script.js?data-website-id=${id}`
+---
+
+<!-- Global site tag (script.js) - Umami Analytics -->
+<script is:inline async src={umamiUrl}></script>
+<script is:inline define:vars={{ id }}>
+  window.dataLayer = window.dataLayer || []
+  function umami() {
+    // eslint-disable-next-line prefer-rest-params
+    dataLayer.push(arguments)
+  }
+  umami('js', new Date())
+  umami('config', id)
+</script>
