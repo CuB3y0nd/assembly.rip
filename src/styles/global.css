@@ -12,6 +12,11 @@ html {
   background-size: 7px 7px;
   background-image: linear-gradient(to right, var(--uno-colors-shadow) 1px, transparent 1px),
     linear-gradient(to bottom, var(--uno-colors-shadow) 1px, transparent 1px);
+
+  body {
+    font-family: "LXGW WenKai Screen";
+    font-weight: normal;
+  }
 }
 
 :where(a):not(.not-underline-hover) {
