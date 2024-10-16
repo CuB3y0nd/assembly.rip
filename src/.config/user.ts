@@ -84,7 +84,4 @@ export const userConfig: Partial<UserConfig> = {
   rss: {
     fullText: true,
   },
-  analytics: {
-    umamiAnalyticsId: 'd155aad5-1783-4597-820f-5c997e9ebbf5',
-  },
 }
