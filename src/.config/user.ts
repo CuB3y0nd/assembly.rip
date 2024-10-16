@@ -22,14 +22,6 @@ export const userConfig: Partial<UserConfig> = {
         name: 'email',
         href: 'mailto:root@cubeyond.net',
       },
-      // {
-      //   name: 'twitter',
-      //   href: 'https://x.com/CuB3y0nd',
-      // },
-      // {
-      //   name: 'mastodon',
-      //   href: 'https://github.com/moeyua/astro-theme-typography',
-      // },
     ],
     navLinks: [
       {
