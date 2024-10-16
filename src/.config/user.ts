@@ -48,6 +48,10 @@ export const userConfig: Partial<UserConfig> = {
         name: 'About',
         href: '/about',
       },
+      {
+        name: 'Links',
+        href: '/friends',
+      },
     ],
     categoryMap: [{ name: '胡适', path: 'hu-shi' }],
     footer: [

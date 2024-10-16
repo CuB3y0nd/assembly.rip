@@ -6,7 +6,7 @@ export const LANGUAGES = {
     Archive: '归档',
     Tags: '标签',
     About: '关于',
-    Links: '链接',
+    Links: '友链',
 
     posted_at: '发布于',
     tag_count: '%d 篇',
