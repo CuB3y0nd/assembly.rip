@@ -53,12 +53,14 @@ export default defineConfig({
     presetTypography({ cssExtend }),
     presetAttributify(),
     presetIcons({ scale: 1.2, warn: true }),
-    presetTheme<Theme>({ theme: {
-      dark: {
-        colors: { ...colorsDark, shadow: '#FFFFFF0A' },
-        // TODO 需要配置代码块颜色
-      },
-    } }),
+    presetTheme<Theme>({
+      theme: {
+        dark: {
+          colors: { ...colorsDark, shadow: '#FFFFFF0A' },
+          // TODO 需要配置代码块颜色
+        },
+      }
+    }),
   ],
   theme: {
     colors: { ...colorsLight, shadow: '#0000000A' },
@@ -72,5 +74,6 @@ export default defineConfig({
     ...themeConfig.site.socialLinks.map(social => `i-mdi-${social.name}`),
     'i-mdi-content-copy',
     'i-mdi-check',
+    'i-mdi-email',
   ],
 })

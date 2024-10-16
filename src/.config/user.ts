@@ -18,6 +18,10 @@ export const userConfig: Partial<UserConfig> = {
         name: 'rss',
         href: '/atom.xml',
       },
+      {
+        name: 'email',
+        href: 'mailto:root@cubeyond.net',
+      },
       // {
       //   name: 'twitter',
       //   href: 'https://x.com/CuB3y0nd',
