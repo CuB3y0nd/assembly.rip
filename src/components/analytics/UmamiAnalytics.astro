@@ -8,12 +8,3 @@ const { id } = Astro.props
 
 <!-- Global site tag (script.js) - Umami Analytics -->
 <script async defer src='https://analytics.cubeyond.net/script.js' data-website-id={id}></script>
-
-<script is:inline define:vars={{ id }}>
-  window.dataLayer = window.dataLayer || [];
-  function umami() {
-    dataLayer.push(arguments);
-  }
-  umami('js', new Date());
-  umami('config', 'id');
-</script>
