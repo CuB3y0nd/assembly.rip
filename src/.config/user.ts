@@ -45,7 +45,6 @@ export const userConfig: Partial<UserConfig> = {
         href: '/friends',
       },
     ],
-    categoryMap: [{ name: '胡适', path: 'hu-shi' }],
     footer: [
       '© %year <a target="_blank" href="%website">%author</a>',
       'Licensed under <a target="_blank" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">4.0 CC-BY-NC-SA</a>'

@@ -14,7 +14,7 @@ html {
     linear-gradient(to bottom, var(--uno-colors-shadow) 1px, transparent 1px);
 
   body {
-    font-family: "LXGW WenKai Screen";
+    font-family: "LXGW WenKai";
     font-weight: normal;
   }
 }
