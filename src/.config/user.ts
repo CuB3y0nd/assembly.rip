@@ -76,4 +76,7 @@ export const userConfig: Partial<UserConfig> = {
   rss: {
     fullText: true,
   },
+  latex: {
+    katex: true,
+  },
 }
