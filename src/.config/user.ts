@@ -76,6 +76,6 @@ export const userConfig: Partial<UserConfig> = {
     fullText: true,
   },
   latex: {
-    katex: false,
+    katex: true,
   },
 }

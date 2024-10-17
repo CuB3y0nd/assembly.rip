@@ -1,5 +1,5 @@
 ---
-title: "Writeups: Nightmare Series"
+title: "WriteUps: Nightmare Series"
 pubDate: "2024-07-24"
 categories: ["WriteUps"]
 description: "WriteUps for Nightmare binary exploitation series."
