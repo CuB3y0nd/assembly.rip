@@ -47,33 +47,7 @@ export default defineConfig({
   },
   integrations: [
     UnoCSS({ injectReset: true }),
-    mdx({
-      recmaPlugins: [
-        remarkToc,
-        [
-          remarkCollapse,
-          {
-            test: "Table of contents",
-          },
-        ],
-        remarkAlert,
-        remarkMath,
-      ],
-      rehypePlugins: [
-        rehypeHeadingIds,
-        [
-          rehypeAutolinkHeadings,
-          {
-            behavior: 'wrap',
-          },
-        ],
-        rehypeKatex,
-      ],
-      shikiConfig: {
-        theme: 'catppuccin-mocha',
-        wrap: true,
-      },
-    }),
+    mdx({}),
     robotsTxt(),
     sitemap(),
     swup({
