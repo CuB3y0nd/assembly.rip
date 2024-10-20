@@ -114,3 +114,16 @@ html {
   color: var(--color-danger-fg);
   color: var(--fgColor-danger,var(--color-danger-fg))
 }
+
+.katex-display {
+  min-height: 100%;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+.katex-display::-webkit-scrollbar {
+  display: none;
+}
+.katex-display:hover::-webkit-scrollbar {
+  display: block;
+}
