@@ -24,11 +24,23 @@ const cssExtend = {
 
   ':where(:not(pre):not(a) > code)': {
     'white-space': 'normal',
+    'word-wrap': 'break-word',
+    'overflow-wrap': 'break-word',
     'padding': '2px 4px',
     'color': '#c7254e',
     'font-size': '90%',
     'background-color': '#f9f2f4',
     'border-radius': '4px',
+  },
+
+  // 'ul': {
+  //   'list-style-position': 'inside', // 使项目符号在文本内
+  // },
+
+  'li': {
+    // 'white-space': 'pre-wrap', // 允许换行
+    'word-wrap': 'break-word', // 强制在单词内换行
+    // 'overflow-wrap': 'break-word', // 同样强制在单词内换行
   },
 }
 
