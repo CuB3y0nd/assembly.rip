@@ -84,18 +84,18 @@ $$
 
 ### 连续性的定义
 
-函数在某一点处连续：$\displaystyle f\ is\ continuous\ at\ x=c\Longleftrightarrow \lim _{x\rightarrow c} f( x) =f( c)$
+函数在某一点处连续：$f$ is continuous at $x=c\Longleftrightarrow \displaystyle \lim _{x\rightarrow c} f( x) =f( c)$
 
-函数在开区间连续：$f\ is\ continuous\ over\ ( a,\ b) \Longleftrightarrow f\ is\ continuous\ over\ every\ point\ in\ the\ interval$
+函数在开区间连续：$f$ is continuous over $( a,\ b) \Longleftrightarrow f$ is continuous over every point in the interval
 
-函数在闭区间连续：$\displaystyle f\ is\ continuous\ over\ [ a,\ b] \Longleftrightarrow f\ is\ continuous\ over\ ( a,\ b) \ and\ \lim _{x\rightarrow a^{+}} f( x) =f( a) ,\ \lim _{x\rightarrow b^{-}} f( x) =f( b)$
+函数在闭区间连续：$f$ is continuous over $[ a,\ b] \Longleftrightarrow f$ is continuous over $( a,\ b)$ and $\displaystyle \lim _{x\rightarrow a^{+}} f( x) =f( a)$, $\displaystyle \lim _{x\rightarrow b^{-}} f( x) =f( b)$
 
 ### Intermediate Value Theorem
 
-$Suppose\ f\ is\ a\ continuous\ function\ at\ every\ point\ of\ the\ interval\ [ a,\ b]$
+Suppose $f$ is a continuous function at every point of the interval $[ a,\ b]$
 
-- $f\ will\ take\ on\ every\ value\ between\ f( a) \ and\ f( b) \ over\ the\ interval$
-- $For\ any\ L\ between\ the\ values\ f( a) \ and\ f( b) ,\ there\ exists\ a\ number\ c\ in\ [ a,\ b] \ for\ which\ f( c) =L$
+- $f$ will take on every value between $f( a)$ and $f( b)$ over the interval
+- For any $L$ between the values $f( a)$ and $f( b)$ , there exists a number $c$ in $[ a,\ b]$ for which $f( c) =L$
 
 怎么会有这么简单的定理…
 
@@ -126,7 +126,7 @@ $
 
 $\mathnormal{Proof.}$
 
-$Assume:\ f\ differentiability\ at\ x=c$
+Assume: $f$ differentiability at $x=c$
 
 $
 \begin{array}{l}
@@ -158,7 +158,7 @@ $\mathnormal{Proof.}$
 
 $\displaystyle \frac{d}{dx}\left( x^{n}\right) =\lim _{\Delta x\rightarrow 0}\frac{( x+\Delta x)^{n} -x^{n}}{\Delta x}$
 
-$According\ to\ Binomial\ theorem:$
+According to Binomial theorem:
 
 $$
 \begin{aligned}
@@ -414,7 +414,7 @@ Known:\  & 1.\ If\ a\ function\ is\ differentiable,\ then\ it\ is\ also\ continu
 \end{aligned}
 $$
 
-$For\ why\ if\ function\ u\ is\ continuous\ at\ x,\ then\ \Delta u\rightarrow 0\ as\ \Delta x\rightarrow 0$:
+For why if function $u$ is continuous at $x$, then $\Delta u\rightarrow 0$ as $\Delta x\rightarrow 0$:
 
 <center>
   <Image alt="1" src="https://pic.imgdb.cn/item/661a87a868eb935713971ab1.png" width={1920} height={1080} />
@@ -422,7 +422,7 @@ $For\ why\ if\ function\ u\ is\ continuous\ at\ x,\ then\ \Delta u\rightarrow 0\
 
 $\displaystyle The\ chain\ rule\ tell\ us:\ \frac{d}{dx}[ y( u( x))] =\frac{dy}{dx} =\frac{dy}{du} \cdot \frac{du}{dx}$
 
-$Assuming\ y,\ u\ differentiable\ at\ x.\ We\ can\ get:$
+Assuming $y$, $u$ differentiable at $x$. We can get:
 
 $$
 \begin{aligned}
