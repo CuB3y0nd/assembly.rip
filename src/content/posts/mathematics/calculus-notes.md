@@ -565,7 +565,7 @@ $$\displaystyle \int \csc xdx=\ln| \csc x-\cot x| +C$$（分子分母同乘 $\cs
 
 下面是另一种方法求这两个不定积分：
 
-$
+$$
 \begin{array}{ l l l }
 \displaystyle \int \sec xdx & =\displaystyle \int \frac{1}{\cos x} dx & \\
  & =\displaystyle \int \frac{\cos x}{\cos^{2} x} dx & \\
@@ -575,9 +575,9 @@ $
  & =\displaystyle \frac{1}{2}\ln\left| \frac{1+u}{1-u}\right| +C & \\
  & =\displaystyle \frac{1}{2}\ln\left| \frac{1+\sin x}{1-\sin x}\right| +C &
 \end{array}
-$
+$$
 
-$
+$$
 \begin{array}{ l l l }
 \displaystyle \int \csc xdx & =\displaystyle \int \frac{1}{\sin x} dx & \\
  & =\displaystyle \int \frac{\sin x}{\sin^{2} x} dx & \\
@@ -587,7 +587,7 @@ $
  & =\displaystyle -\frac{1}{2}\ln\left| \frac{1+u}{1-u}\right| +C & \\
  & =\displaystyle -\frac{1}{2}\ln\left| \frac{1+\cos x}{1-\cos x}\right| +C &
 \end{array}
-$
+$$
 
 **Exponential functions**
 
