@@ -109,18 +109,14 @@ $\displaystyle f^{\prime }( c) =\lim _{x\rightarrow c}\frac{f( x) -f( c)}{x-c}$
 
 ### 可微性
 
-$
-f\ is\ differentiability\ at\ x=c\Longrightarrow f\ is\ continuous\ at\ x=c \\
-f\ is\ not\ continuous\ at\ x=c\Longrightarrow f\ is\ not\ differentiability\ at\ x=c
-$
+- $f$ is differentiability at $x=c\Longrightarrow f$ is continuous at $x=c$
+- $f$ is not continuous at $x=c\Longrightarrow f$ is not differentiability at $x=c$
 
-不可微的三种情况：$
-\begin{cases}
-1.\ not\ continuous\\
-2.\ vertical\ tanget\\
-3.\ sharp\ turn
-\end{cases}
-$
+不可微的三种情况：
+
+1. **not continuous**
+2. **vertical tangent**
+3. **"sharp turn"**
 
 ### Proof: Differentiability implies continuity
 
@@ -471,7 +467,7 @@ If $f$ is continuous over $[ a,\ b]$ and every point over $( a,\ b)$ is differen
 
 ## Extreme Value Theorem
 
-$$f\ continuous\ over\ [ a,\ b] \Longrightarrow \exists \ c,\ d\in [ a,\ b] :f( c) \leqslant f( x) \leqslant f( d) \ for\ all\ x\in [ a,\ b]$$
+$f$ continuous over $[ a,\ b] \Longrightarrow \exists \ c,\ d\in [ a,\ b] :f( c) \leqslant f( x) \leqslant f( d)$ for all $x\in [ a,\ b]$
 
 critical points exists when non endpoint point at $$x=a\ \begin{cases} f^{\prime }( a) =0\\ f^{\prime }( a) \ undefined \end{cases}$$
 
@@ -483,7 +479,7 @@ $$
 \displaystyle \int _{a}^{b} f( x) dx=\lim _{n\rightarrow \infty }\sum _{i=1}^{n} f( x_{i}) \Delta x
 $$
 
-Where $\displaystyle \Delta x=\frac{b-a}{n}$ and $x_{i} =a+\Delta x\cdot i$.
+Where $\displaystyle \Delta x=\frac{b-a}{n}$ and $x_{i} =a+\Delta x\cdot i$
 
 ## Definite integrals properties
 
