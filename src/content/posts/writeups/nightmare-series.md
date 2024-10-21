@@ -18,12 +18,6 @@ description: "WriteUps for Nightmare binary exploitation series."
 
 > tree sounds are best listened to by <https://binary.ninja/demo> or ghidra
 
-<Download
-  name="beleaf"
-  href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/03-beginner_re/csaw19_beleaf/beleaf"
-  type="Binary"
-/>
-
 ### Writeup
 
 简单运行一下程序：
@@ -158,12 +152,6 @@ Flag: `flag{we_beleaf_in_your_re_future}`
 
 > Only big boi pwners will get this one!
 
-<Download
-  name="boi"
-  href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/04-bof_variable/csaw18_boi/boi"
-  type="Binary"
-/>
-
 ### Writeup
 
 ```plaintext
@@ -246,12 +234,6 @@ Flag: `flag{Y0u_Arrre_th3_Bi66Est_of_boiiiiis}`
 
 > Unknow
 
-<Download
-  name="pwn1"
-  href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/04-bof_variable/tamu19_pwn1/pwn1"
-  type="Binary"
-/>
-
 ### Writeup
 
 ```plaintext
@@ -328,12 +310,6 @@ Flag: `flag{g0ttem_b0yz}`
 ### Description
 
 > Unknow
-
-<Download
-  name="just_do_it"
-  href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/04-bof_variable/tw17_justdoit/just_do_it"
-  type="Binary"
-/>
 
 ### Writeup
 
@@ -472,12 +448,6 @@ Flag: `TWCTF{pwnable_warmup_I_did_it!}`
 
 > So you want to be a pwn-er huh? Well let's throw you an easy one ;)
 
-<Download
-  name="warmup"
-  href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/05-bof_callfunction/csaw16_warmup/warmup"
-  type="Binary"
-/>
-
 ### Writeup
 
 ```plaintext
@@ -550,12 +520,6 @@ Flag: `FLAG{LET_US_BEGIN_CSAW_2016}`
 
 > Do you get it?
 
-<Download
-  name="get_it"
-  href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/05-bof_callfunction/csaw18_getit/get_it"
-  type="Binary"
-/>
-
 ### Writeup
 
 ```plaintext
@@ -627,12 +591,6 @@ Flag: `flag{y0u_deF_get_itls}`
 ### Description
 
 > One of our informants goes by the handle djinn. He found some information while working undercover inside an organized crime ring. Although we've had trouble retrieving this information from him. He left us this chat client to talk with him. Let's see if he trusts you...
-
-<Download
-  name="vuln-chat"
-  href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/05-bof_callfunction/tu17_vulnchat/vuln-chat"
-  type="Binary"
-/>
 
 ### Writeup
 
@@ -849,12 +807,6 @@ flag: `TUCTF{574ck_5m45h1n6_l1k3_4_pr0}`
 
 > Can I take your order?
 
-<Download
-  name="pilot"
-  href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/06-bof_shellcode/csaw17_pilot/pilot"
-  type="Binary"
-/>
-
 ### Writeup
 
 ```plaintext
@@ -942,12 +894,6 @@ Flag: `flag{1nput_c00rd1nat3s_Strap_y0urse1v3s_1n_b0ys}`
 ### Description
 
 > This challenge tackles stack buffer overflow leading to a shellcode execution.
-
-<Download
-  name="pwn3"
-  href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/06-bof_shellcode/tamu19_pwn3/pwn3"
-  type="Binary"
-/>
 
 ### Writeup
 
@@ -1323,12 +1269,6 @@ Flag: `gigem{r3m073_fl46_3x3cu710n}`
 
 > Want to be a drive-thru attendant? Well, no one does… But! the best employee receives their very own flag! whatdya say?
 
-<Download
-  name="shella-easy"
-  href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/06-bof_shellcode/tu18_shellaeasy/shella-easy"
-  type="Binary"
-/>
-
 ### Writeup
 
 ```plaintext
@@ -1540,12 +1480,6 @@ Flag: `TUCTF{1_607_4_fl46_bu7_n0_fr135}`
 ### Description
 
 > what a nice little calculator!
-
-<Download
-  name="simplecalc"
-  href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/07-bof_static/bkp16_simplecalc/simplecalc"
-  type="Binary"
-/>
 
 ### Writeup
 
@@ -1948,12 +1882,6 @@ Flag: `BKPCTF{what_is_2015_minus_7547}`
 
 > The Fast and the Furious
 
-<Download
-  name="speedrun-001"
-  href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/07-bof_static/dcquals19_speedrun1/speedrun-001"
-  type="Binary"
-/>
-
 ### Writeup
 
 ```plaintext
@@ -2072,12 +2000,6 @@ Flag: `OOO{Ask any powner. Any real pwner. It don't matter if you pwn by an inch
 ### Description
 
 > Unknow
-
-<Download
-  name="feedme"
-  href="https://github.com/guyinatuxedo/nightmare/blob/master/modules/07-bof_static/dcquals16_feedme/feedme"
-  type="Binary"
-/>
 
 ### Writeup
 
