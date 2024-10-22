@@ -20,7 +20,7 @@ export const userConfig: Partial<UserConfig> = {
       },
       {
         name: 'email',
-        href: 'mailto:root@cubeyond.net',
+        href: 'mailto:root@assembly.rip',
       },
     ],
     navLinks: [
