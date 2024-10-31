@@ -3,8 +3,6 @@ import sitemap from '@astrojs/sitemap'
 import swup from '@swup/astro'
 import { defineConfig } from 'astro/config'
 import robotsTxt from 'astro-robots-txt'
-import UnoCSS from 'unocss/astro'
-import { themeConfig } from './src/.config'
 import remarkToc from 'remark-toc'
 import remarkCollapse from 'remark-collapse'
 import { remarkAlert } from 'remark-github-blockquote-alert'
@@ -12,6 +10,8 @@ import remarkMath from 'remark-math'
 import { rehypeHeadingIds } from '@astrojs/markdown-remark'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import rehypeKatex from 'rehype-katex'
+import UnoCSS from 'unocss/astro'
+import { themeConfig } from './src/.config'
 
 // https://astro.build/config
 export default defineConfig({
