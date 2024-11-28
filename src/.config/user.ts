@@ -3,7 +3,7 @@ import type { UserConfig } from '~/types'
 export const userConfig: Partial<UserConfig> = {
   // Override the default config here
   site: {
-    title: '活版印字',
+    title: '熵餘紀事',
     subtitle: '一片没有知识的荒原',
     author: 'CuB3y0nd',
     description: '一片没有知识的荒原',
