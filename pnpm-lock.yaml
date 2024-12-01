@@ -91,8 +91,8 @@ importers:
         specifier: ^0.62.4
         version: 0.62.4
       '@unocss/transformer-directives':
-        specifier: ^0.62.4
-        version: 0.62.4
+        specifier: ^0.64.1
+        version: 0.64.1
       astro-eslint-parser:
         specifier: ^1.0.3
         version: 1.0.3(typescript@5.5.4)
@@ -137,7 +137,7 @@ importers:
         version: 0.62.4(postcss@8.4.47)(rollup@2.79.2)(vite@5.4.10(@types/node@22.8.6)(terser@5.36.0))
       unocss-preset-theme:
         specifier: ^0.13.0
-        version: 0.13.0(@unocss/core@0.62.4)
+        version: 0.13.0(@unocss/core@0.64.1)
 
 packages:
 
@@ -1825,6 +1825,9 @@ packages:
   '@unocss/core@0.62.4':
     resolution: {integrity: sha512-Cc+Vo6XlaQpyVejkJrrzzWtiK9pgMWzVVBpm9VCVtwZPUjD4GSc+g7VQCPXSsr7m03tmSuRySJx72QcASmauNQ==}
 
+  '@unocss/core@0.64.1':
+    resolution: {integrity: sha512-D1ULd70a24/k6kGyHCIijbrrIn9UjFUEBg2R4xKX2/ViQb1k2MIgOs4VS20MkJX6kbZXqqm/zAFHzDhsQGIhBA==}
+
   '@unocss/eslint-plugin@0.62.4':
     resolution: {integrity: sha512-L4pm8L96OvE99FK+fZHQBXxsu+B/yvhf471Mf5o3idaq+pzptfpZcKKRXCeQKSAYbC80IV4Fm1V5dFxOHbDdPg==}
     engines: {node: '>=14'}
@@ -1876,6 +1879,10 @@ packages:
     resolution: {integrity: sha512-XUwLbLUzL+VSHCJNK5QBHC9RbFehumge1/XJmsRfmh0+oxgJoO1gvEvxi57gYEmdJdMRJHRJZ66se6+cB0Ymvw==}
     engines: {node: '>=14'}
 
+  '@unocss/rule-utils@0.64.1':
+    resolution: {integrity: sha512-h+Du0lezKHmdsEsGQGAtGrwrTrU+Av4eij46UzpzuNWFq0mAouBu8m/lgBI1AcY9B0Jg3EJalkOgA06tAKS8jg==}
+    engines: {node: '>=14'}
+
   '@unocss/transformer-attributify-jsx@0.62.4':
     resolution: {integrity: sha512-z9DDqS2DibDR9gno55diKfAVegeJ9uoyQXQhH3R0KY4YMF49N1fWy/t74gOiHtlPmvjQtDRZYgjgaMCc2w8oWg==}
 
@@ -1884,6 +1891,9 @@ packages:
 
   '@unocss/transformer-directives@0.62.4':
     resolution: {integrity: sha512-bq9ZDG6/mr6X2mAogAo0PBVrLSLT0900MPqnj/ixadYHc7mRpX+y6bc/1AgWytZIFYSdNzf7XDoquZuwf42Ucg==}
+
+  '@unocss/transformer-directives@0.64.1':
+    resolution: {integrity: sha512-6yWZh7YxYTaNSdATkGpP+aQ3aTRLNo4URDmLQKB3uaQbF0Ae5dLlxXWHZ26VIpKkQ3+hME4TRxEptTR0/ag7nw==}
 
   '@unocss/transformer-variant-group@0.62.4':
     resolution: {integrity: sha512-W1fxMc2Lzxu4E+6JBQEBzK+AwoCQYI+EL2FT2BCUsAno37f3JdnwFFEVscck0epSdmdtidsSLDognyX8h10r8A==}
@@ -2368,6 +2378,10 @@ packages:
 
   css-tree@2.3.1:
     resolution: {integrity: sha512-6Fv1DV/TYw//QF5IzQdqsNDjx/wc8TrMBZsqjL9eW01tWb7R7k/mq+/VXfJCl7SoD5emsJop9cOByJZfs8hYIw==}
+    engines: {node: ^10 || ^12.20.0 || ^14.13.0 || >=15.0.0}
+
+  css-tree@3.0.1:
+    resolution: {integrity: sha512-8Fxxv+tGhORlshCdCwnNJytvlvq46sOLSYEx2ZIGurahWvMucSRnyjPA3AmrMq4VPRYbHVpWj5VkiVasrM2H4Q==}
     engines: {node: ^10 || ^12.20.0 || ^14.13.0 || >=15.0.0}
 
   css-what@6.1.0:
@@ -3717,6 +3731,9 @@ packages:
 
   mdn-data@2.0.30:
     resolution: {integrity: sha512-GaqWWShW4kv/G9IEucWScBx9G1/vsFZZJUO+tD26M8J8z3Kw5RDQjaoZe03YAClgeS/SWPOcb4nkFBTEi5DUEA==}
+
+  mdn-data@2.12.1:
+    resolution: {integrity: sha512-rsfnCbOHjqrhWxwt5/wtSLzpoKTzW7OXdT5lLOIH1OTYhWu9rRJveGq0sKvDZODABH7RX+uoR+DYcpFnq4Tf6Q==}
 
   mdurl@2.0.0:
     resolution: {integrity: sha512-Lf+9+2r+Tdp5wXDXC4PcIBjTDtq4UKjCPMQhKIuzpJNW0b96kVqSwW0bT7FhRSfmAiFYgP+SCRvdrDozfh0U5w==}
@@ -7387,6 +7404,8 @@ snapshots:
 
   '@unocss/core@0.62.4': {}
 
+  '@unocss/core@0.64.1': {}
+
   '@unocss/eslint-plugin@0.62.4(eslint@9.13.0(jiti@1.21.6))(typescript@5.5.4)':
     dependencies:
       '@typescript-eslint/utils': 8.12.2(eslint@9.13.0(jiti@1.21.6))(typescript@5.5.4)
@@ -7478,6 +7497,11 @@ snapshots:
       '@unocss/core': 0.62.4
       magic-string: 0.30.12
 
+  '@unocss/rule-utils@0.64.1':
+    dependencies:
+      '@unocss/core': 0.64.1
+      magic-string: 0.30.12
+
   '@unocss/transformer-attributify-jsx@0.62.4':
     dependencies:
       '@unocss/core': 0.62.4
@@ -7491,6 +7515,12 @@ snapshots:
       '@unocss/core': 0.62.4
       '@unocss/rule-utils': 0.62.4
       css-tree: 2.3.1
+
+  '@unocss/transformer-directives@0.64.1':
+    dependencies:
+      '@unocss/core': 0.64.1
+      '@unocss/rule-utils': 0.64.1
+      css-tree: 3.0.1
 
   '@unocss/transformer-variant-group@0.62.4':
     dependencies:
@@ -8132,6 +8162,11 @@ snapshots:
   css-tree@2.3.1:
     dependencies:
       mdn-data: 2.0.30
+      source-map-js: 1.2.1
+
+  css-tree@3.0.1:
+    dependencies:
+      mdn-data: 2.12.1
       source-map-js: 1.2.1
 
   css-what@6.1.0: {}
@@ -9907,6 +9942,8 @@ snapshots:
   mdn-data@2.0.14: {}
 
   mdn-data@2.0.30: {}
+
+  mdn-data@2.12.1: {}
 
   mdurl@2.0.0: {}
 
@@ -11736,9 +11773,9 @@ snapshots:
 
   universalify@2.0.1: {}
 
-  unocss-preset-theme@0.13.0(@unocss/core@0.62.4):
+  unocss-preset-theme@0.13.0(@unocss/core@0.64.1):
     dependencies:
-      '@unocss/core': 0.62.4
+      '@unocss/core': 0.64.1
       '@unocss/rule-utils': 0.61.9
 
   unocss@0.62.4(postcss@8.4.47)(rollup@2.79.2)(vite@5.4.10(@types/node@22.8.6)(terser@5.36.0)):
