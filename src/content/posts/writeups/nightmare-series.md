@@ -1,8 +1,8 @@
 ---
-title: "WriteUps: Nightmare Series"
+title: "Write-ups: Nightmare series"
 pubDate: "2024-07-24"
-categories: ["WriteUps"]
-description: "WriteUps for Nightmare binary exploitation series."
+categories: ["Write-ups"]
+description: "Write-ups for Nightmare binary exploitation series."
 ---
 
 ## Table of contents
@@ -18,7 +18,7 @@ description: "WriteUps for Nightmare binary exploitation series."
 
 > tree sounds are best listened to by <https://binary.ninja/demo> or ghidra
 
-### Writeup
+### Write-up
 
 简单运行一下程序：
 
@@ -152,7 +152,7 @@ Flag: `flag{we_beleaf_in_your_re_future}`
 
 > Only big boi pwners will get this one!
 
-### Writeup
+### Write-up
 
 ```plaintext
 λ ~/ file boi
@@ -234,7 +234,7 @@ Flag: `flag{Y0u_Arrre_th3_Bi66Est_of_boiiiiis}`
 
 > Unknow
 
-### Writeup
+### Write-up
 
 ```plaintext
 λ ~/ file boi
@@ -311,7 +311,7 @@ Flag: `flag{g0ttem_b0yz}`
 
 > Unknow
 
-### Writeup
+### Write-up
 
 ```plaintext
 λ ~/ file just_do_it
@@ -448,7 +448,7 @@ Flag: `TWCTF{pwnable_warmup_I_did_it!}`
 
 > So you want to be a pwn-er huh? Well let's throw you an easy one ;)
 
-### Writeup
+### Write-up
 
 ```plaintext
 λ ~/ file warmup
@@ -520,7 +520,7 @@ Flag: `FLAG{LET_US_BEGIN_CSAW_2016}`
 
 > Do you get it?
 
-### Writeup
+### Write-up
 
 ```plaintext
 λ ~/ file get_it
@@ -592,7 +592,7 @@ Flag: `flag{y0u_deF_get_itls}`
 
 > One of our informants goes by the handle djinn. He found some information while working undercover inside an organized crime ring. Although we've had trouble retrieving this information from him. He left us this chat client to talk with him. Let's see if he trusts you...
 
-### Writeup
+### Write-up
 
 ```plaintext
 λ ~/ file vuln-chat
@@ -807,7 +807,7 @@ flag: `TUCTF{574ck_5m45h1n6_l1k3_4_pr0}`
 
 > Can I take your order?
 
-### Writeup
+### Write-up
 
 ```plaintext
 λ ~/ file pilot
@@ -895,7 +895,7 @@ Flag: `flag{1nput_c00rd1nat3s_Strap_y0urse1v3s_1n_b0ys}`
 
 > This challenge tackles stack buffer overflow leading to a shellcode execution.
 
-### Writeup
+### Write-up
 
 ```plaintext
 λ ~/ file pwn3
@@ -1269,7 +1269,7 @@ Flag: `gigem{r3m073_fl46_3x3cu710n}`
 
 > Want to be a drive-thru attendant? Well, no one does… But! the best employee receives their very own flag! whatdya say?
 
-### Writeup
+### Write-up
 
 ```plaintext
 λ ~/ file shella-easy
@@ -1481,7 +1481,7 @@ Flag: `TUCTF{1_607_4_fl46_bu7_n0_fr135}`
 
 > what a nice little calculator!
 
-### Writeup
+### Write-up
 
 ```plaintext
 λ ~/ file simplecalc
@@ -1882,7 +1882,7 @@ Flag: `BKPCTF{what_is_2015_minus_7547}`
 
 > The Fast and the Furious
 
-### Writeup
+### Write-up
 
 ```plaintext
 λ ~/ file speedrun-001
@@ -2001,7 +2001,7 @@ Flag: `OOO{Ask any powner. Any real pwner. It don't matter if you pwn by an inch
 
 > Unknow
 
-### Writeup
+### Write-up
 
 ```plaintext
 λ ~/ file feedme
