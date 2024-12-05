@@ -23,7 +23,7 @@ description: "Write-ups for pwn.college binary exploitation series."
 
 分析得程序主要逻辑从 `challenge` 函数开始，反编译如下：
 
-```c {9-10} del={55, 63} collapse={3-8, 11-54, 56-62, 64-83, 87-88} ins={"只要 v11[0] 的高 32 bits 不是 0 就可以调用 win":84-86}
+```c {9-10} del={55, 63} collapse={3-8, 11-54, 56-62, 64-83, 86-87} ins={84-85}
 __int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
 {
   int *v3; // rax
@@ -107,7 +107,6 @@ __int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
   printf("- the address of the win variable is %p.\n", (char *)v11 + 4);
   printf("- the value of the win variable is 0x%x.\n", HIDWORD(v11[0]));
   putchar(10);
-
   if ( HIDWORD(v11[0]) )
     win();
   puts("Goodbye!");
@@ -197,7 +196,7 @@ Flag: `pwn.college{oQdReDoKIU218v6uPGguMuFOJnt.0VO4IDL5cTNxgzW}`
 
 #### Write-up
 
-```c {5-6} del={13} ins={"v4 不为 0 即可调用 win":20-22}
+```c {5-6} del={13} ins={20-21}
 __int64 challenge()
 {
   int *v0; // rax
@@ -217,7 +216,6 @@ __int64 challenge()
     printf("ERROR: Failed to read input -- %s!\n", v1);
     exit(1);
   }
-
   if ( v4 )
     win();
   puts("Goodbye!");
@@ -297,7 +295,7 @@ Flag: `pwn.college{cwWgAcBgDsBnGFTCky9i1NRqAtO.0FM5IDL5cTNxgzW}`
 
 #### Write-up
 
-```c {8-12, 22-25, 55} ins={"想办法令 *v11 = 240324168 即可":84-86} del={63} collapse={3-7, 13-21, 26-54, 56-62, 64-83, 87-88}
+```c {8-12, 22-25, 55} ins={84-85} del={63} collapse={3-7, 13-21, 26-54, 56-62, 64-83, 86-87}
 __int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
 {
   int *v3; // rax
@@ -381,7 +379,6 @@ __int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
   printf("- the address of the win variable is %p.\n", v11);
   printf("- the value of the win variable is 0x%x.\n", *v11);
   putchar(10);
-
   if ( *v11 == 240324168 )
     win();
   puts("Goodbye!");
