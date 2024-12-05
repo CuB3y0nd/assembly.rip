@@ -25,10 +25,6 @@ export const userConfig: Partial<UserConfig> = {
     ],
     navLinks: [
       {
-        name: 'Posts',
-        href: '/',
-      },
-      {
         name: 'Archive',
         href: '/archive',
       },
