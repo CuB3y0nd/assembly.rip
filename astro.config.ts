@@ -3,6 +3,9 @@ import sitemap from '@astrojs/sitemap'
 import swup from '@swup/astro'
 import { defineConfig } from 'astro/config'
 import robotsTxt from 'astro-robots-txt'
+import astroExpressiveCode from 'astro-expressive-code';
+import { pluginLineNumbers } from '@expressive-code/plugin-line-numbers'
+import { pluginCollapsibleSections } from '@expressive-code/plugin-collapsible-sections'
 import remarkToc from 'remark-toc'
 import remarkCollapse from 'remark-collapse'
 import { remarkAlert } from 'remark-github-blockquote-alert'
@@ -40,12 +43,24 @@ export default defineConfig({
       ],
       rehypeKatex,
     ],
-    shikiConfig: {
-      theme: 'catppuccin-mocha',
-      wrap: true,
-    },
   },
   integrations: [
+    astroExpressiveCode({
+      themes: ['catppuccin-latte'],
+      defaultProps: {
+        // Enable word wrap by default
+        wrap: true,
+        // Disable wrapped line indentation for terminal languages
+        overridesByLang: {
+          'bash,ps,sh': { preserveIndent: false },
+        },
+        showLineNumbers: true,
+      },
+      plugins: [
+        pluginLineNumbers(),
+        pluginCollapsibleSections()
+      ],
+    }),
     UnoCSS({ injectReset: true }),
     mdx({}),
     robotsTxt(),

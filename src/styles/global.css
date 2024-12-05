@@ -141,3 +141,7 @@ article.prose h6 a:not(.not-prose) {
 .katex-display:hover::-webkit-scrollbar {
   display: block;
 }
+
+.expressive-code {
+  margin-bottom: 1.5rem;
+}
