@@ -1374,7 +1374,7 @@ __int64 challenge()
 
 和上一题思路相同，都是通过有符号数隐式转换为无符号数绕过 payload 长度判断，然后覆盖返回地址。几乎没区别，这里就不再赘述分析过程了。
 
-```asm wrap=false ins="0x0000000000401704" collapse={2-21, 29-30, 36-90, 109-128, 133-162}
+```asm wrap=false showLineNumbers=false ins="0x0000000000401704" collapse={2-21, 29-30, 36-90, 109-128, 133-162}
 pwndbg> i fun
 All defined functions:
 
