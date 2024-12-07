@@ -59,11 +59,11 @@
     "esno": "^4.8.0",
     "lint-staged": "^15.2.10",
     "markdown-it": "^14.1.0",
-    "prettier-plugin-astro": "^0.13.0",
+    "prettier-plugin-astro": "^0.14.1",
     "sanitize-html": "^2.13.1",
     "simple-git-hooks": "^2.11.1",
     "unocss": "^0.62.4",
-    "unocss-preset-theme": "^0.13.0"
+    "unocss-preset-theme": "^0.14.1"
   },
   "simple-git-hooks": {
     "pre-commit": "pnpm lint-staged"
