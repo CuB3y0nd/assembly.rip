@@ -1,8 +1,9 @@
 ---
 title: "微积分笔记"
-pubDate: "2024-03-29"
+pubDate: 2024-03-29
 categories: ["Mathematices"]
 description: "微积分学习笔记——从 1 到无穷大。主要记录各种公式定理的推导过程。"
+slug: calculus-notes
 ---
 
 ## Table of contents

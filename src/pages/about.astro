@@ -1,32 +1,25 @@
 ---
+import { getEntry, render } from 'astro:content'
 import LayoutDefault from '~/layouts/LayoutDefault.astro'
+import { formatDate } from '~/utils'
+
+const { translate: t } = Astro.locals
+const aboutPost = await getEntry('spec', 'about')
+if (!aboutPost) {
+  throw new Error('No about post found')
+}
+const { Content } = await render(aboutPost)
 ---
 
-<style>
-  h2.subtitle {
-    font-size: 1.2rem;
-    font-weight: 400;
-    margin-top: 0.5rem;
-    margin-bottom: 1rem;
-  }
-</style>
-
 <LayoutDefault>
-  <article class='prose'>
-    <h2>TL;DR</h2>
-    <h2 class="subtitle">心之所向，一苇以航。</h2>
-    <ul>
-      <li>ID: CuB3y0nd</li>
-      <li>ROAL: PWNER</li>
-      <li>TEAM: NO TEAM YET :(</li>
-      <li>Personality: INTJ-A 5w4 tritype 513</li>
-      <li>E-Mail: <code>root -at- cubeyond -dot- net</code></li>
-      <li>GPG Key: <a href='./public.key'>Download GPG Key</a></li>
-      <li>
-        <a target='_blank' rel='noopener noreferrer' href='https://memos.cubeyond.net/'>
-          语丝：Memos for record life moments.
-        </a>
-      </li>
-    </ul>
+  <header flex="~ col gap-2">
+    <h1 class="post-title">{aboutPost.data.title}</h1>
+    <div class="text-3.5">
+      <span>{t('posted_at')}</span>
+      <time>{formatDate(aboutPost.data.pubDate)}</time>
+    </div>
+  </header>
+  <article class="prose">
+    <Content />
   </article>
 </LayoutDefault>

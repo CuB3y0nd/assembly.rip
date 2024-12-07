@@ -1,8 +1,8 @@
 import mdx from '@astrojs/mdx'
 import sitemap from '@astrojs/sitemap'
 import swup from '@swup/astro'
-import { defineConfig } from 'astro/config'
 import robotsTxt from 'astro-robots-txt'
+import { defineConfig } from 'astro/config'
 import astroExpressiveCode from 'astro-expressive-code';
 import { pluginLineNumbers } from '@expressive-code/plugin-line-numbers'
 import { pluginCollapsibleSections } from '@expressive-code/plugin-collapsible-sections'

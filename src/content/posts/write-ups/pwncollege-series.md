@@ -1,8 +1,9 @@
 ---
 title: "Write-ups: pwn.college series"
-pubDate: "2024-12-04"
+pubDate: 2024-12-04
 categories: ["Write-ups"]
 description: "Write-ups for pwn.college binary exploitation series."
+slug: pwncollege-series
 ---
 
 ## Table of contents
