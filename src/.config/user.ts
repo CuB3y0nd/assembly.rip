@@ -74,4 +74,20 @@ export const userConfig: Partial<UserConfig> = {
   latex: {
     katex: true,
   },
+  comment: {
+    giscus: {
+      repo: 'CuB3y0nd/comments',
+      repoId: 'R_kgDOLLmM2g',
+      category: 'Announcements',
+      categoryId: 'DIC_kwDOLLmM2s4Ccz0I',
+      mapping: 'pathname',
+      strict: '0',
+      reactionsEnabled: '1',
+      emitMetadata: '1',
+      inputPosition: 'top',
+      theme: 'noborder_light',
+      lang: 'zh-CN',
+      loading: 'lazy',
+    }
+  },
 }
