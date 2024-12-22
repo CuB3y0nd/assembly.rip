@@ -5801,3 +5801,7 @@ Flag: `pwn.college{8C2ZHb8LE-O7bRe0DvQeo4_5XUV.0FOxMDL5cTNxgzW}`
 让我们拭目以待。
 
 ~_唉，寒假还得准备英语等级考试，爷的时间啊！:sob:_~
+
+~_话说，如果你不写后记，你一定不知道写后记有多爽 bushi_~
+
+**Lets liberate~**
