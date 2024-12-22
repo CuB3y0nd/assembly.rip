@@ -5804,4 +5804,4 @@ Flag: `pwn.college{8C2ZHb8LE-O7bRe0DvQeo4_5XUV.0FOxMDL5cTNxgzW}`
 
 ~_话说，如果你不写后记，你一定不知道写后记有多爽 bushi_~
 
-~**_Right now, let's sleep!_**~ **_Let's liberate~_**
+~**_Alr, right now, let's sleep!_**~ **_Let's liberate~_**
