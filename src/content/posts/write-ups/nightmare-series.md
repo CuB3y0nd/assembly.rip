@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Nightmare series"
 pubDate: 2024-07-24
-categories: ["Write-ups"]
+categories: ["Pwn", "Write-ups"]
 description: "Write-ups for Nightmare binary exploitation series."
 slug: nightmare-series
 ---
