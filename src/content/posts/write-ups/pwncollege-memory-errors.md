@@ -143,7 +143,7 @@ v8 = read(0, buf, nbytes);
 
 from pwn import context, ELF, process, remote, gdb
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./binary-exploitation-first-overflow-w"
 HOST = "pwn.college"
@@ -246,7 +246,7 @@ if ( v4 ) { win(); }
 
 from pwn import context, ELF, process, remote, gdb
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./binary-exploitation-first-overflow"
 HOST = "pwn.college"
@@ -421,7 +421,7 @@ if ( *v11 == 240324168 ) { win(); }
 
 from pwn import context, ELF, process, remote, gdb, p64
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-2-0"
 HOST = "pwn.college"
@@ -652,7 +652,7 @@ $4 = 0x14
 
 from pwn import context, ELF, process, remote, gdb, p64
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-2-1"
 HOST = "pwn.college"
@@ -808,7 +808,7 @@ Non-debugging symbols:
 
 from pwn import context, ELF, process, remote, gdb, p64
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-3-0"
 HOST = "pwn.college"
@@ -1078,7 +1078,7 @@ pwndbg> distance 0x7fffffffd130 0x7fffffffd1b8
 
 from pwn import context, ELF, process, remote, gdb, p64
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-3-1"
 HOST = "pwn.college"
@@ -1287,7 +1287,7 @@ v9 = read(0, buf, LODWORD(nbytes[0]));
 
 from pwn import context, ELF, process, remote, gdb, p64
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-4-0"
 HOST = "pwn.college"
@@ -1555,7 +1555,7 @@ pwndbg> distance 0x7fffffffd170 0x7fffffffd1b8
 
 from pwn import context, ELF, process, remote, gdb, p64
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-4-1"
 HOST = "pwn.college"
@@ -1882,7 +1882,7 @@ ssize_t read(int fd, void *buf, size_t nbytes)
 
 from pwn import context, ELF, process, remote, gdb, p64
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-5-0"
 HOST = "pwn.college"
@@ -1996,7 +1996,7 @@ __int64 challenge()
 
 from pwn import context, ELF, process, remote, gdb, p64
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-5-1"
 HOST = "pwn.college"
@@ -2177,7 +2177,7 @@ pwndbg>
 
 from pwn import context, ELF, process, remote, gdb, p64
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-6-0"
 HOST = "pwn.college"
@@ -2239,7 +2239,7 @@ Flag: `pwn.college{AusQ-DCHaivq4M4Tj9IZIsDv7m8.0VO5IDL5cTNxgzW}`
 
 from pwn import context, ELF, process, remote, gdb, p64
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-6-1"
 HOST = "pwn.college"
@@ -2377,7 +2377,7 @@ pwndbg>
 
 from pwn import context, ELF, log, pause, process, random, remote, gdb
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-7-0"
 HOST = "pwn.college"
@@ -2467,7 +2467,7 @@ Flag: `pwn.college{0svlAHsYG0L-ONps0VQ3ssICrbb.0VMwMDL5cTNxgzW}`
 
 from pwn import context, ELF, log, pause, process, random, remote, gdb
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-7-1"
 HOST = "pwn.college"
@@ -2787,7 +2787,7 @@ pwndbg>
 
 from pwn import context, ELF, log, pause, process, random, remote, gdb
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-8-0"
 HOST = "pwn.college"
@@ -2878,7 +2878,7 @@ Flag: `pwn.college{82SpQ2oiZjETn254hnZR69O97tP.01MwMDL5cTNxgzW}`
 
 from pwn import context, ELF, log, pause, process, random, remote, gdb
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-8-1"
 HOST = "pwn.college"
@@ -3165,7 +3165,7 @@ while ( *v12 < v10 )
 
 from pwn import context, ELF, log, pause, process, random, remote, gdb
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-9-0"
 HOST = "pwn.college"
@@ -3299,7 +3299,7 @@ __int64 challenge()
 
 from pwn import context, ELF, log, pause, process, random, remote, gdb
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-9-1"
 HOST = "pwn.college"
@@ -3491,7 +3491,7 @@ __int64 __fastcall challenge(int a1, __int64 a2, __int64 a3)
 
 from pwn import ELF, context, gdb, log, pause, process, remote
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-10-0"
 HOST = "pwn.college"
@@ -3575,7 +3575,7 @@ Flag: `pwn.college{cHV80jBzHGyTr_qaE0HdorP-81y.01NwMDL5cTNxgzW}`
 
 from pwn import ELF, context, gdb, log, pause, process, remote
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-10-1"
 HOST = "pwn.college"
@@ -3956,7 +3956,7 @@ pwndbg> dist $rax $1
 
 from pwn import ELF, context, gdb, log, pause, process, remote
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-11-0"
 HOST = "pwn.college"
@@ -4041,7 +4041,7 @@ Flag: `pwn.college{oNJmkkep5Mt0PwVQdAiStSjA960.0VOwMDL5cTNxgzW}`
 
 from pwn import ELF, context, gdb, log, pause, process, remote
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-11-1"
 HOST = "pwn.college"
@@ -4355,7 +4355,7 @@ void __fastcall win_authed(int a1)
 
 from pwn import ELF, context, gdb, log, pause, process, random, remote
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-12-0"
 HOST, PORT = "pwn.college", 1337
@@ -4487,7 +4487,7 @@ Flag: `pwn.college{YkuEQhg7aejOObKgMu4MNlIgI-S.0VMxMDL5cTNxgzW}`
 
 from pwn import ELF, context, gdb, log, pause, process, random, remote
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-12-1"
 HOST, PORT = "pwn.college", 1337
@@ -4633,7 +4633,7 @@ int verify_flag()
 
 from pwn import ELF, context, gdb, log, process, remote
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-13-0"
 HOST, PORT = "pwn.college", 1337
@@ -4730,7 +4730,7 @@ Flag: `pwn.college{YkKrgg8qd3Vyt4OOrpBqwsAEJ2g.01MxMDL5cTNxgzW}`
 
 from pwn import ELF, context, gdb, log, process, remote
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-13-1"
 HOST, PORT = "pwn.college", 1337
@@ -4988,7 +4988,7 @@ __int64 __fastcall challenge(unsigned int a1, __int64 a2, __int64 a3)
 
 from pwn import ELF, context, gdb, log, pause, process, random, remote
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-14-0"
 HOST, PORT = "pwn.college", 1337
@@ -5118,7 +5118,7 @@ Flag: `pwn.college{chm7VMiV6dZ3oBKDhVUhtvXg3kb.0VNxMDL5cTNxgzW}`
 
 from pwn import ELF, context, gdb, log, pause, process, random, remote
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-14-1"
 HOST, PORT = "pwn.college", 1337
@@ -5471,7 +5471,7 @@ import time
 import psutil
 from pwn import ELF, context, gdb, log, pause, process, random, remote, sleep
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-15-0"
 HOST, PORT = "localhost", 1337
@@ -5645,7 +5645,7 @@ import time
 import psutil
 from pwn import ELF, context, gdb, log, pause, process, random, remote, sleep
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babymem-level-15-1"
 HOST, PORT = "localhost", 1337

