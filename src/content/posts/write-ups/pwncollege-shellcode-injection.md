@@ -1201,6 +1201,8 @@ int __fastcall main(int argc, const char **argv, const char **envp)
 
 ~开玩笑，没有输入输出错误流还能困得住我不成 LOL~
 
+请原谅我肚子饿了，实在懒得写思路了，现在只想快快恰饭，所以请师傅看 exp。
+
 ### Exploit
 
 ```python
