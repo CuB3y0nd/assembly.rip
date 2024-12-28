@@ -6,7 +6,10 @@ title: "友链"
 
 <ul>
   <li>
-    <a target='_blank' rel='noopener noreferrer' href='https://cubeyond.net/'>我的原博客（暂停维护，后期可能用来做别的）</a>
+    <a target='_blank' rel='noopener noreferrer' href='https://cubeyond.net'>我的落地页</a>
+  </li>
+  <li>
+    <a target='_blank' rel='noopener noreferrer' href='https://tailwind-nextjs-starter-blog-ruby.vercel.app'>我的原博客（停止维护）</a>
   </li>
 </ul>
 
