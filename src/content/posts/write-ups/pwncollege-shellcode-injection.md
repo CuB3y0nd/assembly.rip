@@ -483,7 +483,7 @@ int __fastcall main(int argc, const char **argv, const char **envp)
 }
 ```
 
-这次的限制是 shellcode 的机器指令中不允许出现 `\x00` 字节。这就需要我们好好利用各自指令组合来构造数据了。
+这次的限制是 shellcode 的机器指令中不允许出现 `\x00` 字节。这就需要我们好好利用各种指令组合来构造数据了。
 
 ### Exploit
 
