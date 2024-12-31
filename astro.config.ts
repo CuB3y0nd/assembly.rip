@@ -13,6 +13,7 @@ import remarkMath from 'remark-math'
 import { rehypeHeadingIds } from '@astrojs/markdown-remark'
 import rehypeAutolinkHeadings from 'rehype-autolink-headings'
 import rehypeKatex from 'rehype-katex'
+import rehypeExternalLinks from 'rehype-external-links'
 import UnoCSS from 'unocss/astro'
 import { themeConfig } from './src/.config'
 
@@ -42,6 +43,13 @@ export default defineConfig({
         },
       ],
       rehypeKatex,
+      [
+        rehypeExternalLinks,
+        {
+          target: '_blank',
+          rel: 'noopener noreferrer'
+        },
+      ],
     ],
   },
   integrations: [
