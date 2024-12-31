@@ -105,3 +105,52 @@ const dark = themeConfig.appearance.theme === 'dark'
     </style>
   </body>
 </html>
+
+<script>
+  import { Fancybox } from "@fancyapps/ui";
+  import "@fancyapps/ui/dist/fancybox/fancybox.css";
+
+  Fancybox.bind("[data-fancybox]");
+
+  const markdownBody = document.querySelector(".markdown-body");
+
+  if (markdownBody) {
+    let images = markdownBody.querySelectorAll("img");
+
+    const callback = (entries: IntersectionObserverEntry[]) => {
+      entries.forEach((entry: IntersectionObserverEntry) => {
+        if (entry.isIntersecting) {
+          const image = entry.target as HTMLImageElement;
+          const data_src = image.getAttribute("data-src");
+          const data_alt = image.getAttribute("data-alt");
+
+          image.setAttribute("data-fancybox", "gallery");
+
+          if (data_src) {
+            image.setAttribute("src", data_src);
+          }
+          if (data_alt) {
+            image.setAttribute("alt", data_alt);
+          }
+
+          observer.unobserve(image);
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(callback);
+
+    images.forEach((image) => {
+      observer.observe(image);
+    });
+
+    var links = markdownBody.querySelectorAll("a");
+    for (var i = 0; i < links.length; i++) {
+      let names = links[i].getAttributeNames();
+      if (!names.includes('data-footnote-backref') && !names.includes('data-footnote-ref')) {
+        links[i].setAttribute("target", "_blank");
+        links[i].setAttribute("rel", "nofollow noreferrer");
+      }
+    }
+  }
+</script>

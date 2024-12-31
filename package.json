@@ -23,6 +23,7 @@
     "@astrojs/sitemap": "^3.2.1",
     "@expressive-code/plugin-collapsible-sections": "^0.38.3",
     "@expressive-code/plugin-line-numbers": "^0.38.3",
+    "@fancyapps/ui": "^5.0.36",
     "@github/clipboard-copy-element": "^1.3.0",
     "@swup/astro": "^1.5.0",
     "astro": "^5.0.8",
