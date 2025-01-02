@@ -54,7 +54,7 @@ export default defineConfig({
   },
   integrations: [
     astroExpressiveCode({
-      themes: ['catppuccin-latte'],
+      themes: ['catppuccin-latte', 'catppuccin-macchiato'],
       defaultProps: {
         // Enable word wrap by default
         wrap: true,
