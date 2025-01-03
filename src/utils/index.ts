@@ -43,7 +43,7 @@ export function getPostDescription(post: Post) {
   return sanitized.slice(0, 400)
 }
 
-export function formatDate(date: Date, format: string = 'YYYY-MM-DD') {
+export function formatDate(date: Date, format: string = 'MMM D, YYYY | hh:mm A') {
   return dayjs(date).format(format)
 }
 
