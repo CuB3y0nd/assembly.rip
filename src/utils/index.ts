@@ -23,12 +23,18 @@ export async function getCategories() {
 
 export async function getPosts() {
   const posts = await getCollection('posts')
+
   posts.sort((a, b) => {
-    return dayjs(a.data.pubDate).isBefore(dayjs(b.data.pubDate)) ? 1 : -1
+    const aDate = a.data.modDate ? dayjs(a.data.modDate) : dayjs(a.data.pubDate)
+    const bDate = b.data.modDate ? dayjs(b.data.modDate) : dayjs(b.data.pubDate)
+
+    return aDate.isBefore(bDate) ? 1 : -1
   })
+
   if (import.meta.env.PROD) {
     return posts.filter(post => post.data.draft !== true)
   }
+
   return posts
 }
 
