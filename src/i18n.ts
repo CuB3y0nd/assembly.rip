@@ -9,6 +9,7 @@ export const LANGUAGES = {
     Links: '友链',
 
     posted_at: '发布于',
+    updated_at: '更新于',
     tag_count: '%d 篇',
     archive_count: '%d 篇',
     categories_count: '%d 篇',
