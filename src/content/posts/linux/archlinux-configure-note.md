@@ -1,9 +1,10 @@
 ---
 title: "Arch Linux + Bspwm 配置小记"
-pubDate: 2023-07-29
-categories: ["Linux"]
+pubDate: "2023-07-29 13:36"
+categories:
+  - "Linux"
 description: "Arch Linux 安装笔记"
-slug: archlinux-configure-note
+slug: "archlinux-configure-note"
 ---
 
 ## Table of contents

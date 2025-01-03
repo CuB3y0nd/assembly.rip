@@ -1,9 +1,10 @@
 ---
 title: "2024 年终总结"
-pubDate: 2025-01-01
-categories: ["年终总结"]
+pubDate: "2025-01-01 00:00"
+categories:
+  - "年终总结"
 description: "开心的事，在年终总结，不开心的事，在年终了结。"
-slug: 2024-wrap-up
+slug: "2024-wrap-up"
 ---
 
 ## Table of contents

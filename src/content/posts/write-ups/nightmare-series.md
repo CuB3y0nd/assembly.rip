@@ -1,9 +1,12 @@
 ---
 title: "Write-ups: Nightmare series"
-pubDate: 2024-07-24
-categories: ["Pwn", "Write-ups"]
+pubDate: "2024-07-24 14:49"
+modDate: "2024-08-05 07:32"
+categories:
+  - "Pwn"
+  - "Write-ups"
 description: "Write-ups for Nightmare binary exploitation series."
-slug: nightmare-series
+slug: "nightmare-series"
 ---
 
 ## Table of contents

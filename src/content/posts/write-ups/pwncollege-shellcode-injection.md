@@ -1,9 +1,13 @@
 ---
 title: "Write-ups: Program Security (Shellcode Injection) series (Completed)"
-pubDate: 2024-12-24
-categories: ["Pwn", "Write-ups", "Shellcode"]
+pubDate: "2024-12-24 06:35"
+modDate: "2024-12-27 15:36"
+categories:
+  - "Pwn"
+  - "Write-ups"
+  - "Shellcode"
 description: "Write-ups for pwn.college binary exploitation series."
-slug: shellcode-injection
+slug: "shellcode-injection"
 ---
 
 ## Table of contents

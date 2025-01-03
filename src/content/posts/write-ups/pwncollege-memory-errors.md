@@ -1,9 +1,12 @@
 ---
 title: "Write-ups: Program Security (Memory Errors) series (Completed)"
-pubDate: 2024-12-04
-categories: ["Pwn", "Write-ups"]
+pubDate: "2024-12-05 11:32"
+modDate: "2024-12-25 09:26"
+categories:
+  - "Pwn"
+  - "Write-ups"
 description: "Write-ups for pwn.college binary exploitation series."
-slug: memory-errors
+slug: "memory-errors"
 ---
 
 ## Table of contents
