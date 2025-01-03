@@ -33,6 +33,7 @@ export const LANGUAGES = {
     Links: 'Links',
 
     posted_at: 'Posted at',
+    updated_at: 'Updated at',
     tag_count: '%d tags',
     archive_count: '%d post',
     categories_count: '%d post',
@@ -56,6 +57,7 @@ export const LANGUAGES = {
     Links: '鏈接',
 
     posted_at: '發佈於',
+    updated_at: '更新於',
     tag_count: '%d 篇',
     archive_count: '%d 篇',
     categories_count: '%d 篇',
@@ -79,6 +81,7 @@ export const LANGUAGES = {
     Links: 'リンク',
 
     posted_at: '投稿日',
+    updated_at: '更新日',
     tag_count: '%d タグ',
     archive_count: '%d 投稿',
     categories_count: '%d 投稿',
