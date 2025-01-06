@@ -106,8 +106,8 @@ importers:
         specifier: ^0.64.1
         version: 0.64.1
       '@unocss/transformer-directives':
-        specifier: ^0.65.1
-        version: 0.65.1
+        specifier: ^0.65.3
+        version: 0.65.3
       astro-eslint-parser:
         specifier: ^1.1.0
         version: 1.1.0(typescript@5.7.2)
@@ -152,7 +152,7 @@ importers:
         version: 0.62.4(postcss@8.4.49)(rollup@2.79.2)(vite@6.0.3(@types/node@22.10.1)(jiti@2.4.2)(terser@5.36.0)(tsx@4.19.2)(yaml@2.6.1))
       unocss-preset-theme:
         specifier: ^0.14.1
-        version: 0.14.1(@unocss/core@0.65.1)
+        version: 0.14.1(@unocss/core@0.65.3)
 
 packages:
 
@@ -2140,6 +2140,9 @@ packages:
   '@unocss/core@0.65.1':
     resolution: {integrity: sha512-Ke0WNZjfSCE6pniJb8PjiwhO6/McxVb1EQYrkkz8aJuR83xu+AEcTog9D4N9EUkRfHS5tZYXQtTj4Uh90T6CEg==}
 
+  '@unocss/core@0.65.3':
+    resolution: {integrity: sha512-xYkJ63lIadL6KqvGcaE2fFeLvo6rC1F+e+R9EFn0Aj0ArMRhiltZk8vvLFHP7iYjjdTdqDkAr/7IdrTosTo8Pg==}
+
   '@unocss/eslint-plugin@0.65.1':
     resolution: {integrity: sha512-N39mNa+pBXMzHjLXO2dE93NvxOhO9hHUQWkyrH+8u8tbXMOy+bt9aVehr2/LZfd6nbwUyZx6DxEZqu3OaSyD7A==}
     engines: {node: '>=14'}
@@ -2194,8 +2197,8 @@ packages:
     resolution: {integrity: sha512-moeDEq5d9mB8gSYeoqHMkXWWekaFFdhg7QCuwwCbxCc+NPMOgGkmfAoafz+y2tdvK7pEuT191RWOiHQ0MkA5oQ==}
     engines: {node: '>=14'}
 
-  '@unocss/rule-utils@0.65.1':
-    resolution: {integrity: sha512-XGXdXsRmIuMDQk/3Fd3g5JMhsyDGWsTfs6aN4vFQ1rfdSgY4UwbslqUNbIH9xxoTfmzUOJ2lhNrFw78RygCNSA==}
+  '@unocss/rule-utils@0.65.3':
+    resolution: {integrity: sha512-jndyth0X11FbvIDForYq90b+N5xsR31FRsmvp7AC7dcW71clemUEDHCwqzSJn8cVFwahgvlwWbEoYHPEgQrtIQ==}
     engines: {node: '>=14'}
 
   '@unocss/transformer-attributify-jsx@0.62.4':
@@ -2207,8 +2210,8 @@ packages:
   '@unocss/transformer-directives@0.62.4':
     resolution: {integrity: sha512-bq9ZDG6/mr6X2mAogAo0PBVrLSLT0900MPqnj/ixadYHc7mRpX+y6bc/1AgWytZIFYSdNzf7XDoquZuwf42Ucg==}
 
-  '@unocss/transformer-directives@0.65.1':
-    resolution: {integrity: sha512-6D3QSeSWXCA+Jc+BQGwat0RfcNtYZdyFFpP+zr1cFpK7nwNZqwqZU+mcY8nywu/u+hYuEQMWPMzEYDAssMfUQQ==}
+  '@unocss/transformer-directives@0.65.3':
+    resolution: {integrity: sha512-Jn2b9NSzbp+X5YLY1MWJzXY6dMUYhAuE+xjdiwFNACdbSvnjV+WLX1rOFeeNZx0rP2e5sPeDsv7MTF71uZeohg==}
 
   '@unocss/transformer-variant-group@0.62.4':
     resolution: {integrity: sha512-W1fxMc2Lzxu4E+6JBQEBzK+AwoCQYI+EL2FT2BCUsAno37f3JdnwFFEVscck0epSdmdtidsSLDognyX8h10r8A==}
@@ -2768,15 +2771,6 @@ packages:
 
   debug@3.2.7:
     resolution: {integrity: sha512-CFjzYYAi4ThfiQvizrFQevTTXHtnCqWfe7x1AhgEscTz6ZbLbfoLRLPugTQyBth6f8ZERVUSyWHFD/7Wu4t1XQ==}
-    peerDependencies:
-      supports-color: '*'
-    peerDependenciesMeta:
-      supports-color:
-        optional: true
-
-  debug@4.3.7:
-    resolution: {integrity: sha512-Er2nc/H7RrMXZBFCEim6TCmMk02Z8vLC2Rbi1KEBggpo0fS6l0S1nnapwmIi3yW/+GOJap1Krg4w0Hg80oCqgQ==}
-    engines: {node: '>=6.0'}
     peerDependencies:
       supports-color: '*'
     peerDependenciesMeta:
@@ -8187,6 +8181,8 @@ snapshots:
 
   '@unocss/core@0.65.1': {}
 
+  '@unocss/core@0.65.3': {}
+
   '@unocss/eslint-plugin@0.65.1(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2)':
     dependencies:
       '@typescript-eslint/utils': 8.17.0(eslint@9.17.0(jiti@2.4.2))(typescript@5.7.2)
@@ -8273,17 +8269,17 @@ snapshots:
   '@unocss/rule-utils@0.62.4':
     dependencies:
       '@unocss/core': 0.62.4
-      magic-string: 0.30.14
+      magic-string: 0.30.17
 
   '@unocss/rule-utils@0.63.6':
     dependencies:
       '@unocss/core': 0.63.6
       magic-string: 0.30.14
 
-  '@unocss/rule-utils@0.65.1':
+  '@unocss/rule-utils@0.65.3':
     dependencies:
-      '@unocss/core': 0.65.1
-      magic-string: 0.30.14
+      '@unocss/core': 0.65.3
+      magic-string: 0.30.17
 
   '@unocss/transformer-attributify-jsx@0.62.4':
     dependencies:
@@ -8299,10 +8295,10 @@ snapshots:
       '@unocss/rule-utils': 0.62.4
       css-tree: 2.3.1
 
-  '@unocss/transformer-directives@0.65.1':
+  '@unocss/transformer-directives@0.65.3':
     dependencies:
-      '@unocss/core': 0.65.1
-      '@unocss/rule-utils': 0.65.1
+      '@unocss/core': 0.65.3
+      '@unocss/rule-utils': 0.65.3
       css-tree: 3.1.0
 
   '@unocss/transformer-variant-group@0.62.4':
@@ -9064,10 +9060,6 @@ snapshots:
   dayjs@1.11.13: {}
 
   debug@3.2.7:
-    dependencies:
-      ms: 2.1.3
-
-  debug@4.3.7:
     dependencies:
       ms: 2.1.3
 
@@ -12787,9 +12779,9 @@ snapshots:
 
   universalify@2.0.1: {}
 
-  unocss-preset-theme@0.14.1(@unocss/core@0.65.1):
+  unocss-preset-theme@0.14.1(@unocss/core@0.65.3):
     dependencies:
-      '@unocss/core': 0.65.1
+      '@unocss/core': 0.65.3
       '@unocss/rule-utils': 0.63.6
 
   unocss@0.62.4(postcss@8.4.49)(rollup@2.79.2)(vite@6.0.3(@types/node@22.10.1)(jiti@2.4.2)(terser@5.36.0)(tsx@4.19.2)(yaml@2.6.1)):
