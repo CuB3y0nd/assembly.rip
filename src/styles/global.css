@@ -38,6 +38,10 @@ html.dark {
   --at-apply: 'hover:(c-background bg-primary decoration-primary)';
 }
 
+.prose {
+  max-width: 70ch;
+}
+
 .not-prose {
   text-decoration: underline;
   text-decoration-thickness: 0.1em;
