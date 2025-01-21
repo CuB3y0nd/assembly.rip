@@ -2507,7 +2507,7 @@ pop rbp
 
 那么现在的问题是，迁移到哪里？首先肯定得是 `rw` 区吧，不然怎么实现 ROP。一个比较常见的方法应该是迁移到 `.bss` 段。pwntools 还是很方便的，通过 `elf.bss()` 即可得到当前程序的 `.bss` 段地址。
 
-```asm wrap=false collapse={2-20, 31-56, 63-278, 286-298}
+```asm wrap=false showLineNumbers=false collapse={2-20, 31-56, 63-278, 286-298}
 Breakpoint 1, 0x000000000040266c in challenge ()
 ------- tip of the day (disable with set show-tips off) -------
 Want to display each context panel in a separate tmux window? See https://github.com/pwndbg/pwndbg/blob/dev/FEATURES.md#splitting--layouting-context
