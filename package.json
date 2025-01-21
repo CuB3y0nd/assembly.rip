@@ -38,7 +38,7 @@
     "remark-math": "^6.0.0",
     "remark-toc": "^9.0.0",
     "typescript": "~5.7.2",
-    "vite": "^6.0.3"
+    "vite": "^6.0.9"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^3.11.2",
