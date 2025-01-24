@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Program Security (Return Oriented Programming) series"
 pubDate: "2025-01-19 13:34"
-modDate: "2025-01-23 14:58"
+modDate: "2025-01-24 13:36"
 categories:
   - "Pwn"
   - "Write-ups"
@@ -4632,3 +4632,112 @@ if __name__ == "__main__":
 ### Flag
 
 Flag: `pwn.college{M-9WLFPzOoEolY4qgzOfZ2Xk3JW.0lN2MDL5cTNxgzW}`
+
+## Level 14.0
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Perform ROP against a network forkserver!
+
+### Write-up
+
+```c
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  int optval; // [rsp+24h] [rbp-2Ch] BYREF
+  int fd; // [rsp+28h] [rbp-28h]
+  int v7; // [rsp+2Ch] [rbp-24h]
+  sockaddr addr; // [rsp+30h] [rbp-20h] BYREF
+  unsigned __int64 v9; // [rsp+48h] [rbp-8h]
+
+  v9 = __readfsqword(0x28u);
+  setvbuf(stdin, 0LL, 2, 0LL);
+  setvbuf(_bss_start, 0LL, 2, 0LL);
+  puts("###");
+  printf("### Welcome to %s!\n", *argv);
+  puts("###");
+  putchar(10);
+  puts("This challenge is listening for connections on TCP port 1337.\n");
+  puts("The challenge supports unlimited sequential connections.\n");
+  fd = socket(2, 1, 0);
+  optval = 1;
+  setsockopt(fd, 1, 15, &optval, 4u);
+  addr.sa_family = 2;
+  *(_DWORD *)&addr.sa_data[2] = 0;
+  *(_WORD *)addr.sa_data = htons(0x539u);
+  bind(fd, &addr, 0x10u);
+  listen(fd, 1);
+  while ( 1 )
+  {
+    v7 = accept(fd, 0LL, 0LL);
+    if ( !fork() )
+      break;
+    close(v7);
+    wait(0LL);
+  }
+  dup2(v7, 0);
+  dup2(v7, 1);
+  dup2(v7, 2);
+  close(fd);
+  close(v7);
+  challenge((unsigned int)argc, argv, envp);
+  puts("### Goodbye!");
+  return 0;
+}
+```
+
+```c del={31} collapse={1-27, 35-37}
+int __fastcall challenge(int a1, __int64 a2, __int64 a3)
+{
+  _QWORD v4[3]; // [rsp+0h] [rbp-80h] BYREF
+  int v5; // [rsp+1Ch] [rbp-64h]
+  int v6; // [rsp+2Ch] [rbp-54h]
+  _BYTE buf[72]; // [rsp+30h] [rbp-50h] BYREF
+  unsigned __int64 v8; // [rsp+78h] [rbp-8h]
+  __int64 savedregs; // [rsp+80h] [rbp+0h] BYREF
+  _UNKNOWN *retaddr; // [rsp+88h] [rbp+8h] BYREF
+
+  v5 = a1;
+  v4[2] = a2;
+  v4[1] = a3;
+  v8 = __readfsqword(0x28u);
+  puts(
+    "This challenge reads in some bytes, overflows its stack, and allows you to perform a ROP attack. Through this series of");
+  puts("challenges, you will become painfully familiar with the concept of Return Oriented Programming!\n");
+  sp_ = (__int64)v4;
+  bp_ = (__int64)&savedregs;
+  sz_ = ((unsigned __int64)((char *)&savedregs - (char *)v4) >> 3) + 2;
+  rp_ = (__int64)&retaddr;
+  puts(
+    "PIE is turned on! This means that you do not know where any of the gadgets in the main binary are. However, you can do a");
+  puts(
+    "partial overwrite of the saved instruction pointer in order to execute 1 gadget! If that saved instruction pointer goes");
+  puts(
+    "to libc, you will need to ROP from there. If that saved instruction pointer goes to the main binary, you will need to");
+  puts(
+    "ROP from there. You may need need to execute your payload several times to account for the randomness introduced. This");
+  puts("might take anywhere from 0-12 bits of bruteforce depending on the scenario.\n");
+  v6 = read(0, buf, 0x1000uLL);
+  printf("Received %d bytes! This is potentially %d gadgets.\n", v6, (unsigned __int64)&buf[v6 - rp_] >> 3);
+  puts("Let's take a look at your chain! Note that we have no way to verify that the gadgets are executable");
+  puts("from within this challenge. You will have to do that by yourself.");
+  print_chain(rp_, (unsigned int)((unsigned __int64)&buf[v6 - rp_] >> 3) + 1);
+  return puts("Leaving!");
+}
+```
+
+`forkserver`，典。
+
+爆破 Canary、ret2challenge leak libc 再 ROP 应该就好了。2.9 有个 Nu1L Junior 招新赛，我得去抽个热闹，万一选上了岂不是很爽，但是现在才学到 ROP，好在还有一点时间，得提前学点堆了，就怕到时候遇到堆题啥也不会就死了……
+
+反正这章只剩下两道题，我就先鸽着了，看了下简介感觉都不难，感觉无非就是把所有知识综合起来罢了。
+
+### Exploit
+
+### Flag
+
+Flag: ``
