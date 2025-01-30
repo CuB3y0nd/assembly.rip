@@ -22,6 +22,16 @@ pubDate: "2024-01-26 10:25"
   <li>E-Mail: <code>root -at- cubeyond -dot- net</code></li>
   <li>GPG Key: <a href='./public.key'>Download GPG Key</a></li>
   <li>
-    语丝：<a target='_blank' rel='noopener noreferrer' href='https://memos.cubeyond.net/'>Memos for record life moments.</a>
+    Landing page: <a target='_blank' rel='noopener noreferrer' href='https://cubeyond.net/'>My personal landing page.</a>
+  </li>
+  <li>
+    Memos: <a target='_blank' rel='noopener noreferrer' href='https://memos.cubeyond.net/'>My life moments.</a>
+  </li>
+</ul>
+
+<h3>My CVEs</h3>
+<ul>
+  <li>
+    CVE-2024-25817: <a target='_blank' rel='noopener noreferrer' href='https://www.cve.org/CVERecord?id=CVE-2024-25817'>Buffer Overflow vulnerability in eza before version 0.18.2, allows local attackers to execute arbitrary code via the .git/HEAD, .git/refs, and .git/objects components.</a>
   </li>
 </ul>
