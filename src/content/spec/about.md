@@ -18,7 +18,7 @@ pubDate: "2024-01-26 10:25"
   <li>ID: CuB3y0nd</li>
   <li>ROAL: PWNER</li>
   <li>TEAM: NO TEAM YET :(</li>
-  <li>Personality: INTJ-A 5w4 tritype 513</li>
+  <li>Personality: INTJ-A 5w4 Tritype 513</li>
   <li>E-Mail: <code>root -at- cubeyond -dot- net</code></li>
   <li>GPG Key: <a href='./public.key'>Download GPG Key</a></li>
   <li>
