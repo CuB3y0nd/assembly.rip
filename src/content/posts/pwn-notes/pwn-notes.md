@@ -1,5 +1,5 @@
 ---
-title: "Special topic: Tricky tricks summary for Pwn"
+title: "Special Topic: Tricky tricks summary for Pwn"
 pubDate: "2025-02-01 16:01"
 modDate: "2025-02-01 23:19"
 categories:
