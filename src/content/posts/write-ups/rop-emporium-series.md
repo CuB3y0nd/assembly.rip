@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: ROP Emporium series"
 pubDate: "2025-02-01 09:38"
-modDate: "2025-02-01 17:24"
+modDate: "2025-02-01 18:22"
 categories:
   - "Pwn"
   - "Write-ups"
@@ -131,9 +131,9 @@ jnz <func>
 ret
 ```
 
-- `[r12 + rbx * 8]` 必须指向一个存储可调用函数的地址（如果没有想法且没有 PIE，可以直接使用 `_init` 函数）
-- `rbp` 和 `rbx` 必须具有相同的值以避免跳转
-- 有一些被省略的 `pop`s 需要考虑
+- `[r12 + rbx * 8]` 必须指向一个存储可调用函数的地址（如果没有想法且没有 PIE，可以直接使用 `_init` 函数）。
+- `rbp` 和 `rbx` 必须具有相同的值以避免跳转。
+- 有一些被省略的 `pop`s 需要考虑。
 
 另外，从 ret2csu gadget 控制 rdi 和 rsi 的另一种方法是通过访问特定的偏移量，可以参考这篇讲 BROP 的论文[^2].
 
