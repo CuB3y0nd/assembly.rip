@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: ROP Emporium series"
 pubDate: "2025-02-01 09:38"
-modDate: "2025-02-01 15:50"
+modDate: "2025-02-01 17:24"
 categories:
   - "Pwn"
   - "Write-ups"
@@ -39,7 +39,7 @@ slug: "rop-emporium-series"
 
 简单来说就是当你找不到可以控制函数参数的 gadgets 时，就可以考虑一下这个 trick.
 
-当一个程序使用某些库（如 libc）时，它有一些内置函数来管理程序不同部分之间的通信。在这些函数中，有一些隐藏的宝石可以作为我们缺失的 gadgets，特别是一个叫 `__libc_csu_init` 的函数。
+> 当一个程序使用某些库（如 libc）时，它有一些内置函数来管理程序不同部分之间的通信。在这些函数中，有一些隐藏的宝石可以作为我们缺失的 gadgets，特别是一个叫 `__libc_csu_init` 的函数。——Hack Tricks
 
 就以本题的 `__libc_csu_init` 为例（不同版本的 libc 的这个函数可能略有区别，不过影响不大），看一下里面有什么好东东：
 
