@@ -105,7 +105,7 @@ Okay, the first thing, what is `SROP`?
 
 好了，知道了这些基础概念后，下面就通过 Backdoor CTF 2017 的 [Fun Signals](https://github.com/guyinatuxedo/nightmare/blob/master/modules/16-srop/backdoor_funsignals/funsignals_player_bin) 这道题来实战一下吧～
 
-```asm wrap=false showLineNumbers=true ins={35}
+```asm wrap=false showLineNumbers=false ins={35}
 .shellcode:0000000010000000                     .686p
 .shellcode:0000000010000000                     .mmx
 .shellcode:0000000010000000                     .model flat
