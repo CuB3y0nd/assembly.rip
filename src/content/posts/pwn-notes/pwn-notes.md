@@ -1,7 +1,7 @@
 ---
 title: "Special Topic: Tricky tricks summary for Pwn"
 pubDate: "2025-02-01 16:01"
-modDate: "2025-02-02 21:35"
+modDate: "2025-02-04 14:43"
 categories:
   - "Pwn"
   - "Tricks"
@@ -287,7 +287,13 @@ if __name__ == "__main__":
 
 我们就以 `pwntools` 官方文档里面提供的示例程序来学习 how to ret2dlresolve. 其实就是学一下如何使用它提供的自动化工具……有关如何手动伪造 `_dl_runtime_resolve` 所需的结构体，以及一些更深入的话题，我之后应该还会回来填这个坑，先立 flag 了哈哈哈。
 
-示例程序来源于 [pwnlib.rop.ret2dlresolve — Return to dl_resolve](https://docs.pwntools.com/en/stable/rop/ret2dlresolve.html)，通过 `gcc ret2dlresolve.c -o ret2dlresolve -fno-stack-protector -no-pie` 编译。
+示例程序来源于 [pwnlib.rop.ret2dlresolve — Return to dl_resolve](https://docs.pwntools.com/en/stable/rop/ret2dlresolve.html)，通过下面这条指令来编译：
+
+```bash wrap=false showLineNumbers=false
+gcc ret2dlresolve.c -o ret2dlresolve \
+    -fno-stack-protector \
+    -no-pie
+```
 
 `pwntools` 官方文档里给我们的程序源码是这样的：
 
@@ -431,3 +437,197 @@ if __name__ == "__main__":
 - [Boosting your ROP skills with SROP and ret2dlresolve - Giulia Martino - HackTricks Track 2023](https://youtu.be/ADULSwnQs-s?si=TC5OyUwFHDFEHRO3)
 - [ret2dl_resolve x64: Exploiting Dynamic Linking Procedure In x64 ELF Binaries](https://syst3mfailure.io/ret2dl_resolve/)
 - [Finding link_map and \_dl_runtime_resolve() under full RELRO](https://ypl.coffee/dl-resolve-full-relro/)
+
+### ret2vDSO
+
+#### Principle
+
+`vDSO (Virtual Dynamic Shared Object)` 是 Linux 内核为用户态程序提供的一个特殊共享库，注意它是虚拟的，本身并不存在，它做的只是将一些常用的内核态调用映射到用户地址空间。这么做的目的是为了加速系统调用，避免频繁地从用户态切换到内核态，有效的减少了切换带来的巨大开销。
+
+在 vDSO 区域 可能存在一些 gadgets，用于从用户态切换到内核态。我们关注的就是这块区域里有没有什么可供我们利用的 gadgets，通常需要手动把 vDSO dump 出来分析。
+
+#### Example
+
+崩溃了兄弟，我自己出了一道题然后折腾了两天做不出来……我好菜啊……受到致命心理打击。例题等我缓过来再说吧，估计一年都不想碰这个了……反正只要知道 vDSO 区域里面存在一些可用的 gadgets 就好了，剩下的和普通 ROP 没啥区别。
+
+示范一下怎么通过 gdb dump 出 vDSO：
+
+```asm wrap=false showLineNumbers=false
+pwndbg> vmmap
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+             Start                End Perm     Size Offset File
+    0x555555554000     0x555555555000 r--p     1000      0 /home/cub3y0nd/Projects/ret2vDSO/ret2vDSO
+    0x555555555000     0x555555556000 r-xp     1000   1000 /home/cub3y0nd/Projects/ret2vDSO/ret2vDSO
+    0x555555556000     0x555555557000 r--p     1000   2000 /home/cub3y0nd/Projects/ret2vDSO/ret2vDSO
+    0x7ffff7fbf000     0x7ffff7fc1000 rw-p     2000      0 [anon_7ffff7fbf]
+    0x7ffff7fc1000     0x7ffff7fc5000 r--p     4000      0 [vvar]
+    0x7ffff7fc5000     0x7ffff7fc7000 r-xp     2000      0 [vdso]
+    0x7ffff7fc7000     0x7ffff7fc8000 r--p     1000      0 /usr/lib/ld-linux-x86-64.so.2
+    0x7ffff7fc8000     0x7ffff7ff1000 r-xp    29000   1000 /usr/lib/ld-linux-x86-64.so.2
+    0x7ffff7ff1000     0x7ffff7ffb000 r--p     a000  2a000 /usr/lib/ld-linux-x86-64.so.2
+    0x7ffff7ffb000     0x7ffff7fff000 rw-p     4000  34000 /usr/lib/ld-linux-x86-64.so.2
+    0x7ffffffde000     0x7ffffffff000 rw-p    21000      0 [stack]
+0xffffffffff600000 0xffffffffff601000 --xp     1000      0 [vsyscall]
+pwndbg> dump memory vdso.so 0x7ffff7fc5000 0x7ffff7fc7000
+```
+
+用 `ROPgadget` 分析 dump 出来的文件，大概那么一看有将近 500 个 gadgets，不过好像并不是很实用呢？感觉用这个 trick 性价比不高，不过也是一个值得尝试的方法。
+
+嗯……再来介绍个好东西，叫 `ELF Auxiliary Vectors (AUXV)`，ELF 辅助向量。它是内核在加载 ELF 可执行文件时传递给用户态程序的一组键值对。包含了与程序运行环境相关的底层信息，例如系统调用接口位置、内存布局、硬件能力等。
+
+当一个程序被加载时，Linux 内核将参数数量 (argc)、参数 (argv)、环境变量 (envp) 以及 AUXV 结构传递给程序的入口函数。程序可以通过系统提供的 `getauxval` 访问这些辅助向量，以获取系统信息。
+
+看看当前最新的 `v6.14-rc1` 内核中有关它的定义（旧版本中有关它的定义在 `elf.h` 中）：
+
+```c
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _UAPI_LINUX_AUXVEC_H
+#define _UAPI_LINUX_AUXVEC_H
+
+#include <asm/auxvec.h>
+
+/* Symbolic values for the entries in the auxiliary table
+   put on the initial stack */
+#define AT_NULL   0 /* end of vector */
+#define AT_IGNORE 1 /* entry should be ignored */
+#define AT_EXECFD 2 /* file descriptor of program */
+#define AT_PHDR   3 /* program headers for program */
+#define AT_PHENT  4 /* size of program header entry */
+#define AT_PHNUM  5 /* number of program headers */
+#define AT_PAGESZ 6 /* system page size */
+#define AT_BASE   7 /* base address of interpreter */
+#define AT_FLAGS  8 /* flags */
+#define AT_ENTRY  9 /* entry point of program */
+#define AT_NOTELF 10 /* program is not ELF */
+#define AT_UID    11 /* real uid */
+#define AT_EUID   12 /* effective uid */
+#define AT_GID    13 /* real gid */
+#define AT_EGID   14 /* effective gid */
+#define AT_PLATFORM 15  /* string identifying CPU for optimizations */
+#define AT_HWCAP  16    /* arch dependent hints at CPU capabilities */
+#define AT_CLKTCK 17 /* frequency at which times() increments */
+/* AT_* values 18 through 22 are reserved */
+#define AT_SECURE 23   /* secure mode boolean */
+#define AT_BASE_PLATFORM 24 /* string identifying real platform, may
+     * differ from AT_PLATFORM. */
+#define AT_RANDOM 25 /* address of 16 random bytes */
+#define AT_HWCAP2 26 /* extension of AT_HWCAP */
+#define AT_RSEQ_FEATURE_SIZE 27 /* rseq supported feature size */
+#define AT_RSEQ_ALIGN  28 /* rseq allocation alignment */
+#define AT_HWCAP3 29 /* extension of AT_HWCAP */
+#define AT_HWCAP4 30 /* extension of AT_HWCAP */
+
+#define AT_EXECFN  31 /* filename of program */
+
+#ifndef AT_MINSIGSTKSZ
+#define AT_MINSIGSTKSZ 51 /* minimal stack size for signal delivery */
+#endif
+
+#endif /* _UAPI_LINUX_AUXVEC_H */
+```
+
+对于特定的架构可能还有一些特别的宏定义：
+
+```c
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
+#ifndef _ASM_X86_AUXVEC_H
+#define _ASM_X86_AUXVEC_H
+/*
+ * Architecture-neutral AT_ values in 0-17, leave some room
+ * for more of them, start the x86-specific ones at 32.
+ */
+#ifdef __i386__
+#define AT_SYSINFO 32
+#endif
+#define AT_SYSINFO_EHDR 33
+
+/* entries in ARCH_DLINFO: */
+#if defined(CONFIG_IA32_EMULATION) || !defined(CONFIG_X86_64)
+# define AT_VECTOR_SIZE_ARCH 3
+#else /* else it's non-compat x86-64 */
+# define AT_VECTOR_SIZE_ARCH 2
+#endif
+
+#endif /* _ASM_X86_AUXVEC_H */
+```
+
+以上所有内容的参考链接我都放在末尾的 References 了，感兴趣的自行查阅。
+
+我们可以通过指定 `LD_SHOW_AUXV=1` 来查看程序的 AUXV 信息：
+
+```bash wrap=false showLineNumbers=false
+λ ~/ LD_SHOW_AUXV=1 w
+AT_SYSINFO_EHDR:      0x7f92c06b9000
+AT_MINSIGSTKSZ:       1776
+AT_HWCAP:             178bfbff
+AT_PAGESZ:            4096
+AT_CLKTCK:            100
+AT_PHDR:              0x626d19090040
+AT_PHENT:             56
+AT_PHNUM:             13
+AT_BASE:              0x7f92c06bb000
+AT_FLAGS:             0x0
+AT_ENTRY:             0x626d19092940
+AT_UID:               1000
+AT_EUID:              1000
+AT_GID:               1000
+AT_EGID:              1000
+AT_SECURE:            0
+AT_RANDOM:            0x7ffca3edf4e9
+AT_HWCAP2:            0x2
+AT_EXECFN:            /usr/bin/w
+AT_PLATFORM:          x86_64
+AT_RSEQ_FEATURE_SIZE: 28
+AT_RSEQ_ALIGN:        32
+ 14:19:59 up  3:54,  1 user,  load average: 0.52, 0.57, 0.59
+USER     TTY       LOGIN@   IDLE   JCPU   PCPU  WHAT
+cub3y0nd tty1      10:26    3:53m  6:43    ?    xinit /home/cub3y0nd/.xinitrc -- /etc/X11/xinit/xs
+```
+
+注意到这个变量是以 `LD_` 开头的，说明动态链接器会负责解析这个变量，因此，如果程序是静态链接的，那使用这个变量将不会得到任何输出。
+
+但是得不到输出不代表它没有，用 `pwndbg` 的 `i auxv` 或 `auxv` 也可以查看程序的 AUXV 信息（或者你手动 telescope stack）：
+
+```asm wrap=false showLineNumbers=false
+pwndbg> i auxv
+33   AT_SYSINFO_EHDR      System-supplied DSO's ELF header 0x7ffff7ffd000
+51   AT_MINSIGSTKSZ       Minimum stack size for signal delivery 0x6f0
+16   AT_HWCAP             Machine-dependent CPU capability hints 0x178bfbff
+6    AT_PAGESZ            System page size               4096
+17   AT_CLKTCK            Frequency of times()           100
+3    AT_PHDR              Program headers for program    0x400040
+4    AT_PHENT             Size of program header entry   56
+5    AT_PHNUM             Number of program headers      6
+7    AT_BASE              Base address of interpreter    0x0
+8    AT_FLAGS             Flags                          0x0
+9    AT_ENTRY             Entry point of program         0x40101d
+11   AT_UID               Real user ID                   1000
+12   AT_EUID              Effective user ID              1000
+13   AT_GID               Real group ID                  1000
+14   AT_EGID              Effective group ID             1000
+23   AT_SECURE            Boolean, was exec setuid-like? 0
+25   AT_RANDOM            Address of 16 random bytes     0x7fffffffe789
+26   AT_HWCAP2            Extension of AT_HWCAP          0x2
+31   AT_EXECFN            File name of executable        0x7fffffffefce "/home/cub3y0nd/Projects/ret2vDSO/ret2vDSO"
+15   AT_PLATFORM          String identifying platform    0x7fffffffe799 "x86_64"
+27   AT_RSEQ_FEATURE_SIZE rseq supported feature size    28
+28   AT_RSEQ_ALIGN        rseq allocation alignment      32
+0    AT_NULL              End of vector                  0x0
+```
+
+这之中我们最关心的应该是 `AT_SYSINFO_EHDR`，它与 `vDSO` 的起始地址相同。因此，只要能把它泄漏出来，我们就可以掌握 vDSO 的 gadgets 了。
+
+其中 `AT_RANDOM` 好像也是一个很实用的东西，等我有空了再好好研究研究这些，话说这是我立的第几个 flag 了……
+
+一般程序的返回地址之后紧接着的就是 `argc`，然后是 `argv`，再之后就是 `envp`，最后还有一堆信息，它们就是 `AUXV` 了，这些都在栈上保存，自己研究去吧，我心好累……
+
+#### Summary
+
+反正我感觉这是一个性价比不怎么高的 trick，不过要是实在没办法搞到可用的 gadgets 的话还是可以考虑一下的。
+
+#### References
+
+- [vDSO](https://en.wikipedia.org/wiki/VDSO)
+- [getauxval(3) — Linux manual page](https://man7.org/linux/man-pages/man3/getauxval.3.html)
+- [kernel/git/torvalds/linux.git - path: root/include/uapi/linux/auxvec.h](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/uapi/linux/auxvec.h?h=v6.14-rc1)
+- [kernel/git/torvalds/linux.git - path: root/arch/x86/include/uapi/asm/auxvec.h](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/include/uapi/asm/auxvec.h?h=v6.14-rc1)
