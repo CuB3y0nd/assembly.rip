@@ -6,7 +6,7 @@ categories:
   - "Pwn"
   - "Tricks"
 description: "This special topic is about some tricky tricks i've learned so far in Pwn field. Keep updating as the mood strikes."
-slug: "pwn-notes"
+slug: "pwn-trick-notes"
 pin: true
 ---
 
