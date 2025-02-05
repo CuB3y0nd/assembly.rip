@@ -4738,7 +4738,7 @@ int __fastcall challenge(int a1, __int64 a2, __int64 a3)
 
 吗的 Heap 镇南，我被蹂躏的好惨，还是先把这两题打了稳固下 rank 吧。
 
-重新总结下思路：因为是 forkserver，子进程会沿用父进程的内存布局，所以我们可以把 canary 和 retaddr 爆破出来。有了 retaddr 后我们就可以使用一些程序本身的 gadgets 了，但是这些 gadgets 中不包含 syscall 什么的，所以不能做一些很 powerful 的事情，但是 libc 里面一定有好东西，那么问题就在于怎么获得 libc 基地址了。因为这个程序使用了 `puts` 函数，所以我们可以构造两个 stage payload，第一个 stage 用 `puts@plt` 泄漏 `__libc_start_main` 的地址，第二个 stage 根据泄漏出来的地址计算 libc 基地址，然后构造 ROP Chain Do anything what you want to do!
+重新总结下思路：因为是 forkserver，子进程会沿用父进程的内存布局，所以我们可以把 canary 和 retaddr 爆破出来。有了 retaddr 后我们就可以使用一些程序本身的 gadgets 了，但是这些 gadgets 中不包含 syscall 什么的，所以不能做一些很 powerful 的事情，但是 libc 里面一定有好东西，那么问题就在于怎么获得 libc 基地址了。因为这个程序使用了 `puts` 函数，所以我们可以构造两个 stage payload，第一个 stage 用 `puts@plt` 泄漏 `__libc_start_main` 的地址，第二个 stage 根据泄漏出来的地址计算 libc 基地址，然后构造 ROP Chain Do anything whatever you want!
 
 ### Exploit
 
