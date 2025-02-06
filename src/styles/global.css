@@ -197,3 +197,15 @@ article.prose th:last-child,
 article.prose td:last-child {
   border-right: none;
 }
+
+@media (prefers-color-scheme: dark) {
+  .fancybox__backdrop {
+    background: rgba(0, 0, 0, 0.9) !important;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  .fancybox__backdrop {
+    background: rgba(255, 255, 255, 0.9) !important;
+  }
+}
