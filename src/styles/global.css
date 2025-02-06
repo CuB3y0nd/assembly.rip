@@ -198,14 +198,28 @@ article.prose td:last-child {
   border-right: none;
 }
 
+@media (prefers-color-scheme: light) {
+  .fancybox__backdrop {
+    background: rgba(255, 255, 255, 0.9) !important;
+  }
+  .fancybox__caption {
+    color: #333333 !important;
+    background: rgba(255, 255, 255, 1.0) !important;
+  }
+  .fancybox__thumbs {
+    background: rgba(255, 255, 255, 1.0) !important;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   .fancybox__backdrop {
     background: rgba(0, 0, 0, 0.9) !important;
   }
-}
-
-@media (prefers-color-scheme: light) {
-  .fancybox__backdrop {
-    background: rgba(255, 255, 255, 0.9) !important;
+  .fancybox__caption {
+    color: #ffffff !important;
+    background: rgba(0, 0, 0, 0.0) !important;
+  }
+  .fancybox__thumbs {
+    background: rgba(0, 0, 0, 0.0) !important;
   }
 }

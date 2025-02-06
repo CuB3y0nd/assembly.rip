@@ -4,6 +4,7 @@ pubDate: "2024-03-31 10:30"
 modDate: "2024-08-26 06:09"
 categories:
   - "Mathematices"
+  - "Notes"
 description: "微积分学习笔记——从 1 到无穷大。主要记录各种公式定理的推导过程。"
 slug: "calculus-notes"
 ---

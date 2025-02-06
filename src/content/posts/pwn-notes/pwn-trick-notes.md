@@ -5,6 +5,7 @@ modDate: "2025-02-04 14:43"
 categories:
   - "Pwn"
   - "Tricks"
+  - "Notes"
 description: "This special topic is about some tricky tricks i've learned so far in Pwn field. Keep updating as the mood strikes."
 slug: "pwn-trick-notes"
 pin: true
