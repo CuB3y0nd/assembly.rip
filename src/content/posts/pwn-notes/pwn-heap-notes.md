@@ -1,7 +1,7 @@
 ---
 title: "Notes: Pwn heap fundamental knowledge"
 pubDate: "2025-02-06 15:42"
-modDate: "2025-02-07 15:19"
+modDate: "2025-02-07 23:40"
 categories:
   - "Pwn"
   - "Heap"
@@ -18,6 +18,10 @@ slug: "pwn-heap-notes"
 
 一切的恐惧来源于经验不足，~_幻想我跨过瓶颈期的那天……一定……会很爽吧？_~
 
+咳咳，先声明一下：因为这本质上算是我的个人笔记，而非对外「教材」，所以我基本上是想写什么，分析什么，就写什么了，尤其是在分析 glibc 源码的时候，写的比较杂，一般并不会只专注于一个有用的核心知识，中间可能会根据心情发散出来很多无关内容的分析。所以整体上内容并不会显得那么循序渐进，可能不太适合新人食用<s>_（虽然我现在就是从零开始学的？应该说和严谨的系统性教学文相比是不行，谁知道我潜意识里消化了多少外部文献的内容……）_</s>。当然，如果你是好学宝宝<s>_/大佬走开，走开～_</s>，我的笔记可能会大大的扩大你的知识面？
+
+~_读 glibc 源码恶补 C 语言真是自虐啊，你别说还挺爽？_~
+
 ## Terminology
 
 首先让我们了解一下堆 (Heap) 这个 terminology 的由来，注意我们讨论的堆可**不是数据结构中的「堆」**。
@@ -26,11 +30,24 @@ Heap 在英语中本义是「堆积物」，表示一块随意堆放、无特定
 
 总之，我们所研究的堆，通常来说就是由动态分配器 (dynamic allocator) 所管理的那个堆。
 
+## Dynamic Allocator?
+
+动态分配器 (Dynamic Allocator) 也叫做堆管理器，介于用户程序与内核之间，主要做如下工作：
+
+1. 响应用户的申请内存请求，向操作系统申请内存，然后将其返回给用户程序。同时，为了保证内存管理的高效性，内核一般都会预先分配很大的一块连续的内存，然后让堆管理器通过某种算法管理这块内存。只有当出现了堆空间不足的情况，堆管理器才会再次与操作系统进行交互。
+2. 管理用户所释放的内存。一般来说，用户释放的内存并不是直接返还给操作系统的，而是由堆管理器进行管理。这些释放的内存可以用来响应用户的新的申请内存的请求。
+
+Linux 中早期的堆分配与回收由 [Doug Lea](https://gee.cs.oswego.edu/) 实现，叫做 `dlmalloc`，但它在并行处理多个线程时，会共享进程的堆内存空间。因此，为了安全性，一个线程使用堆时，会进行加锁。然而，与此同时，加锁会导致其它线程无法使用堆，降低了内存分配和回收的高效性。同时，如果在多线程使用时，没能正确控制，也可能影响内存分配和回收的正确性。因此 [Wolfram Gloger](http://www.malloc.de/en/) 在 Doug Lea 实现的 dlmalloc 的基础上进行改进，使其可以支持多线程，这个改进后的堆分配器就是 `ptmalloc`。`glibc 2.1` 开始使用 `ptmalloc`，`glibc 2.3` 开始默认使用 `ptmalloc2`，进一步优化了 arena 管理，使多核环境下的性能得到显著提升。
+
+目前 Linux 标准发行版中使用的堆分配器是 glibc 中的堆分配器：ptmalloc2。ptmalloc2 主要是通过 malloc/free 函数来分配和释放内存块。
+
+需要注意的是，在内存分配与使用的过程中，Linux 有这样的一个基本内存管理思想，只有当真正访问一个地址的时候，系统才会建立虚拟页与物理页之间的映射关系。 所以虽然操作系统已经给程序分配了很大的一块内存，但是这块内存其实只是虚拟内存。只有当用户使用到相应的内存时，系统才会真正分配物理页给用户使用。
+
 ## What's the different with stack?
 
-让我们先 recap 一下栈。栈一般用于存放局部变量，函数调用信息等内容，当函数作用域结束后，这块空间（栈帧）就自动释放了，因此不适合做长期存储，而且栈空间也有限，不适合存储大量数据。
+我们先 recap 一下栈。栈由高地址向低地址增长，一般用于存放局部变量，函数调用信息等内容，当函数作用域结束后，这块空间（栈帧）就自动释放了，因此不适合做长期存储，而且栈空间也有限，不适合存储大量数据。
 
-堆与栈的一大区别在于，堆可以动态分配空间，要多少分多少，并且分配出来的内存全局可用，通过堆指针可以在程序的任何地方访问和修改它。若非手动释放的话，生命周期会维持到程序结束。
+堆与栈的一大区别在于，首先，它由低地址向高地址增长，其次堆可以动态分配空间，要多少分多少，并且分配出来的内存全局可用，通过堆指针可以在程序的任何地方访问和修改它。若非手动释放的话，生命周期会维持到程序结束。
 
 ## When should we use the heap?
 
@@ -90,6 +107,39 @@ free_memory(lastname);
 - `malloc()` allocate some memory
 - `free()` free a prior allocated chunk
 
+可以看到 glibc 在 [malloc.c](https://github.com/bminor/glibc/blob/master/malloc/malloc.c#L574) 中对于这两个函数给出的介绍：
+
+```c showLineNumbers=false
+/*
+  malloc(size_t n)
+  Returns a pointer to a newly allocated chunk of at least n bytes, or null
+  if no space is available. Additionally, on failure, errno is
+  set to ENOMEM on ANSI C systems.
+
+  If n is zero, malloc returns a minimum-sized chunk. (The minimum
+  size is 16 bytes on most 32bit systems, and 24 or 32 bytes on 64bit
+  systems.)  On most systems, size_t is an unsigned type, so calls
+  with negative arguments are interpreted as requests for huge amounts
+  of space, which will often fail. The maximum supported value of n
+  differs across systems, but is in all cases less than the maximum
+  representable value of a size_t.
+*/
+```
+
+```c showLineNumbers=false
+/*
+  free(void* p)
+  Releases the chunk of memory pointed to by p, that had been previously
+  allocated using malloc or a related routine such as realloc.
+  It has no effect if p is null. It can have arbitrary (i.e., bad!)
+  effects if p has already been freed.
+
+  Unless disabled (using mallopt), freeing very large spaces will
+  when possible, automatically trigger operations that give
+  back unused memory to the system, thus reducing program footprint.
+*/
+```
+
 上面两个是常用的主要函数，还有很多辅助函数：
 
 - `realloc()` change the size of an allocation
@@ -97,14 +147,16 @@ free_memory(lastname);
 
 ## How does the heap work?
 
-事实上 `ptmalloc` 并没有使用 `mmap` 来实现动态内存管理，而是使用了所谓的 `data segment`。通过 ASLR，`data segment` 通常被随机放置在某个靠近但不紧贴 PIE 地址的地方，起始大小为零，所以在没有分配堆内存的时候我们无法通过 `/proc/self/maps` 看到它。
+事实上 `ptmalloc` 并没有使用 [mmap/munmap](https://man7.org/linux/man-pages/man2/mmap.2.html) 来实现动态内存管理，而是使用了所谓的 `data segment`。通过 ASLR，`data segment` 通常被随机放置在某个靠近但不紧贴 PIE 地址的地方，起始大小为零，所以在没有分配堆内存的时候我们无法通过 `/proc/self/maps` 看到它。
 
-内存的分配通过 `brk` 和 `sbrk` 这两个系统调用来进行：
+内存的分配通过 [(s)brk](https://man7.org/linux/man-pages/man2/sbrk.2.html) 系统调用来进行：
 
 - `brk(NULL)` returns the end of the data segment
 - `brk(addr)` expands the end of the data segment to addr
 - `sbrk(NULL)` returns the end of the data segment
 - `sbrk(delta)` expands the end of the data segment by delta bytes
+
+`brk` 是内核提供的系统调用，而 `sbrk` 是 `(g)libc` 提供的一个用户空间的封装，底层还是调用了 `brk`。
 
 ptmalloc 在进行小规模分配时，会切分数据段的若干位，而在进行大规模分配时，则会使用 `mmap`。
 
@@ -306,9 +358,11 @@ exit_group(0)
 *** Process 147011 exited normally ***
 ```
 
-正如理论告诉我们的一样，在还没 malloc 前，程序的内存映射里面是看不到堆的；在第一次 malloc 之后，程序在「靠近」 PIE 的地方分配了 `0x21000` 字节的堆空间，从 `0x5cce5f83c000` 到 `0x5cce5f85d000`；之后进行一个比较大的内存分配，这是在原空间的基础上扩增了 `0x30000` 字节到 `0x5cce5f88d000`；最后进行一个特别大的分配，这次因为太大了所以使用的是 `mmap`，以避免内存碎片的问题。
+正如理论告诉我们的一样，在还没 malloc 前，程序的内存映射里面是看不到堆的；在第一次 malloc 之后，程序在「靠近」 PIE 的地方分配了 `0x21000` 字节的堆空间，从 `0x5cce5f83c000` 到 `0x5cce5f85d000`。你可能疑惑：我们明明只申请了 16 字节，为什么返回那么大的空间？这是为了避免频繁的内核态与用户态的切换，提高程序的效率。此外，我们称分配下来的这块连续的内存区域为 `arena`，而在多线程程序中，由主线程申请的内存被称为 `main_arena`，子线程申请的内存被称为 `thread_arena`。后续申请的内存会一直从这个 arena 中获取，直到空间不足。当 arena 空间不足时，它可以通过 brk 来增加堆的空间。类似地，也可以通过 brk 来缩小自己的空间；之后进行一个比较大的内存分配，这是在原空间的基础上扩增了 `0x30000` 字节到 `0x5cce5f88d000`；最后进行一个特别大的分配，这次因为太大了所以使用的是 `mmap`，以避免内存碎片的问题。
 
-<s>还有一些理论没有告诉你的，就由我来告诉你。</s>通常情况下，Linux 会在 heap 后面开始映射 mmap 区域，这片区域被称为匿名映射区。
+<s>还有一些理论没有告诉你的，就由我来告诉你。</s>通常情况下，Linux 会在 heap 后面开始映射 mmap 区域，这片区域被称为匿名映射区。当用户请求的内存大于 128 KB，比如 `malloc(132 * 1024)`，并且没有任何 arena 有足够的空间时，那么系统就会调用 mmap 来分配相应的内存空间。这与这个请求来自于主线程还是子线程无关。另外，子线程一般使用 mmap 分配堆内存，而非 brk，这是为了不干扰主线程或其它线程。如果多个线程同时修改 brk 的堆顶，会导致数据竞争，令内存管理变复杂，带来性能和稳定性问题。
+
+[Understanding glibc malloc](https://sploitfun.wordpress.com/2015/02/10/understanding-glibc-malloc/) 演示了一个多线程 malloc 的底层情况分析，感兴趣的可以看看。
 
 ## What can go wrong?
 
@@ -339,7 +393,7 @@ exit_group(0)
 
 比如 valgrind 可以检测一些堆误用，如果你的测试用例覆盖到了的话……glibc 本身也提供了很多加固措施，但是其中有些会造成严重的性能损失……人们一直在积极开发各种「更安全」的堆管理器，但它们要么被留在学术 paper 上了，要么因为种种原因根本没部署……
 
-## Common dangers
+## Common Dangers
 
 - Forgetting to free memory
   - Leads to resource exhaustion
@@ -382,3 +436,85 @@ exit_group(0)
 - House of Einherjar
 - House of Rabbit
 - House of Botcake
+
+## tcache
+
+历史课上完了，是时候讲点不那么轻松的东西了。
+
+线程本地缓存 `tcache (Thread Local Caching)` 是在 glibc 2.26, Ubuntu 17.10 之后引入的一种新技术 ([commit](https://sourceware.org/git/?p=glibc.git;a=commitdiff;h=d5c3fafc4307c9b7a4c7d5cb381fcdbfad340bcc))，旨在加速在一个线程中的重复的小块内存分配，提升堆管理的性能。但提升性能的同时也舍弃了很多安全检查，因此有了很多新的利用方式。
+
+`tcache` 是通过单链表实现的，每一个线程都有一个 `tcache_perthread_struct`，用于缓存线程中不同大小的一类内存块。
+
+```c
+// https://github.com/bminor/glibc/blob/master/malloc/malloc.c
+
+#if USE_TCACHE
+/* We want 64 entries.  This is an arbitrary limit, which tunables can reduce.  */
+# define TCACHE_MAX_BINS  64
+# define MAX_TCACHE_SIZE tidx2usize (TCACHE_MAX_BINS-1)
+
+/* Only used to pre-fill the tunables.  */
+# define tidx2usize(idx) (((size_t) idx) * MALLOC_ALIGNMENT + MINSIZE - SIZE_SZ)
+
+/* When "x" is from chunksize().  */
+# define csize2tidx(x) (((x) - MINSIZE + MALLOC_ALIGNMENT - 1) / MALLOC_ALIGNMENT)
+/* When "x" is a user-provided size.  */
+# define usize2tidx(x) csize2tidx (request2size (x))
+
+/* With rounding and alignment, the bins are...
+   idx 0   bytes 0..24 (64-bit) or 0..12 (32-bit)
+   idx 1   bytes 25..40 or 13..20
+   idx 2   bytes 41..56 or 21..28
+   etc.  */
+
+/* This is another arbitrary limit, which tunables can change.  Each
+   tcache bin will hold at most this number of chunks.  */
+# define TCACHE_FILL_COUNT 7
+
+/* Maximum chunks in tcache bins for tunables.  This value must fit the range
+   of tcache->counts[] entries, else they may overflow.  */
+# define MAX_TCACHE_COUNT UINT16_MAX
+#endif
+
+/* We overlay this structure on the user-data portion of a chunk when
+   the chunk is stored in the per-thread cache.  */
+typedef struct tcache_entry
+{
+  struct tcache_entry *next;
+  /* This field exists to detect double frees.  */
+  uintptr_t key;
+} tcache_entry;
+
+/* There is one of these for each thread, which contains the
+   per-thread cache (hence "tcache_perthread_struct").  Keeping
+   overall size low is mildly important.  Note that COUNTS and ENTRIES
+   are redundant (we could have just counted the linked list each
+   time), this is for performance reasons.  */
+typedef struct tcache_perthread_struct
+{
+  uint16_t counts[TCACHE_MAX_BINS];
+  tcache_entry *entries[TCACHE_MAX_BINS];
+} tcache_perthread_struct;
+```
+
+先解释一下部分宏的定义：
+
+- `TCACHE_MAX_BINS` 设置了 tcache 最大可管理的 bins 数，每个 bin 都负责管理一组特定大小的内存块
+- `MAX_TCACHE_SIZE` 通过 `tidx2usize (TCACHE_MAX_BINS-1)` 计算 bin 可存储的最大内存块大小
+- `TCACHE_FILL_COUNT` 设置了每条 tcache_entry 链上可以存放多少个 free()ed 的 chunk
+- `MAX_TCACHE_COUNT` 限制了每个 bin 中最多允许存储的块数量。`UINT16_MAX` 即 `2^16 - 1` 个。默认情况下，`TCACHE_FILL_COUNT` 为 7，即每个 bin 通常最多缓存 7 个 chunks，但通过 tunables 可以调整这个数量
+- `tidx2usize(idx)` 通过 bin 的索引给出这个 bin 存储的内存的大小
+- `csize2tidx(x)` 将 chunk 大小转换为 bin 的索引
+- `usize2tidx(x)` 将用户请求的内存大小转换为对应 bin 的索引
+- `request2size(x)` 将用户请求的大小转换为实际分配的 chunk 大小（包括对齐和元数据）
+- `chunksize()` 大小包含元素据
+- `MALLOC_ALIGNMENT` 表示内存块的对齐单位，通常为 16 字节 (64-bit)，8 字节 (32-bit)
+- `MINSIZE` 表示内存块的最小大小，通常为 32 字节 (64-bit)，16 字节 (32-bit)
+- `SIZE_SZ` 表示头部元数据大小，通常为 8 字节 (64-bit)，4 字节 (32-bit)
+
+然后是有关 tcache 的两个结构体：
+
+- `tcache_entry` 用单链表的方式链接了相同大小的 free()ed 的 chunk. `next` 指向同一 bin 中下一个可用的内存块
+- `key` 用于检测 `double free`
+- `counts[TCACHE_MAX_BINS]` 记录了 `tcache_entry` 链上空闲 chunk 的数目，每条链上最多可以有 `TCACHE_FILL_COUNT` 个 chunk
+- `entries[TCACHE_MAX_BINS]` 指向每个 bin 中的链表头
