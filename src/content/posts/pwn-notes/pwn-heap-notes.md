@@ -1,7 +1,7 @@
 ---
 title: "Notes: Pwn heap fundamental knowledge"
 pubDate: "2025-02-06 15:42"
-modDate: "2025-02-07 23:40"
+modDate: "2025-02-08 23:17"
 categories:
   - "Pwn"
   - "Heap"
@@ -18,9 +18,11 @@ slug: "pwn-heap-notes"
 
 一切的恐惧来源于经验不足，~_幻想我跨过瓶颈期的那天……一定……会很爽吧？_~
 
-咳咳，先声明一下：因为这本质上算是我的个人笔记，而非对外「教材」，所以我基本上是想写什么，分析什么，就写什么了，尤其是在分析 glibc 源码的时候，写的比较杂，一般并不会只专注于一个有用的核心知识，中间可能会根据心情发散出来很多无关内容的分析。所以整体上内容并不会显得那么循序渐进，可能不太适合新人食用<s>_（虽然我现在就是从零开始学的？应该说和严谨的系统性教学文相比是不行，谁知道我潜意识里消化了多少外部文献的内容……）_</s>。当然，如果你是好学宝宝<s>_/大佬走开，走开～_</s>，我的笔记可能会大大的扩大你的知识面？
+咳咳，先声明一下：因为这本质上算是我的个人笔记，而非对外「教材」，所以我基本上是想写什么，分析什么，就写什么了，尤其是在分析 glibc 源码的时候，写的比较杂，有点乱，而且一般并不会只专注于一个有用/相关的核心知识，中间可能会根据心情发散出来很多无关内容的分析。所以整体上内容并不会显得那么循序渐进，可能不太适合新人食用<s>_（虽然我现在就是从零开始学的？应该说和严谨的系统性教学文相比是不行，谁知道我潜意识里消化了多少外部文献的内容……）_</s>。当然，如果你是好学宝宝<s>_/大佬走开，走开～_</s>，我的笔记可能会大大的扩大你的知识面？
 
 ~_读 glibc 源码恶补 C 语言真是自虐啊，你别说还挺爽？_~
+
+还有一点就是这份笔记分析的源码基于 [glibc-2.41](https://sourceware.org/git/?p=glibc.git;a=tag;h=refs/tags/glibc-2.41).
 
 ## Terminology
 
@@ -437,17 +439,225 @@ exit_group(0)
 - House of Rabbit
 - House of Botcake
 
-## tcache
+## glibc 中部分可能需要特别记忆的内容
 
 历史课上完了，是时候讲点不那么轻松的东西了。
 
-线程本地缓存 `tcache (Thread Local Caching)` 是在 glibc 2.26, Ubuntu 17.10 之后引入的一种新技术 ([commit](https://sourceware.org/git/?p=glibc.git;a=commitdiff;h=d5c3fafc4307c9b7a4c7d5cb381fcdbfad340bcc))，旨在加速在一个线程中的重复的小块内存分配，提升堆管理的性能。但提升性能的同时也舍弃了很多安全检查，因此有了很多新的利用方式。
+```c showLineNumbers=false collapse={1-89}
+/* Malloc implementation for multiple threads without lock contention.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
+   Copyright The GNU Toolchain Authors.
+   This file is part of the GNU C Library.
 
-`tcache` 是通过单链表实现的，每一个线程都有一个 `tcache_perthread_struct`，用于缓存线程中不同大小的一类内存块。
+   The GNU C Library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Lesser General Public License as
+   published by the Free Software Foundation; either version 2.1 of the
+   License, or (at your option) any later version.
+
+   The GNU C Library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Lesser General Public License for more details.
+
+   You should have received a copy of the GNU Lesser General Public
+   License along with the GNU C Library; see the file COPYING.LIB.  If
+   not, see <https://www.gnu.org/licenses/>.  */
+
+/*
+  This is a version (aka ptmalloc2) of malloc/free/realloc written by
+  Doug Lea and adapted to multiple threads/arenas by Wolfram Gloger.
+
+  There have been substantial changes made after the integration into
+  glibc in all parts of the code.  Do not look for much commonality
+  with the ptmalloc2 version.
+
+* Version ptmalloc2-20011215
+  based on:
+  VERSION 2.7.0 Sun Mar 11 14:14:06 2001  Doug Lea  (dl at gee)
+
+* Quickstart
+
+  In order to compile this implementation, a Makefile is provided with
+  the ptmalloc2 distribution, which has pre-defined targets for some
+  popular systems (e.g. "make posix" for Posix threads).  All that is
+  typically required with regard to compiler flags is the selection of
+  the thread package via defining one out of USE_PTHREADS, USE_THR or
+  USE_SPROC.  Check the thread-m.h file for what effects this has.
+  Many/most systems will additionally require USE_TSD_DATA_HACK to be
+  defined, so this is the default for "make posix".
+
+* Why use this malloc?
+
+  This is not the fastest, most space-conserving, most portable, or
+  most tunable malloc ever written. However it is among the fastest
+  while also being among the most space-conserving, portable and tunable.
+  Consistent balance across these factors results in a good general-purpose
+  allocator for malloc-intensive programs.
+
+  The main properties of the algorithms are:
+  * For large (>= 512 bytes) requests, it is a pure best-fit allocator,
+    with ties normally decided via FIFO (i.e. least recently used).
+  * For small (<= 64 bytes by default) requests, it is a caching
+    allocator, that maintains pools of quickly recycled chunks.
+  * In between, and for combinations of large and small requests, it does
+    the best it can trying to meet both goals at once.
+  * For very large requests (>= 128KB by default), it relies on system
+    memory mapping facilities, if supported.
+
+  For a longer but slightly out of date high-level description, see
+     http://gee.cs.oswego.edu/dl/html/malloc.html
+
+  You may already by default be using a C library containing a malloc
+  that is  based on some version of this malloc (for example in
+  linux). You might still want to use the one in this file in order to
+  customize settings or to avoid overheads associated with library
+  versions.
+
+* Contents, described in more detail in "description of public routines" below.
+
+  Standard (ANSI/SVID/...)  functions:
+    malloc(size_t n);
+    calloc(size_t n_elements, size_t element_size);
+    free(void* p);
+    realloc(void* p, size_t n);
+    memalign(size_t alignment, size_t n);
+    valloc(size_t n);
+    mallinfo()
+    mallopt(int parameter_number, int parameter_value)
+
+  Additional functions:
+    independent_calloc(size_t n_elements, size_t size, void* chunks[]);
+    independent_comalloc(size_t n_elements, size_t sizes[], void* chunks[]);
+    pvalloc(size_t n);
+    malloc_trim(size_t pad);
+    malloc_usable_size(void* p);
+    malloc_stats();
+
+* Vital statistics:
+
+  Supported pointer representation:       4 or 8 bytes
+  Supported size_t  representation:       4 or 8 bytes
+       Note that size_t is allowed to be 4 bytes even if pointers are 8.
+       You can adjust this by defining INTERNAL_SIZE_T
+
+  Alignment:                              2 * sizeof(size_t) (default)
+       (i.e., 8 byte alignment with 4byte size_t). This suffices for
+       nearly all current machines and C compilers. However, you can
+       define MALLOC_ALIGNMENT to be wider than this if necessary.
+
+  Minimum overhead per allocated chunk:   4 or 8 bytes
+       Each malloced chunk has a hidden word of overhead holding size
+       and status information.
+
+  Minimum allocated size: 4-byte ptrs:  16 bytes    (including 4 overhead)
+     8-byte ptrs:  24/32 bytes (including, 4/8 overhead)
+
+       When a chunk is freed, 12 (for 4byte ptrs) or 20 (for 8 byte
+       ptrs but 4 byte size) or 24 (for 8/8) additional bytes are
+       needed; 4 (8) for a trailing size field and 8 (16) bytes for
+       free list pointers. Thus, the minimum allocatable size is
+       16/24/32 bytes.
+
+       Even a request for zero bytes (i.e., malloc(0)) returns a
+       pointer to something of the minimum allocatable size.
+
+       The maximum overhead wastage (i.e., number of extra bytes
+       allocated than were requested in malloc) is less than or equal
+       to the minimum size, except for requests >= mmap_threshold that
+       are serviced via mmap(), where the worst case wastage is 2 *
+       sizeof(size_t) bytes plus the remainder from a system page (the
+       minimal mmap unit); typically 4096 or 8192 bytes.
+
+  Maximum allocated size:  4-byte size_t: 2^32 minus about two pages
+      8-byte size_t: 2^64 minus about two pages
+
+       It is assumed that (possibly signed) size_t values suffice to
+       represent chunk sizes. `Possibly signed' is due to the fact
+       that `size_t' may be defined on a system as either a signed or
+       an unsigned type. The ISO C standard says that it must be
+       unsigned, but a few systems are known not to adhere to this.
+       Additionally, even when size_t is unsigned, sbrk (which is by
+       default used to obtain memory from system) accepts signed
+       arguments, and may not be able to handle size_t-wide arguments
+       with negative sign bit.  Generally, values that would
+       appear as negative after accounting for overhead and alignment
+       are supported only via mmap(), which does not have this
+       limitation.
+
+       Requests for sizes outside the allowed range will perform an optional
+       failure action and then return null. (Requests may also
+       also fail because a system is out of memory.)
+
+  Thread-safety: thread-safe
+
+  Compliance: I believe it is compliant with the 1997 Single Unix Specification
+       Also SVID/XPG, ANSI C, and probably others as well.
+
+* Synopsis of compile-time options:
+
+    People have reported using previous versions of this malloc on all
+    versions of Unix, sometimes by tweaking some of the defines
+    below. It has been tested most extensively on Solaris and Linux.
+    People also report using it in stand-alone embedded systems.
+
+    The implementation is in straight, hand-tuned ANSI C.  It is not
+    at all modular. (Sorry!)  It uses a lot of macros.  To be at all
+    usable, this code should be compiled using an optimizing compiler
+    (for example gcc -O3) that can simplify expressions and control
+    paths. (FAQ: some macros import variables as arguments rather than
+    declare locals because people reported that some debuggers
+    otherwise get confused.)
+
+    OPTION                     DEFAULT VALUE
+
+    Compilation Environment options:
+
+    HAVE_MREMAP                0
+
+    Changing default word sizes:
+
+    INTERNAL_SIZE_T            size_t
+
+    Configuration and functionality options:
+
+    USE_PUBLIC_MALLOC_WRAPPERS NOT defined
+    USE_MALLOC_LOCK            NOT defined
+    MALLOC_DEBUG               NOT defined
+    REALLOC_ZERO_BYTES_FREES   1
+    TRIM_FASTBINS              0
+
+    Options for customizing MORECORE:
+
+    MORECORE                   sbrk
+    MORECORE_FAILURE           -1
+    MORECORE_CONTIGUOUS        1
+    MORECORE_CANNOT_TRIM       NOT defined
+    MORECORE_CLEARS            1
+    MMAP_AS_MORECORE_SIZE      (1024 * 1024)
+
+    Tuning options that are also dynamically changeable via mallopt:
+
+    DEFAULT_MXFAST             64 (for 32bit), 128 (for 64bit)
+    DEFAULT_TRIM_THRESHOLD     128 * 1024
+    DEFAULT_TOP_PAD            0
+    DEFAULT_MMAP_THRESHOLD     128 * 1024
+    DEFAULT_MMAP_MAX           65536
+
+    There are several other #defined constants and macros that you
+    probably don't want to touch unless you are extending or adapting malloc.  */
+```
+
+- `MALLOC_ALIGNMENT` 表示 chunk 的对齐单位，通常为 16 字节 (64-bit)，8 字节 (32-bit)
+- `MINSIZE` 表示我们能 malloc 的最小 chunk 大小（包含 metadata），通常为 32 字节 (64-bit)，16 字节 (32-bit)
+- `SIZE_SZ` 表示单个头部字段的大小，通常为 8 字节 (64-bit)，4 字节 (32-bit)
+
+## tcache
+
+线程本地缓存 `tcache (Thread Local Caching)` 是在 glibc 2.26 (Ubuntu 17.10) 之后引入的一种新技术 ([commit](https://sourceware.org/git/?p=glibc.git;a=commitdiff;h=d5c3fafc4307c9b7a4c7d5cb381fcdbfad340bcc))，旨在加速在一个线程中的重复的小块内存分配，提升堆管理的性能。但提升性能的同时也舍弃了很多安全检查，因此有了很多新的利用方式。
+
+先看看相关的宏定义：
 
 ```c
-// https://github.com/bminor/glibc/blob/master/malloc/malloc.c
-
 #if USE_TCACHE
 /* We want 64 entries.  This is an arbitrary limit, which tunables can reduce.  */
 # define TCACHE_MAX_BINS  64
@@ -475,7 +685,21 @@ exit_group(0)
    of tcache->counts[] entries, else they may overflow.  */
 # define MAX_TCACHE_COUNT UINT16_MAX
 #endif
+```
 
+- `TCACHE_MAX_BINS` 设置了 tcache 最大可管理的 bins 数，每个 bin 都负责管理一组特定大小的 chunks
+- `MAX_TCACHE_SIZE` 表示 bin 可存储的最大 chunk 大小（包含 metadata）
+- `TCACHE_FILL_COUNT` 设置了每条 tcache_entry 链上可以存放多少个 free()ed 的 chunk，可以通过 tunables 调整这个值
+- `MAX_TCACHE_COUNT` 限制了每个 bin 中最多允许存储的 chunks 数量，限制的是 tunables 最大可调整的范围
+- `tidx2usize(idx)` 通过 bin 的索引给出这个 bin 可存储的 chunk 的大小
+- `csize2tidx(x)` 将给定 chunk 大小转换为对应 bin 的索引
+- `usize2tidx(x)` 将用户请求的内存大小转换为对应 bin 的索引
+- `request2size(x)` 将用户请求的大小转换为实际分配的 chunk 大小（包含 metadata）
+- `chunksize()` chunk 大小，包含 metadata
+
+然后是有关 tcache 的两个结构体：
+
+```c
 /* We overlay this structure on the user-data portion of a chunk when
    the chunk is stored in the per-thread cache.  */
 typedef struct tcache_entry
@@ -497,24 +721,279 @@ typedef struct tcache_perthread_struct
 } tcache_perthread_struct;
 ```
 
-先解释一下部分宏的定义：
+每一个线程都有一个 `tcache_perthread_struct`，位于堆开头的位置。
 
-- `TCACHE_MAX_BINS` 设置了 tcache 最大可管理的 bins 数，每个 bin 都负责管理一组特定大小的内存块
-- `MAX_TCACHE_SIZE` 通过 `tidx2usize (TCACHE_MAX_BINS-1)` 计算 bin 可存储的最大内存块大小
-- `TCACHE_FILL_COUNT` 设置了每条 tcache_entry 链上可以存放多少个 free()ed 的 chunk
-- `MAX_TCACHE_COUNT` 限制了每个 bin 中最多允许存储的块数量。`UINT16_MAX` 即 `2^16 - 1` 个。默认情况下，`TCACHE_FILL_COUNT` 为 7，即每个 bin 通常最多缓存 7 个 chunks，但通过 tunables 可以调整这个数量
-- `tidx2usize(idx)` 通过 bin 的索引给出这个 bin 存储的内存的大小
-- `csize2tidx(x)` 将 chunk 大小转换为 bin 的索引
-- `usize2tidx(x)` 将用户请求的内存大小转换为对应 bin 的索引
-- `request2size(x)` 将用户请求的大小转换为实际分配的 chunk 大小（包括对齐和元数据）
-- `chunksize()` 大小包含元素据
-- `MALLOC_ALIGNMENT` 表示内存块的对齐单位，通常为 16 字节 (64-bit)，8 字节 (32-bit)
-- `MINSIZE` 表示内存块的最小大小，通常为 32 字节 (64-bit)，16 字节 (32-bit)
-- `SIZE_SZ` 表示头部元数据大小，通常为 8 字节 (64-bit)，4 字节 (32-bit)
+- `next` 指向同一 bin 中下一个 free()ed 的 chunk，构成单链表
+- `key` 用于检测 double free
+- `counts` 记录了 tcache_entry 链上空闲 chunks 的数目，默认情况下每条链上最多可以有 7 个 chunks
+- `entries` 指向每个 bin 中的链表头
 
-然后是有关 tcache 的两个结构体：
+### tcache_init
 
-- `tcache_entry` 用单链表的方式链接了相同大小的 free()ed 的 chunk. `next` 指向同一 bin 中下一个可用的内存块
-- `key` 用于检测 `double free`
-- `counts[TCACHE_MAX_BINS]` 记录了 `tcache_entry` 链上空闲 chunk 的数目，每条链上最多可以有 `TCACHE_FILL_COUNT` 个 chunk
-- `entries[TCACHE_MAX_BINS]` 指向每个 bin 中的链表头
+现在开始分析那些操作 tcache 的函数，就从 `tcache_init` 开始说好了。
+
+```c
+static __thread bool tcache_shutting_down = false;
+static __thread tcache_perthread_struct *tcache = NULL;
+
+static void
+tcache_init(void)
+{
+  mstate ar_ptr;
+  void *victim = NULL;
+  const size_t bytes = sizeof (tcache_perthread_struct);
+
+  if (tcache_shutting_down)
+    return;
+
+  arena_get (ar_ptr, bytes);
+  victim = _int_malloc (ar_ptr, bytes);
+  if (!victim && ar_ptr != NULL)
+    {
+      ar_ptr = arena_get_retry (ar_ptr, bytes);
+      victim = _int_malloc (ar_ptr, bytes);
+    }
+
+
+  if (ar_ptr != NULL)
+    __libc_lock_unlock (ar_ptr->mutex);
+
+  /* In a low memory situation, we may not be able to allocate memory
+     - in which case, we just keep trying later.  However, we
+     typically do this very early, so either there is sufficient
+     memory, or there isn't enough memory to do non-trivial
+     allocations anyway.  */
+  if (victim)
+    {
+      tcache = (tcache_perthread_struct *) victim;
+      memset (tcache, 0, sizeof (tcache_perthread_struct));
+    }
+
+}
+```
+
+- `ar_ptr` 用来存储指向 arena 的指针
+- `victim` 用来存储分配得到的内存地址
+- `bytes` 存储每个线程的 `tcache_perthread_struct` 结构体的大小
+
+整个函数大致上就是做了这么几件事：
+
+1. 初始化检查：通过检查 `tcache_shutting_down` 是否为真，避免在 tcache 正在关闭时进行初始化
+2. 内存分配：获取一块 arena，并从这块 arena 分配内存，若失败则重试
+3. 内存初始化：分配成功后，将得到的地址赋值给全局的 tcache，将分配到的内存清零，初始化了 `tcache_perthread_struct` 的所有字段
+
+### tcache_thread_shutdown
+
+```c
+static __thread bool tcache_shutting_down = false;
+static __thread tcache_perthread_struct *tcache = NULL;
+
+static void
+tcache_thread_shutdown (void)
+{
+  int i;
+  tcache_perthread_struct *tcache_tmp = tcache;
+
+  tcache_shutting_down = true;
+
+  if (!tcache)
+    return;
+
+  /* Disable the tcache and prevent it from being reinitialized.  */
+  tcache = NULL;
+
+  /* Free all of the entries and the tcache itself back to the arena
+     heap for coalescing.  */
+  for (i = 0; i < TCACHE_MAX_BINS; ++i)
+    {
+      while (tcache_tmp->entries[i])
+ {
+   tcache_entry *e = tcache_tmp->entries[i];
+   if (__glibc_unlikely (!aligned_OK (e)))
+     malloc_printerr ("tcache_thread_shutdown(): "
+        "unaligned tcache chunk detected");
+   tcache_tmp->entries[i] = REVEAL_PTR (e->next);
+   __libc_free (e);
+ }
+    }
+
+  __libc_free (tcache_tmp);
+}
+```
+
+它基本上就是遍历并释放了每一个 entries 并释放了 tcache 本身，实现了清理当前线程的 tcache 资源。
+
+这里有一个检查，用于确保每个 chunk 都正确对齐了：
+
+```c
+if (__glibc_unlikely (!aligned_OK (e)))
+  malloc_printerr ("tcache_thread_shutdown(): "
+        "unaligned tcache chunk detected");
+```
+
+### tcache_free
+
+怎么把 free()ed 的 chunk 放到 tcache 应该是我们需要重点关注的一个操作，它的实现如下：
+
+```c
+/* Try to free chunk to the tcache, if success return true.
+   Caller must ensure that chunk and size are valid.  */
+static inline bool
+tcache_free (mchunkptr p, INTERNAL_SIZE_T size)
+{
+  bool done = false;
+  size_t tc_idx = csize2tidx (size);
+  if (tcache != NULL && tc_idx < mp_.tcache_bins)
+    {
+      /* Check to see if it's already in the tcache.  */
+      tcache_entry *e = (tcache_entry *) chunk2mem (p);
+
+      /* This test succeeds on double free.  However, we don't 100%
+  trust it (it also matches random payload data at a 1 in
+  2^<size_t> chance), so verify it's not an unlikely
+  coincidence before aborting.  */
+      if (__glibc_unlikely (e->key == tcache_key))
+ tcache_double_free_verify (e, tc_idx);
+
+      if (tcache->counts[tc_idx] < mp_.tcache_count)
+ {
+   tcache_put (p, tc_idx);
+   done = true;
+ }
+    }
+  return done;
+}
+```
+
+用到了一个没讲过的 `chunk2mem` 宏，定义如下：
+
+```c
+/* The chunk header is two SIZE_SZ elements, but this is used widely, so
+   we define it here for clarity later.  */
+#define CHUNK_HDR_SZ (2 * SIZE_SZ)
+
+/* Convert a chunk address to a user mem pointer without correcting
+   the tag.  */
+#define chunk2mem(p) ((void*)((char*)(p) + CHUNK_HDR_SZ))
+```
+
+简单来讲就是把 chunk 地址转换为了用户可用的指针。
+
+`tcache_free` 的作用是尝试将 chunk `p` 释放到 tcache 中。
+
+首先，根据 chunk size 计算对应的 bin (tc_idx)，然后检查 tcache 是否可用以及 bin 是否有效，之后是检测是否触发了 double free. 如果没啥问题，并且 bin 未满，则调用 `tcache_put` 将其插入链表。
+
+### tcache_double_free_verify
+
+```c
+/* Verify if the suspicious tcache_entry is double free.
+   It's not expected to execute very often, mark it as noinline.  */
+static __attribute__ ((noinline)) void
+tcache_double_free_verify (tcache_entry *e, size_t tc_idx)
+{
+  tcache_entry *tmp;
+  size_t cnt = 0;
+  LIBC_PROBE (memory_tcache_double_free, 2, e, tc_idx);
+  for (tmp = tcache->entries[tc_idx];
+       tmp;
+       tmp = REVEAL_PTR (tmp->next), ++cnt)
+    {
+      if (cnt >= mp_.tcache_count)
+ malloc_printerr ("free(): too many chunks detected in tcache");
+      if (__glibc_unlikely (!aligned_OK (tmp)))
+ malloc_printerr ("free(): unaligned chunk detected in tcache 2");
+      if (tmp == e)
+ malloc_printerr ("free(): double free detected in tcache 2");
+      /* If we get here, it was a coincidence.  We've wasted a
+  few cycles, but don't abort.  */
+    }
+}
+```
+
+如其名，我不说你也知道这是用来检测 double free 的……
+
+glibc 检测 double free 的核心逻辑是：
+
+每当把一块 free()ed 的 chunk 放到 tcache 中时都会通过 `e->key = tcache_key` 设置它的 key 为 tcache_key. 释放内存时，先判断 `e->key == tcache_key`，如果成立，则说明这块内存还在 tcache 里，没有被重新分配出去，这时候你再释放它就是 double free 了。因为正常情况下当这块内存被重新分配，`e->key` 就会被新的数据覆盖，不再等于 `tcache_key`。
+
+但存在 `1/2^<size_t>` 的几率使得 `e->key` 恰好等于 `tcache_key`，导致误判。所以又通过 `tcache_double_free_verify` 进行二次验证。
+
+`e` 是刚检测到可能 double free 的 chunk. `tc_idx` 是对应的 tcache bin 索引。`tmp` 用于遍历 tcache bin 链表中的各个节点，`cnt` 用于记录已遍历的节点的数量。
+
+如果 `cnt >= mp_.tcache_count`，则说明链表异常，可能 chunk 已损坏或者出现了什么其它问题；如果节点地址不对齐，也说明 chunk 可能已经损坏；`tmp == e` 是检查当前遍历到的节点是否正好等于传入的 `e`。如果相等，说明在该 tcache bin 的链表中已经存在该 chunk，因此再次释放就属于 double free 了。
+
+### tcache_key_initialize
+
+```c
+/* Process-wide key to try and catch a double-free in the same thread.  */
+static uintptr_t tcache_key;
+
+/* The value of tcache_key does not really have to be a cryptographically
+   secure random number.  It only needs to be arbitrary enough so that it does
+   not collide with values present in applications.  If a collision does happen
+   consistently enough, it could cause a degradation in performance since the
+   entire list is checked to check if the block indeed has been freed the
+   second time.  The odds of this happening are exceedingly low though, about 1
+   in 2^wordsize.  There is probably a higher chance of the performance
+   degradation being due to a double free where the first free happened in a
+   different thread; that's a case this check does not cover.  */
+static void
+tcache_key_initialize (void)
+{
+  /* We need to use the _nostatus version here, see BZ 29624.  */
+  if (__getrandom_nocancel_nostatus_direct (&tcache_key, sizeof(tcache_key),
+         GRND_NONBLOCK)
+      != sizeof (tcache_key))
+    {
+      tcache_key = random_bits ();
+#if __WORDSIZE == 64
+      tcache_key = (tcache_key << 32) | random_bits ();
+#endif
+    }
+}
+```
+
+`tcache_key` 是一个进程范围内的随机数，用来帮助检测 double free 的情况。
+
+这个函数通过调用 `__getrandom_nocancel_nostatus_direct` 直接从内核中读取随机数，它会返回给 `tcache_key` 一个比较高质量随机数。如果失败，则使用 `random_bits` 生成随机数。64-bit 系统上，通过将两个 32 位随机数拼接为一个完整的 64 位随机数，以提高随机性的强度。
+
+### tcache_put
+
+```c
+/* Caller must ensure that we know tc_idx is valid and there's room
+   for more chunks.  */
+static __always_inline void
+tcache_put (mchunkptr chunk, size_t tc_idx)
+{
+  tcache_entry *e = (tcache_entry *) chunk2mem (chunk);
+
+  /* Mark this chunk as "in the tcache" so the test in _int_free will
+     detect a double free.  */
+  e->key = tcache_key;
+
+  e->next = PROTECT_PTR (&e->next, tcache->entries[tc_idx]);
+  tcache->entries[tc_idx] = e;
+  ++(tcache->counts[tc_idx]);
+}
+```
+
+这个函数负责将 chunk 插入到 tcache 的指定 bin (tc_idx) 中。至于位置嘛，是插到了链表头，并更新了 counts.
+
+## Safe-Linking
+
+属于是重点关注对象了，等写完 tcache 再来写这个。
+
+```c
+/* Safe-Linking:
+   Use randomness from ASLR (mmap_base) to protect single-linked lists
+   of Fast-Bins and TCache.  That is, mask the "next" pointers of the
+   lists' chunks, and also perform allocation alignment checks on them.
+   This mechanism reduces the risk of pointer hijacking, as was done with
+   Safe-Unlinking in the double-linked lists of Small-Bins.
+   It assumes a minimum page size of 4096 bytes (12 bits).  Systems with
+   larger pages provide less entropy, although the pointer mangling
+   still works.  */
+#define PROTECT_PTR(pos, ptr) \
+  ((__typeof (ptr)) ((((size_t) pos) >> 12) ^ ((size_t) ptr)))
+#define REVEAL_PTR(ptr)  PROTECT_PTR (&ptr, ptr)
+```
