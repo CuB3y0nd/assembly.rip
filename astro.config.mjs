@@ -78,8 +78,8 @@ export default defineConfig({
     svelte(),
     sitemap(),
     Compress({
-      CSS: false,
-      Image: false,
+      CSS: true,
+      Image: true,
       Action: {
         Passed: async () => true, // https://github.com/PlayForm/Compress/issues/376
       },
