@@ -7,7 +7,7 @@
 - TEAM: NO TEAM YET :(
 - Personality: INTJ-A 5w4 Tritype 513
 - E-Mail: `root -at- cubeyond -dot- net`
-- GPG Key: <a href="/public/public.key" download>My GPG Public Key.</a>
+- GPG Key: <a href="/public.key" download>My GPG Public Key.</a>
 - Landing page: [My personal landing page.](https://cubeyond.net/)
 - Memos: [My life moments.](https://memos.cubeyond.net/)
 
