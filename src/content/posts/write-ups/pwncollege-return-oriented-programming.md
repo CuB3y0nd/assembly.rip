@@ -3425,7 +3425,7 @@ Flag: `pwn.college{g4EQhfj4W4pI_g9tDdWlqPAdtK2.0VO1MDL5cTNxgzW}`
 
 ## Write-up
 
-参见 [Level 10.0](#level-10)。
+参见 [Level 10.0](#level-100)。
 
 ## Exploit
 
@@ -3683,7 +3683,7 @@ Flag: `pwn.college{ogFd_c22L6ok_8m23oykWyxLfn9.0VM2MDL5cTNxgzW}`
 
 ## Write-up
 
-参见 [Level 10](#level-10)。
+参见 [Level 10](#level-100)。
 
 ## Exploit
 

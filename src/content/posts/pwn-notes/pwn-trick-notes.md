@@ -160,7 +160,7 @@ Okay, the first thing, what is `SROP`?
 
 简单分析一下这个程序，我们知道它在第一个 `syscall` 处调用了 `read`，从 `stdin` 读取了 `0x400` bytes 到栈上。紧接着第二个 `syscall` 直接帮我们调用了 `rt_sigreturn`，那就不用我们自己动手了，我们只要伪造并发送 `sigcontext` 栈帧即可。思路是伪造一个 `SYS_write` 的调用，将 flag 输出到 `stdout`。
 
-## Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3
@@ -340,7 +340,7 @@ int main(int argc, char **argv) { vuln(); }
 
 我们的目标是通过 `ret2dlresolve` 技术来 getshell. 思路大致应该是：将伪造的用于解析 `system` 符号的结构体放到一个 `rw` 空间，并提前设置好 `system` 函数要用到的参数，也就是将 `rdi` 设为 `/bin/sh` 字符串的地址。接着在栈上布置我们伪造的结构的地址，以便 `_dl_runtime_resolve` 引用我们伪造的这个结构体来解析符号。现在我们调用 `_dl_runtime_resolve` 就会解析出 `system` 的地址，根据我们先前设置好的参数，程序会乖乖的 spawn a shell.
 
-## Exploit
+### Exploit
 
 ```python
 #!/usr/bin/python3

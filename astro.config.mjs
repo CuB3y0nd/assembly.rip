@@ -78,7 +78,7 @@ export default defineConfig({
     svelte(),
     sitemap(),
     Compress({
-      CSS: true,
+      CSS: false,
       Image: true,
       Action: {
         Passed: async () => true, // https://github.com/PlayForm/Compress/issues/376
@@ -157,6 +157,12 @@ export default defineConfig({
           warn(warning);
         },
       },
+    },
+  },
+  server: {
+    watch: {
+      usePolling: true,
+      interval: 100,
     },
   },
 });
