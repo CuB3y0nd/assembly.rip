@@ -1,7 +1,7 @@
 ---
 title: "Exordium Operating System Development Notes"
 published: 2025-03-09
-updated: 2025-03-10
+updated: 2025-03-12
 description: "Exordium operating system development notes. Mainly based on the book《操作系统真象还原》"
 tags: ["Operating System", "Notes"]
 category: "Operating System"
@@ -20,6 +20,14 @@ draft: false
 
 记录一下，我是从 _03/09/2025_ 正式开始的，<s>虽然还没写下任何一行代码，但准确来说就是这个点……</s>只是想在最后看看什么时候结束，届时可能会小小的感慨一下下吧。
 
+::github{repo="CuB3y0nd/Exordium"}
+
+<br />
+
+# 开发日志
+
+Yeeee! 今天，03/12/2025，我终于正式写下了 Exordium 的第一行代码<s>（其实是好几行……）</s>。从此，接力棒由 BIOS 传到了 MBR 之手，真是值得庆祝的一刻呢！
+
 # 书中的勘误
 
 基于 **_《操作系统真象还原》（2022.10 重印）_**。
@@ -37,3 +45,11 @@ draft: false
 > 栈由于是向下生长的，堆栈框架就是把 esp 指针提前加一个数，原 esp 指针到新 esp 指针之间的栈空间用来存储局部变量。
 
 这里应该说是提前减一个数才对，因为栈是从高地址向低地址生长的，所以创建栈帧是减，清理才是加。
+
+## 第 1 章：部署工作环境
+
+- **1.3 操作系统的宿主环境**
+
+> 在编译中要加 -lpthread 参数。用 vim 编译 makefile，vim 是 Linux 下功能最为强大的文本编辑器。vim Makefile 回车：
+
+此处有个小小的 typo：「用 vim 编译 makefile」应改为「用 vim 编辑 makefile」。

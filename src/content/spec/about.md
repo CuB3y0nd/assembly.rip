@@ -18,3 +18,5 @@
 ### Projects
 
 ::github{repo="CuB3y0nd/1llusion"}
+
+::github{repo="CuB3y0nd/Exordium"}
