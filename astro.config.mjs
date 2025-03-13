@@ -17,6 +17,8 @@ import remarkDirective from "remark-directive";/* Handle directives */
 import remarkGithubAdmonitionsToDirectives from "remark-github-admonitions-to-directives";
 import remarkMath from "remark-math";
 import remarkSectionize from "remark-sectionize";
+import { expressiveCodeConfig } from "./src/config.ts";
+import { pluginLanguageBadge } from "./src/plugins/language-badge.ts";
 import { AdmonitionComponent } from "./src/plugins/rehype-component-admonition.mjs";
 import { GithubCardComponent } from "./src/plugins/rehype-component-github-card.mjs";
 import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
@@ -30,22 +32,23 @@ export default defineConfig({
   trailingSlash: "always",
   integrations: [
     expressiveCode({
-      themes: ['catppuccin-latte', 'catppuccin-macchiato'],
+      themes: expressiveCodeConfig.themes,
       styleOverrides: {
         codeFontFamily: '"JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace',
       },
       defaultProps: {
-        // Enable word wrap by default
         wrap: true,
-        // Disable wrapped line indentation for terminal languages
         overridesByLang: {
-          'bash,ps,sh': { preserveIndent: false },
+          'shellsession': {
+            showLineNumbers: false
+          },
         },
         showLineNumbers: true,
       },
       plugins: [
         pluginLineNumbers(),
-        pluginCollapsibleSections()
+        pluginCollapsibleSections(),
+        pluginLanguageBadge(),
       ],
     }),
     tailwind(
@@ -78,6 +81,11 @@ export default defineConfig({
     svelte(),
     sitemap(),
     Compress({
+      HTML: {
+        'html-minifier-terser': {
+          minifyCSS: false, // Explicitly set to avoid interfering with Expressive Code.
+        },
+      },
       CSS: false,
       Image: true,
       Action: {
