@@ -36,6 +36,12 @@ if (fs.existsSync(fullPath)) {
   process.exit(1)
 }
 
+// recursive mode creates multi-level directories
+const dirPath = path.dirname(fullPath)
+if (!fs.existsSync(dirPath)) {
+  fs.mkdirSync(dirPath, { recursive: true })
+}
+
 const content = `---
 title: ${args[0]}
 published: ${getDate()}
@@ -43,7 +49,7 @@ description: ''
 image: ''
 tags: []
 category: ''
-draft: false 
+draft: false
 lang: ''
 ---
 `
