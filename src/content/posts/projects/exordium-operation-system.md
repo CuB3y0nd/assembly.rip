@@ -1,7 +1,7 @@
 ---
 title: "Exordium Operating System Development Notes"
 published: 2025-03-09
-updated: 2025-03-13
+updated: 2025-03-14
 description: "Exordium operating system development notes. Mainly based on the book《操作系统真象还原》"
 tags: ["Operating System", "Notes"]
 category: "Operating System"
@@ -120,6 +120,8 @@ times 510-($-$$) db 0x00
 dw 0xAA55
 ```
 
+以上，有关 `int 0x10` 视频中断的用法可以参考 [INT 10 - Video BIOS Services](https://stanislavs.org/helppc/int_10.html).
+
 通过 `qemu-system-x86_64 -drive file=hd60M.img,format=raw` 创建一个硬盘镜像，使用 `nasm -f bin -o boot/mbr.bin boot/mbr.s` 来编译上述程序，最后，通过 `dd if=boot/mbr.bin of=hd60M.img bs=512 count=1 conv=notrunc` 将我们编译出来的程序写入硬盘镜像的 0 盘 0 道 1 扇区。
 
 最终，通过 `qemu-system-x86_64 -drive file=hd60M.img,format=raw` 启动虚拟机，看到 MBR 三个大字被输出在屏幕上，就意味着我们成功地向 MBR 迈出了第一步，壮举！
@@ -169,3 +171,9 @@ Yeeee! 今天，03/12/2025，我终于正式写下了 Exordium 的第一行代�
 | 起始  | 结束  | 大小 | 用途                                                                                                                                             |
 | ----- | ----- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
 | FFFF0 | FFFFF | 16B  | BIOS 入口地址，此地址也属于 BIOS 代码，同样属于顶部的 64KB 字节。只是为了强调其入口地址才单独贴出来。此处 16 字节的内容是跳转指令 jmp F000\:E05B |
+
+## 第 3 章：完善 MBR
+
+- **3.1.3 什么是 vstart**
+
+两处「code.节名.start」应修改为「section.节名.start」。
