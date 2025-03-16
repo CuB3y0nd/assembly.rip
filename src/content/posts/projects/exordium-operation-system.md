@@ -1,7 +1,7 @@
 ---
 title: "Exordium Operating System Development Notes"
 published: 2025-03-09
-updated: 2025-03-14
+updated: 2025-03-17
 description: "Exordium operating system development notes. Mainly based on the book《操作系统真象还原》"
 tags: ["Operating System", "Notes"]
 category: "Operating System"
@@ -87,42 +87,100 @@ MBR 本身也是程序，是程序就要用到栈，栈也是在内存中的，�
 
 ### 实现一个简单的 MBR
 
-最后，让我们写一个简单的程序来验证一下我们所学到的理论知识的正确性：
+最后，让我们写一个简单的程序来验证一下我们所学到的理论知识的正确性。
 
-```asm
-SECTION MBR vstart=0x7c00
-  mov ax, cs
-  mov es, ax
-  mov ss, ax
-  mov sp, 0x7c00 ; 0x7c00 down as stack is temporary safe
+项目结构为：
 
-  mov ax, 0x0600 ; clear screen
-  mov bh, 0x07   ; color attribute 0x07
-  xor cx, cx     ; upper left corner
-  mov dx, 0x184f ; bottom right corner
-  int 0x10
+```plaintext
+.
+├── boot
+│   ├── link.ld
+│   └── mbr.s
+└── Makefile
 
-  mov ah, 0x03   ; get cursor position
-  xor bh, bh     ; video page 0
-  int 0x10
+```
 
-  mov cx, 0x03   ; length of string
-  mov ax, 0x1301 ; write string, move cursor
-  mov bx, 0x07   ; video page 0, color attribute 0x07
-  lea bp, [msg]  ; ES:BP is the pointer to string
-  int 0x10
+```asm title="boot/mbr.asm"
+.code16
+.section .text
+.global _main
 
-  jmp $
+_main:
+  mov %cs, %ax
+  mov %ax, %ss
+  mov %ax, %sp
+  mov $0xb800, %ax
+  mov %ax, %es
 
-msg db "MBR"
+  mov $0x0600, %ax # clear screen
+  mov $0x07, %bh   # color attribute 0x07
+  xor %cx, %cx     # upper left corner
+  mov $0x184f, %dx # bottom right corner
+  int $0x10
 
-times 510-($-$$) db 0x00
-dw 0xAA55
+  movb $'M', %es:[0x00]
+  movb $0x07, %es:[0x01]
+  movb $'B', %es:[0x02]
+  movb $0x07, %es:[0x03]
+  movb $'R', %es:[0x04]
+  movb $0x07, %es:[0x05]
+
+  jmp .
 ```
 
 以上，有关 `int 0x10` 视频中断的用法可以参考 [INT 10 - Video BIOS Services](https://stanislavs.org/helppc/int_10.html).
 
-通过 `qemu-system-x86_64 -drive file=hd60M.img,format=raw` 创建一个硬盘镜像，使用 `nasm -f bin -o boot/mbr.bin boot/mbr.s` 来编译上述程序，最后，通过 `dd if=boot/mbr.bin of=hd60M.img bs=512 count=1 conv=notrunc` 将我们编译出来的程序写入硬盘镜像的 0 盘 0 道 1 扇区。
+这里我不得不吐槽一句：AT&T 语法珍尼 🐴 屎……
+
+更有趣的是：
+
+> Intel Syntax Support
+>
+> Up until v2.10 of binutils, GAS supported only the AT&T syntax for x86 and x86-64, which differs significantly from the Intel syntax used by virtually every other assembler. Today, GAS supports both syntax sets (.intel_syntax and the default .att_syntax), and even allows disabling the otherwise mandatory operand prefixes '%' or '$' (...\_syntax noprefix). There are some pitfalls - several FP opcodes suffer from a reverse operand ordering that is bound to stay in there for compatibility reasons, .intel_syntax generates less optimized opcodes on occasion (try mov'ing to %si...).
+>
+> It is generally discouraged to use the support for Intel Syntax because it can subtly and surprisingly different than the real Intel Syntax found in other assemblers. A different assembler should be considered if Intel Syntax is desired.
+
+唉算了，忍忍就过去了……
+
+需要注意的是我并没有将最后的 magic number 设置写在 `mbr.asm` 中，而是通过下面的 `link.ld` 来实现：
+
+```plaintext title="boot/link.ld"
+OUTPUT_FORMAT(binary)
+ENTRY(_main)
+SECTIONS
+{
+  /* The BIOS loads the code from the disk to this location. We must tell
+   * that to the linker so that it can properly calculate the addresses of
+   * the symbols we might jump to.
+   */
+  . = 0x7c00;
+  .text :
+  {
+    _main = .;
+    *(.text)
+    /* Place the magic bytes at the end of the first 512 bytes sector. */
+    . = 0x1FE;
+    SHORT(0xAA55);
+  }
+}
+```
+
+```plaintext title="Makefile"
+AS = i386-elf-as
+LD = i386-elf-ld
+
+boot/mbr: boot/mbr.o
+ $(LD) -T boot/link.ld -o $@ $<
+
+boot/mbr.o: boot/mbr.s
+ $(AS) -o $@ $<
+
+clean:
+ rm -rf boot/mbr
+ rm -rf boot/*.o
+```
+
+通过 `qemu-system-x86_64 -drive file=hd60M.img,format=raw` 创建一个硬盘镜像，使用 `make` 来自动编译上述程序，最后，通过 `dd if=boot/mbr of=hd60M.img bs=512 count=1 conv=notrunc` 将我们编译出来的程序写入硬盘镜像的 0 盘 0 道 1 扇区。
 
 最终，通过 `qemu-system-x86_64 -drive file=hd60M.img,format=raw` 启动虚拟机，看到 MBR 三个大字被输出在屏幕上，就意味着我们成功地向 MBR 迈出了第一步，壮举！
 
@@ -177,3 +235,21 @@ Yeeee! 今天，03/12/2025，我终于正式写下了 Exordium 的第一行代�
 - **3.1.3 什么是 vstart**
 
 两处「code.节名.start」应修改为「section.节名.start」。
+
+- **3.2.2 实模式下的寄存器**
+
+还是 typo：「IP 寄存器是不可见寄存器，CS 寄存器是可见寄存器。这两个配合在一起后就是 CPU 的罗盘，它们是给 CPU 导航用的。CPU 执行到何处，完成要听从这两个寄存器的安排。」，「完成」应改成「完全」。
+
+- **3.2.4 实模式下 CPU 内存寻址方式**
+
+直接寻址这里，「第二条指令中，由于使用了段跨越前缀 fs，0x5678 的段基址变成了 gs 寄存器。」这里不应该是 gs 寄存器，而是 fs 寄存器才对。
+
+- **3.2.7 实模式下的 call - 16 位实模式相对近调用**
+
+「指令中的立即数地址可以是被调用的函数名、标号、立即数，函数名同标号一样，它只是地址的人性化表示方法，最终会被编译器转换为一个实际数字地址，如 call near prog_name。」这里「prog_name」应改为同下文一样的「proc_name」，要么就全部改成「prog_name」。其实我更偏向于「prog_name」，因为「proc」通常缩写为进程 (process) 的情况更常见，故我觉得改成「prog_name」相对来说比较合适，但是书上作者几乎所有地方都在用「proc_name」来命名，我不知道这是考虑到了什么原因才这样命名，还是完全只是个错误我也不清楚，故在此只留下一点个人的拙见。
+
+「这好办，咱们上 bochs 看，让其边执行边反汇编给咱们看结果。下面粗体的文件是我加的注释说明。」这里「文件」应该改成「文字」吧。改成「文字」的话，排版上也存在问题，因为贴出来的额外注释字体并不是呈粗体的。还有一种可能是，作者将 `> (markdown cite syntax)` 引用格式的排版描述为粗体，将引用内容描述成文件，不过这样理解的话也会引出一个争端：引用的内容称为「文件」并不合适，如果一定要用「文件」这个词语的话，我觉得写成「文件内容」更好。
+
+- **3.3.1 CPU 如何与外界设备通信——IO 接口**
+
+「再说，同任何一个设备打交道，CPU 那么速度那么快，它不得嫌弃别人慢吗……」多打了一个「那么」。
