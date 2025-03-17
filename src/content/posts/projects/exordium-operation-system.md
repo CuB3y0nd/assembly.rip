@@ -100,7 +100,7 @@ MBR 本身也是程序，是程序就要用到栈，栈也是在内存中的，�
 
 ```
 
-```asm title="boot/mbr.asm"
+```asm title="boot/mbr.asm" wrap=false
 .code16
 .section .text
 .global _main
@@ -144,7 +144,7 @@ _main:
 
 需要注意的是我并没有将最后的 magic number 设置写在 `mbr.asm` 中，而是通过下面的 `link.ld` 来实现：
 
-```plaintext title="boot/link.ld"
+```plaintext title="boot/link.ld" wrap=false
 OUTPUT_FORMAT(binary)
 ENTRY(_main)
 SECTIONS
@@ -165,7 +165,7 @@ SECTIONS
 }
 ```
 
-```plaintext title="Makefile"
+```plaintext title="Makefile" wrap=false
 AS = i386-elf-as
 LD = i386-elf-ld
 
@@ -180,9 +180,30 @@ clean:
  rm -rf boot/*.o
 ```
 
-通过 `qemu-system-x86_64 -drive file=hd60M.img,format=raw` 创建一个硬盘镜像，使用 `make` 来自动编译上述程序，最后，通过 `dd if=boot/mbr of=hd60M.img bs=512 count=1 conv=notrunc` 将我们编译出来的程序写入硬盘镜像的 0 盘 0 道 1 扇区。
+通过 `qemu-img create -f raw hd60M.img 60M` 创建一个硬盘镜像，使用 `make` 来自动编译上述程序，最后，通过 `dd if=boot/mbr of=hd60M.img bs=512 count=1 conv=notrunc` 将我们编译出来的程序写入硬盘镜像的 0 盘 0 道 1 扇区。
 
-最终，通过 `qemu-system-x86_64 -drive file=hd60M.img,format=raw` 启动虚拟机，看到 MBR 三个大字被输出在屏幕上，就意味着我们成功地向 MBR 迈出了第一步，壮举！
+最终，通过 `qemu-system-i386 -drive file=hd60M.img,format=raw -s -S` 启动虚拟机，之后你就可以通过 `gdb`，使用 `target remote localhost:1234` 连接到虚拟机进行调试了，直接 `(c) continue`，看到 MBR 三个大字被输出在屏幕上，就意味着我们成功地向 MBR 迈出了第一步，壮举！
+
+> [!TIP]
+> 如果你通过 gdb 查看开机后运行的第一条指令，会发现这条指令并不符合我们的预期，这可能是因为 gdb 解析的是 32-bit 指令，而不是 16-bit 指令。
+>
+> 所以如果你想查看开机后运行的第一条指令的话，可以在启动虚拟机的指令后面加上 `-monitor stdio` 参数，之后在 qemu 控制台使用 `x/10i $cs*16+$eip` 指令来进行查看。
+>
+> 结果如下：
+>
+> ```asm showLineNumbers=false wrap=false ins={2}
+> (qemu) x/10i $cs*16+$eip
+> 0x000ffff0:  ea 5b e0 00 f0           ljmpw    $0xf000:$0xe05b
+> 0x000ffff5:  30 36 2f 32              xorb     %dh, 0x322f
+> 0x000ffff9:  33 2f                    xorw     (%bx), %bp
+> 0x000ffffb:  39 39                    cmpw     %di, (%bx, %di)
+> 0x000ffffd:  00 fc                    addb     %bh, %ah
+> 0x000fffff:  00 00                    addb     %al, (%bx, %si)
+> 0x00100001:  00 00                    addb     %al, (%bx, %si)
+> 0x00100003:  00 00                    addb     %al, (%bx, %si)
+> 0x00100005:  00 00                    addb     %al, (%bx, %si)
+> 0x00100007:  00 00                    addb     %al, (%bx, %si)
+> ```
 
 # 开发日志
 
