@@ -1,9 +1,9 @@
 import type {
+  ExpressiveCodeConfig,
   LicenseConfig,
   NavBarConfig,
   ProfileConfig,
   SiteConfig,
-  ExpressiveCodeConfig,
 } from './types/config'
 import { LinkPreset } from './types/config'
 

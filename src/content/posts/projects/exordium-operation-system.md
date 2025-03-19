@@ -1,7 +1,7 @@
 ---
 title: "Exordium Operating System Development Notes"
 published: 2025-03-09
-updated: 2025-03-17
+updated: 2025-03-19
 description: "Exordium operating system development notes. Mainly based on the book《操作系统真象还原》"
 tags: ["Operating System", "Notes"]
 category: "Operating System"
@@ -44,9 +44,9 @@ draft: false
 | 0x9FC00 | 0x9FFFF | 1KB               | EDBA (Extended BIOS Data Area)                                                                                                                   |
 | 0x7E00  | 0x9FBFF | 622080B，约 608KB | 可用区域                                                                                                                                         |
 | 0x7C00  | 0x7DFF  | 512B              | MBR 被 BIOS 加载到此处                                                                                                                           |
-| 0x0500  | 0x7BFF  | 30464B，约 30KB   | 可用区域                                                                                                                                         |
-| 0x0400  | 0x04FF  | 256B              | BIOS Data Area                                                                                                                                   |
-| 0x00    | 0x03FF  | 1KB               | Interrupt Vector Table                                                                                                                           |
+| 0x500   | 0x7BFF  | 30464B，约 30KB   | 可用区域                                                                                                                                         |
+| 0x400   | 0x4FF   | 256B              | BIOS Data Area                                                                                                                                   |
+| 0x00    | 0x3FF   | 1KB               | Interrupt Vector Table                                                                                                                           |
 
 ## 计算机的启动过程
 
@@ -83,7 +83,7 @@ MBR 不是随便放在哪里都行的，首先它不能覆盖已有数据，其�
 
 MBR 本身也是程序，是程序就要用到栈，栈也是在内存中的，虽然 MBR 本身只有 512 字节，但还要为其所用的栈分配点空间，所以其实际所用的内存空间要大于 512 字节，估计 1KB 内存够用了。
 
-结合以上几点，选择 32KB 中的最后 1KB 最为合适。32KB 转换为十六进制是 0x8000，减去 1KB (0x0400) 的话，正好等于 0x7c00。这就是备受质疑的 0x7c00 的由来！
+结合以上几点，选择 32KB 中的最后 1KB 最为合适。32KB 转换为十六进制是 0x8000，减去 1KB (0x400) 的话，正好等于 0x7c00。这就是备受质疑的 0x7c00 的由来！
 
 ### 实现一个简单的 MBR
 
@@ -94,7 +94,6 @@ MBR 本身也是程序，是程序就要用到栈，栈也是在内存中的，�
 ```plaintext
 .
 ├── boot
-│   ├── link.ld
 │   └── mbr.s
 └── Makefile
 
@@ -103,12 +102,12 @@ MBR 本身也是程序，是程序就要用到栈，栈也是在内存中的，�
 ```asm title="boot/mbr.asm" wrap=false
 .code16
 .section .text
-.global _main
+.global _start
 
-_main:
-  mov %cs, %ax
+_start:
+  xor %ax, %ax
   mov %ax, %ss
-  mov %ax, %sp
+  mov $0x7c00, %sp
   mov $0xb800, %ax
   mov %ax, %es
 
@@ -126,6 +125,10 @@ _main:
   movb $0x07, %es:[0x05]
 
   jmp .
+
+  .fill 510-(.-_start), 1, 0
+boot_flag:
+  .word 0xAA55
 ```
 
 以上，有关 `int 0x10` 视频中断的用法可以参考 [INT 10 - Video BIOS Services](https://stanislavs.org/helppc/int_10.html).
@@ -142,35 +145,12 @@ _main:
 
 唉算了，忍忍就过去了……
 
-需要注意的是我并没有将最后的 magic number 设置写在 `mbr.asm` 中，而是通过下面的 `link.ld` 来实现：
-
-```plaintext title="boot/link.ld" wrap=false
-OUTPUT_FORMAT(binary)
-ENTRY(_main)
-SECTIONS
-{
-  /* The BIOS loads the code from the disk to this location. We must tell
-   * that to the linker so that it can properly calculate the addresses of
-   * the symbols we might jump to.
-   */
-  . = 0x7c00;
-  .text :
-  {
-    _main = .;
-    *(.text)
-    /* Place the magic bytes at the end of the first 512 bytes sector. */
-    . = 0x1FE;
-    SHORT(0xAA55);
-  }
-}
-```
-
 ```plaintext title="Makefile" wrap=false
 AS = i386-elf-as
 LD = i386-elf-ld
 
 boot/mbr: boot/mbr.o
- $(LD) -T boot/link.ld -o $@ $<
+ $(LD) -Ttext 0x7c00 --oformat binary -o $@ $<
 
 boot/mbr.o: boot/mbr.s
  $(AS) -o $@ $<
@@ -204,6 +184,14 @@ clean:
 > 0x00100005:  00 00                    addb     %al, (%bx, %si)
 > 0x00100007:  00 00                    addb     %al, (%bx, %si)
 > ```
+
+### 向 Loader 迈进
+
+由于 MBR 受限于 512 字节大小的空间，显然，这么点小小的空间肯定不足以我们将内核加载进内存并运行。所以一个很自然的想法就是，实现一个 Loader，用它来初始化环境并加载内核。
+
+Loader 应该被 MBR 从硬盘读取到内存后执行，那我们应该将 Loader 写在硬盘中什么位置呢？我们知道 MBR 已经占据了第 0 扇区（LBA 扇区从 0 开始编号），那我们把它放到第 1 扇区？当然可以，但是离得那么近，心理多少有点不踏实，还是隔开点好了……那就放到第 2 扇区好啦～那么现在的问题是，我们把它加载到哪里好呢？理论上任何一块空闲空间都可以，参考实模式下的 1MB 内存布局可知，0x0500\~0x7BFF 和 0x7E00\~0x9FBFF 都是空闲内存。由于未来 Loader 中需要定义一些数据结构，比如 GDT，这些数据结构将来的内核还需要使用，所以 Loader 加载到内存后不能被覆盖；其次，随着我们不断添加功能，内核必然越来越大，其所在的内存地址也会向越来越高的的地方发展，难免会超过可用区域的上限，所以应该尽量把 Loader 放在低处，多留一些空间给内核。但……我选择效仿 Linux 内核的设计，把它加载到了 0x90000 这个位置，大家随意～
+
+代码嘛……如果我每次新增了什么代码都复制一份贴到博客里显然有点多余，显得过于杂乱了。所以劳烦您自行阅读我提交的 source code. 仓库地址在 [前言](#前言) 底部已经给出。
 
 # 开发日志
 
@@ -267,10 +255,22 @@ Yeeee! 今天，03/12/2025，我终于正式写下了 Exordium 的第一行代�
 
 - **3.2.7 实模式下的 call - 16 位实模式相对近调用**
 
-「指令中的立即数地址可以是被调用的函数名、标号、立即数，函数名同标号一样，它只是地址的人性化表示方法，最终会被编译器转换为一个实际数字地址，如 call near prog_name。」这里「prog_name」应改为同下文一样的「proc_name」，要么就全部改成「prog_name」。其实我更偏向于「prog_name」，因为「proc」通常缩写为进程 (process) 的情况更常见，故我觉得改成「prog_name」相对来说比较合适，但是书上作者几乎所有地方都在用「proc_name」来命名，我不知道这是考虑到了什么原因才这样命名，还是完全只是个错误我也不清楚，故在此只留下一点个人的拙见。
+「指令中的立即数地址可以是被调用的函数名、标号、立即数，函数名同标号一样，它只是地址的人性化表示方法，最终会被编译器转换为一个实际数字地址，如 call near prog_name。」这里「prog_name」应改为同下文一样的「proc_name」。
 
 「这好办，咱们上 bochs 看，让其边执行边反汇编给咱们看结果。下面粗体的文件是我加的注释说明。」这里「文件」应该改成「文字」吧。改成「文字」的话，排版上也存在问题，因为贴出来的额外注释字体并不是呈粗体的。还有一种可能是，作者将 `> (markdown cite syntax)` 引用格式的排版描述为粗体，将引用内容描述成文件，不过这样理解的话也会引出一个争端：引用的内容称为「文件」并不合适，如果一定要用「文件」这个词语的话，我觉得写成「文件内容」更好。
 
 - **3.3.1 CPU 如何与外界设备通信——IO 接口**
 
 「再说，同任何一个设备打交道，CPU 那么速度那么快，它不得嫌弃别人慢吗……」多打了一个「那么」。
+
+- **3.5.3 硬盘控制器端口**
+
+「有些命令需要指定额外参数，这些参数就写在 Fea ture 寄存器中。」这里的问题是「Fea ture」中多打了一个空格，应改成「Feature」。
+
+- **3.6.1 改造 MBR**
+
+「我们的 MBR 受限于 512 字节大小的，在那么小的空间中……」多打了一个「的」。
+
+「在寄存器 eax 中的是待读入的扇区起始地址，赋值后 eax 为定义的宏 LOADER_START\_ SECTOR，即 0x2。」这里「LOADER_START\_ SECTOR」多打了一个空格，应改为「LOADER_START_SECTOR」。
+
+「段内偏移地址正因为是 16 位，只能访问 64KB 的段空间，所以才将段基址乘以 16 来突破这 64KB，从而实现访问低调 1MB 空间的。」这里可能是多打了一个「低调」，也可能是多打了一个「调」。
