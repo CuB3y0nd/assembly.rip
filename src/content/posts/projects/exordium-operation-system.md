@@ -1,7 +1,7 @@
 ---
 title: "Exordium Operating System Development Notes"
 published: 2025-03-09
-updated: 2025-03-19
+updated: 2025-03-25
 description: "Exordium operating system development notes. Mainly based on the book《操作系统真象还原》"
 tags: ["Operating System", "Notes"]
 category: "Operating System"
@@ -96,39 +96,33 @@ MBR 本身也是程序，是程序就要用到栈，栈也是在内存中的，�
 ├── boot
 │   └── mbr.s
 └── Makefile
-
 ```
 
 ```asm title="boot/mbr.asm" wrap=false
-.code16
-.section .text
-.global _start
+section mbr vstart=0x7c00
+  mov ax, 0x0600 ; clear screen
+  mov bh, 0x07   ; color attribute 0x07
+  xor cx, cx     ; upper left corner
+  mov dx, 0x184f ; bottom right corner
+  int 0x10
 
-_start:
-  xor %ax, %ax
-  mov %ax, %ss
-  mov $0x7c00, %sp
-  mov $0xb800, %ax
-  mov %ax, %es
+  mov ah, 0x03   ; get cursor position
+  xor bh, bh     ; video page 0
+  int 0x10
 
-  mov $0x0600, %ax # clear screen
-  mov $0x07, %bh   # color attribute 0x07
-  xor %cx, %cx     # upper left corner
-  mov $0x184f, %dx # bottom right corner
-  int $0x10
+  mov cx, 0x03   ; length of string
+  mov ax, 0x1301 ; write string, move cursor
+  mov bx, 0x07   ; video page 0, color attribute 0x07
+  lea bp, [msg]  ; ES:BP is the pointer to string
+  int 0x10
 
-  movb $'M', %es:[0x00]
-  movb $0x07, %es:[0x01]
-  movb $'B', %es:[0x02]
-  movb $0x07, %es:[0x03]
-  movb $'R', %es:[0x04]
-  movb $0x07, %es:[0x05]
+  jmp $
 
-  jmp .
+  msg db "MBR"
 
-  .fill 510-(.-_start), 1, 0
+  times 510-($-$$) db 0
 boot_flag:
-  .word 0xAA55
+  dw 0xAA55
 ```
 
 以上，有关 `int 0x10` 视频中断的用法可以参考 [INT 10 - Video BIOS Services](https://stanislavs.org/helppc/int_10.html).
@@ -143,29 +137,56 @@ boot_flag:
 >
 > It is generally discouraged to use the support for Intel Syntax because it can subtly and surprisingly different than the real Intel Syntax found in other assemblers. A different assembler should be considered if Intel Syntax is desired.
 
-唉算了，忍忍就过去了……
+你可知我有多无语……我反复用 GAS 重构 nasm，用 nasm 重构 GAS……最终，也还是没有活下来，我还是被这狗屎语法打倒了。学到了：珍惜生命，远离 GAS……不过倔强的精神告诉我，我以后大概还是会用 GAS 来重构，至于原因……Linux 内核用的就是这个……什么是自虐？我这就是……
 
 ```plaintext title="Makefile" wrap=false
-AS = i386-elf-as
-LD = i386-elf-ld
+AS = nasm
+DD = dd bs=512 conv=notrunc
+IMG = exordium.img
+IMG_SIZE = 60M
 
-boot/mbr: boot/mbr.o
- $(LD) -Ttext 0x7c00 --oformat binary -o $@ $<
+all: boot/mbr create_img write_mbr
 
-boot/mbr.o: boot/mbr.s
- $(AS) -o $@ $<
+boot/mbr: boot/mbr.asm
+ $(AS) -I boot -o $@ $<
+
+create_img:
+ qemu-img create -f raw $(IMG) $(IMG_SIZE)
+
+write_mbr: boot/mbr
+ $(DD) if=$< of=$(IMG) count=1
 
 clean:
  rm -rf boot/mbr
- rm -rf boot/*.o
+ rm -f $(IMG)
 ```
 
-通过 `qemu-img create -f raw hd60M.img 60M` 创建一个硬盘镜像，使用 `make` 来自动编译上述程序，最后，通过 `dd if=boot/mbr of=hd60M.img bs=512 count=1 conv=notrunc` 将我们编译出来的程序写入硬盘镜像的 0 盘 0 道 1 扇区。
+使用 `make clean && make` 编译上述程序，并生成系统镜像。
 
-最终，通过 `qemu-system-i386 -drive file=hd60M.img,format=raw -s -S` 启动虚拟机，之后你就可以通过 `gdb`，使用 `target remote localhost:1234` 连接到虚拟机进行调试了，直接 `(c) continue`，看到 MBR 三个大字被输出在屏幕上，就意味着我们成功地向 MBR 迈出了第一步，壮举！
+之后，使用这个 `start.sh` 来模拟：
+
+```shell title="start.sh" wrap=false
+#!/bin/bash
+
+IMG="exordium.img"
+
+qemu-system-i386 -drive file=$IMG,format=raw,if=ide,index=0 -s -S -monitor stdio
+```
+
+使用下面这个 `debug.sh` 开启 gdb 以调试：
+
+```shell title="debug.sh" wrap=false
+#!/bin/sh
+
+gdb -ix gdb/.gdbinit \
+  -ex 'set tdesc filename gdb/target.xml' \
+  -ex 'target remote localhost:1234'
+```
+
+我们 gdb 中直接 `(c) continue`，看到 MBR 三个大字被输出在屏幕上，就意味着我们成功地向 MBR 迈出了第一步，壮举！
 
 > [!TIP]
-> 如果你通过 gdb 查看开机后运行的第一条指令，会发现这条指令并不符合我们的预期，这可能是因为 gdb 解析的是 32-bit 指令，而不是 16-bit 指令。
+> 如果你通过 gdb 查看开机后运行的第一条指令，会发现这条指令并不符合我们的预期，这是因为 gdb 是按照 32-bit 指令格式进行解析指令的，而不是 16-bit 指令格式。
 >
 > 所以如果你想查看开机后运行的第一条指令的话，可以在启动虚拟机的指令后面加上 `-monitor stdio` 参数，之后在 qemu 控制台使用 `x/10i $cs*16+$eip` 指令来进行查看。
 >
@@ -184,6 +205,10 @@ clean:
 > 0x00100005:  00 00                    addb     %al, (%bx, %si)
 > 0x00100007:  00 00                    addb     %al, (%bx, %si)
 > ```
+>
+> 其实还有别的方法，比如直接用 bochs，它很好的支持 16-bit 指令等内容，你也可以手动 patch qemu，或者简单点，如果你还是想用 qemu + gdb 的话，在我的项目根目录下有一个 `gdb` 目录，包含了 16-bit 调试的拓展脚本，并且可以自动在进入保护模式后切换到 32-bit 架构，实现正确解析不同架构之间的指令。
+>
+> 参考：[The only proper way to debug 16-bit code on Qemu+GDB](https://gist.github.com/Theldus/4e1efc07ec13fb84fa10c2f3d054dccd).
 
 ### 向 Loader 迈进
 
@@ -194,6 +219,72 @@ Loader 应该被 MBR 从硬盘读取到内存后执行，那我们应该将 Load
 有关硬盘的操作，可以参考 [AT Attachment with Packet Interface](http://ebook.pldworld.com/_eBook/ATA%20spec/ATA7_Spec.pdf).
 
 至于代码嘛……如果我每次新增了什么代码都复制一份贴到博客里显然有点多余，显得过于杂乱了。所以劳烦您自行阅读我提交的 source code. 仓库地址在 [前言](#前言) 底部已经给出。
+
+### 进入保护模式
+
+一个新的模式的出现一定是为了取代旧有的模式，它一定是为了解决原先模式的一些缺陷而生的。
+
+实模式是在有了 32-bit CPU 后才提出的，和纯粹的 16-bit CPU，8086 等无关。提出「实模式」的概念只是为了和有了 32-bit CPU 之后诞生的「保护模式」相区分，仅此而已。另外，实模式的运行环境是 16-bit，而保护模式的运行环境是 32-bit.
+
+虽然有了保护模式，但之前实模式下的程序还得兼容，因此在「实模式」和「保护模式」之间还有个过渡模式，即「虚拟 8086」模式。
+
+简单罗列一些实模式下的缺陷：
+
+1. 实模式下操作系统和用户程序处于同一特权级，这哥俩平起平坐，没有区别对待。
+2. 用户程序所引用的地址都是指向真实的物理地址，也就是说逻辑地址等于物理地址，实实在在的指哪打哪。
+3. 用户程序可以自由修改段基址，可以不亦乐乎地访问所有内存，没人拦得住。
+4. 访问超过 64KB 的内存区域时要切换段基址，转来转去容易晕乎。
+5. 一次只能运行一个程序，无法充分利用计算机资源。
+6. 共 20 条地址总线，最大可用内存为 1MB，这即使在当时也不够用。
+
+前三点属于安全缺陷，第四、五点是使用方面的缺陷，似乎当时还可以勉强忍受一下，但最后一条就是硬伤，随着计算机事业的发展，程序对内存的需求必然越来越大，如果还是 1MB 内存，那真的是束手无策。
+
+CPU 发展到 32-bit 后，地址总线和数据总线也发展到了 32-bit，其寻址空间达到了 $$2^{32} =4294967296$$ 字节，也就是 4GB 范围。寻址空间上去了，寻址方法还是老一套的「段基址:段内偏移地址」，因此如果还是维持 16-bit 的寄存器大小，肯定无法承担 4GB 的寻址重任。因此，保护模式下寄存器宽度也得到了提升，除段寄存器外，通用寄存器、指令指针寄存器和标志寄存器都由原先的 16-bit 扩展到了 32-bit，这样一来，单独的一个寄存器就可以访问到 4GB 空间的每一个角落，段地址可以为 0，开启了「平坦模式」的时代，大大方便了开发者的工作。
+
+至于保护模式中对安全性的改进，主要是体现在段寄存器的用途上面。保护模式建立了 `全局描述符表 (Global Description Table, GDT)` 的概念，其中每一个表项称为段描述符，大小为 8 字节，用来描述各个内存段的起始地址、大小和权限等信息，GDT 存储在内存中，由 `GDTR` 寄存器负责指向这张表的起始位置。这样，原先的段寄存器存放的不再是一个简单的段基址，而是一个叫做 `选择子 (Selector)` 的东西，它相当于一个索引，将从 GDT 中找到对应的段基址，再加上偏移地址，通过这种方式来确定地址。
+
+下图就是 GDT 表项的格式了，其中灰色的那位是 `L (Long Mode)` 位，用于指示是 32-bit 还是 64-bit.
+
+<center>
+  <img src="https://upload.wikimedia.org/wikipedia/commons/0/0a/SegmentDescriptor.svg" />
+</center>
+
+有关不同位的含义，可以参考 [Global Descriptor Table](https://wiki.osdev.org/Global_Descriptor_Table)，这里不再赘述。
+
+通过上图你也看到了，像是段基址，段界限值，它们都被分割开来了，而不是连续存储的，这导致 CPU 还要对这些七零八落的数据进行重组，拼成一个完整的数据……还有访问内存中的段描述符，这些都需要时间，CPU 可等不起。因此，为了提高获取段信息的效率，将段信息缓存到了 `段描述符缓存寄存器 (Descriptor Cache Register)`。每个段寄存器都有一个隐藏的段描述符缓存寄存器，这个寄存器只有 CPU 可操作，CPU 每次将历经千辛万苦获取到的段信息整理成完整的、通顺、不蹩脚的形式后，存入段描述符缓存寄存器，以后每次访问相同的段时，就直接读取该段寄存器对应的的段描述符缓存寄存器。
+
+> [!TIP]
+> 虽然段描述符缓存寄存器是保护模式下的产物，但这个寄存器也可以用在实模式下。因为每次都将段基址左移 4 位也算一个不小的操作，所以也可以将移位后的结果缓存到这个寄存器中供下次使用。
+
+至于这个缓存的失效时间，还真没个「准」。段描述符缓存不会自动刷新，只有当 CPU 重新加载段寄存器时才会更新。
+
+比如这会刷新缓存：
+
+```asm
+mov ax, 0x10
+mov ds, ax
+```
+
+这样则不会刷新段描述符缓存寄存器：
+
+```asm
+mov ax, ds
+mov ds, ax
+```
+
+因此，除非手动重新加载段寄存器，否则 CPU 会一直使用旧的缓存，即使 GDT/LDT 已被修改。
+
+保护模式下，寻址方式也得到了极大的扩展，灵活性得到了极大的提高。基址寄存器不再只能用 BX、BP，而是所有 32-bit 通用寄存器，变址寄存器也一样，不再只是 SI、DI，而是除 ESP 之外的所有 32-bit 通用寄存器。偏移量也从 16-bit 变成了 32-bit，并且，还可以对变址寄存器乘以一个比例因子，不过出于内存对齐的考虑，比例因子只能是 1、2、4、8。
+
+还有一些杂七杂八的，比如指令扩展啦，运行模式反转啦之类的，我看我也是写不动了（或者改天再写），有兴趣的自己看书查资料去吧～
+
+最后说说进入保护模式需要做的三件事：
+
+- 加载 GDT
+- 打开 A20 Gate
+- 将 CR0 的 PE 位置 1
+
+这三个步骤可以不顺序，也不连续。至于实际步骤，还是移步我的 GitHub 看实际代码好了，懒得写了……/逃
 
 # 开发日志
 
@@ -276,3 +367,43 @@ Yeeee! 今天，03/12/2025，我终于正式写下了 Exordium 的第一行代�
 「在寄存器 eax 中的是待读入的扇区起始地址，赋值后 eax 为定义的宏 LOADER_START\_ SECTOR，即 0x2。」这里「LOADER_START\_ SECTOR」多打了一个空格，应改为「LOADER_START_SECTOR」。
 
 「段内偏移地址正因为是 16 位，只能访问 64KB 的段空间，所以才将段基址乘以 16 来突破这 64KB，从而实现访问低调 1MB 空间的。」这里可能是多打了一个「低调」，也可能是多打了一个「调」。
+
+- **3.6.2 实现内核加载器**
+
+「这次我只抓了一张图，但我人格保证这是跳动的字符……」，「人格」与「人品」是有区别的吧，这里用「人格」感觉并不合适，应该用「人品」 xD
+
+### 第 4 章：保护模式入门
+
+- **4.2.1 保护模式之寄存器扩展**
+
+「其中每一个表项称为段描述符，其大小为 64 字节」，我滴个乖乖，一个表项 64 字节有点虾仁了啊，其实是 64 比特，8 字节。
+
+大麻烦来了，我觉得作者写的描述符缓存寄存器的失效时间的这部分内容存在一点小小的逻辑问题，书上写的「即使新选择子的值和之前段寄存器中老的选择子相同，CPU 就会重新访问全局描述符表，再将获取的段信息重新放回段描述符缓存寄存器」和「在 16 位环境下，无论是否与之前的段基址相同，段基址左移 4 位后的结果就被送入段描述符缓存寄存器」，既然不管有没有改变段寄存器的值都要重新访问 GDT，那缓存的意义何在？对此，我写了下自己的一点拙见，见 [进入保护模式](#进入保护模式) 中有关对缓存失效时间的描述。
+
+- **4.3.1 段描述符**
+
+「内存访问需要用到『段其址:段内偏移地址』……」，是「段地址」吧，怎么打成了「段其址」。
+
+- **4.3.5 让我们进入保护模式**
+
+代码 4-2 中第 27 行：
+
+```asm wrap=false showLineNumbers=false
+DESC_VIDEO_HIGH4 equ (0x00 << 24) + DESC_G_4K + DESC_D_32 + \
+DESC_L + DESC_AVL + DESC_LIMIT_VIDEO2 + DESC_P + \
+DESC_DPL_0 + DESC_S_DATA + DESC_TYPE_D ATA + 0x00
+```
+
+`DESC_TYPE_D ATA` 中间多了一个空格，应改为 `DESC_TYPE_DATA`.
+
+同代码 4-2，第 13 行：
+
+```asm wrap=false showLineNumbers=false
+DESC_LIMIT_VIDEO2 equ 0000_000000000000000b
+```
+
+这里全部置零肯定是有问题的，拼不出段基址 `0xb8000`。应该改成：
+
+```asm wrap=false showLineNumbers=false
+DESC_LIMIT_VIDEO2 equ 0000_0000000000001011b
+```
