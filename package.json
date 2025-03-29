@@ -3,8 +3,8 @@
   "type": "module",
   "version": "0.0.1",
   "scripts": {
-    "dev": "astro dev --no-cache",
-    "start": "astro dev --no-cache",
+    "dev": "astro dev",
+    "start": "astro dev",
     "build": "astro build && pagefind --site dist",
     "preview": "astro preview",
     "astro": "astro",
