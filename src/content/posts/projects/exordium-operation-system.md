@@ -1,7 +1,7 @@
 ---
 title: "Exordium Operating System Development Notes"
 published: 2025-03-09
-updated: 2025-03-25
+updated: 2025-03-30
 description: "Exordium operating system development notes. Mainly based on the book《操作系统真象还原》"
 tags: ["Operating System", "Notes"]
 category: "Operating System"
@@ -135,7 +135,7 @@ boot_flag:
 >
 > Up until v2.10 of binutils, GAS supported only the AT&T syntax for x86 and x86-64, which differs significantly from the Intel syntax used by virtually every other assembler. Today, GAS supports both syntax sets (.intel_syntax and the default .att_syntax), and even allows disabling the otherwise mandatory operand prefixes '%' or '$' (...\_syntax noprefix). There are some pitfalls - several FP opcodes suffer from a reverse operand ordering that is bound to stay in there for compatibility reasons, .intel_syntax generates less optimized opcodes on occasion (try mov'ing to %si...).
 >
-> It is generally discouraged to use the support for Intel Syntax because it can subtly and surprisingly different than the real Intel Syntax found in other assemblers. A different assembler should be considered if Intel Syntax is desired.
+> `It is generally discouraged to use the support for Intel Syntax because it can subtly and surprisingly different than the real Intel Syntax found in other assemblers.` A different assembler should be considered if Intel Syntax is desired.
 
 你可知我有多无语……我反复用 GAS 重构 nasm，用 nasm 重构 GAS……最终，也还是没有活下来，我还是被这狗屎语法打倒了。学到了：珍惜生命，远离 GAS……不过倔强的精神告诉我，我以后大概还是会用 GAS 来重构，至于原因……Linux 内核用的就是这个……什么是自虐？我这就是……
 
@@ -249,12 +249,12 @@ CPU 发展到 32-bit 后，地址总线和数据总线也发展到了 32-bit，�
   <img src="https://upload.wikimedia.org/wikipedia/commons/0/0a/SegmentDescriptor.svg" />
 </center>
 
-有关不同位的含义，可以参考 [Global Descriptor Table](https://wiki.osdev.org/Global_Descriptor_Table)，这里不再赘述。
+有关不同位的含义，可以参考 [Global Descriptor Table](https://en.wikipedia.org/wiki/Segment_descriptor)，这里不再赘述。
 
-通过上图你也看到了，像是段基址，段界限值，它们都被分割开来了，而不是连续存储的，这导致 CPU 还要对这些七零八落的数据进行重组，拼成一个完整的数据……还有访问内存中的段描述符，这些都需要时间，CPU 可等不起。因此，为了提高获取段信息的效率，将段信息缓存到了 `段描述符缓存寄存器 (Descriptor Cache Register)`。每个段寄存器都有一个隐藏的段描述符缓存寄存器，这个寄存器只有 CPU 可操作，CPU 每次将历经千辛万苦获取到的段信息整理成完整的、通顺、不蹩脚的形式后，存入段描述符缓存寄存器，以后每次访问相同的段时，就直接读取该段寄存器对应的的段描述符缓存寄存器。
+通过上图你也看到了，像是段基址，段界限值，它们都被分割开来了，而不是连续存储的，这导致 CPU 还要对这些七零八落的数据进行重组，拼成一个完整的数据……还有访问内存中的段描述符，这些都需要时间，CPU 可等不起。因此，为了提高获取段信息的效率，将段信息缓存到了 `段描述符缓存 (Segment Descriptor Cache)`。每个段寄存器都有一个 hidden part，叫做段描述符缓存，它只有 CPU 可操作，CPU 每次将历经千辛万苦获取到的段信息整理成完整的、通顺、不蹩脚的形式后，存入段描述符缓存，以后每次访问相同的段时，就直接读取该段寄存器对应的的段描述符缓存。
 
 > [!TIP]
-> 虽然段描述符缓存寄存器是保护模式下的产物，但这个寄存器也可以用在实模式下。因为每次都将段基址左移 4 位也算一个不小的操作，所以也可以将移位后的结果缓存到这个寄存器中供下次使用。
+> 虽然段描述符缓存是保护模式下的产物，但也可以用在实模式下。因为每次都将段基址左移 4 位也算一个不小的操作，所以也可以将移位后的结果缓存起来供下次使用。
 
 至于这个缓存的失效时间，还真没个「准」。段描述符缓存不会自动刷新，只有当 CPU 重新加载段寄存器时才会更新。
 
@@ -274,9 +274,9 @@ mov ds, ax
 
 因此，除非手动重新加载段寄存器，否则 CPU 会一直使用旧的缓存，即使 GDT/LDT 已被修改。
 
-保护模式下，寻址方式也得到了极大的扩展，灵活性得到了极大的提高。基址寄存器不再只能用 BX、BP，而是所有 32-bit 通用寄存器，变址寄存器也一样，不再只是 SI、DI，而是除 ESP 之外的所有 32-bit 通用寄存器。偏移量也从 16-bit 变成了 32-bit，并且，还可以对变址寄存器乘以一个比例因子，不过出于内存对齐的考虑，比例因子只能是 1、2、4、8。
+此外，保护模式下寻址方式也得到了极大的扩展，灵活性得到了极大的提高。基址寄存器不再只能用 BX、BP，而是所有 32-bit 通用寄存器，变址寄存器也一样，不再只是 SI、DI，而是除 ESP 之外的所有 32-bit 通用寄存器。偏移量也从 16-bit 变成了 32-bit，并且，还可以对变址寄存器乘以一个比例因子，不过出于内存对齐的考虑，比例因子只能是 1、2、4、8。
 
-还有一些杂七杂八的，比如指令扩展啦，运行模式反转啦之类的，我看我也是写不动了（或者改天再写），有兴趣的自己看书查资料去吧～
+还有一些杂七杂八的，比如指令扩展啦，运行模式反转啦之类的，不过我呀，是写不动了<s>_（改天也不一定会写的）_</s>，有兴趣的自己看书查资料去吧～
 
 最后说说进入保护模式需要做的三件事：
 
@@ -284,11 +284,15 @@ mov ds, ax
 - 打开 A20 Gate
 - 将 CR0 的 PE 位置 1
 
-这三个步骤可以不顺序，也不连续。至于实际步骤，还是移步我的 GitHub 看实际代码好了，懒得写了……/逃
+这三个步骤可以不顺序，也不连续。至于实现，还是移步我的 GitHub 看实际代码好了，懒得写了……/逃
 
 # 开发日志
 
-Yeeee! 今天，03/12/2025，我终于正式写下了 Exordium 的第一行代码<s>（其实是好几行……）</s>。从此，接力棒由 BIOS 传到了 MBR 之手，真是值得庆祝的一刻呢！
+- **Mar 12, 2025** Yeeee! 我终于正式写下了 Exordium 的第一行代码<s>（其实是好几行……）</s>。从此，接力棒由 BIOS 传到了 MBR 之手，真是值得庆祝的一刻呢！
+- **Mar 17, 2025** TNND 使用 GAS 重构。
+- **Mar 19, 2025** 实现了一个简单的 Loader.
+- **Mar 20, 2025** 使用 I/O 处理机传送方式优化 in/out 的传送方式。
+- **Mar 24, 2025** 吐血，使用 NASM 重构……进入保护模式、GDB 实模式拓展脚本。
 
 # 书中的勘误
 
@@ -372,7 +376,7 @@ Yeeee! 今天，03/12/2025，我终于正式写下了 Exordium 的第一行代�
 
 「这次我只抓了一张图，但我人格保证这是跳动的字符……」，「人格」与「人品」是有区别的吧，这里用「人格」感觉并不合适，应该用「人品」 xD
 
-### 第 4 章：保护模式入门
+## 第 4 章：保护模式入门
 
 - **4.2.1 保护模式之寄存器扩展**
 

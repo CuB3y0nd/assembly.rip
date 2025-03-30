@@ -2,7 +2,7 @@
 title: "Notes: Pwn heap fundamental knowledge"
 published: 2025-02-06
 updated: 2025-02-08
-description: "This notes is for explaining some fundamental knowledge of heap (managed by dynamic allocator). From the easiest things to even harder things."
+description: "This note is for explaining some fundamental knowledge of heap (managed by dynamic allocator). From the easiest things to even harder things."
 image: "./covers/pwn-heap-notes.png"
 tags: ["Pwn", "Heap", "Notes"]
 category: "Pwn"
