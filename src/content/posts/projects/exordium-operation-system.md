@@ -1,7 +1,7 @@
 ---
 title: "Exordium Operating System Development Notes"
 published: 2025-03-09
-updated: 2025-03-31
+updated: 2025-04-03
 description: "Exordium operating system development notes. Mainly based on the book《操作系统真象还原》"
 tags: ["Operating System", "Notes"]
 category: "Operating System"
@@ -303,6 +303,7 @@ mov ds, ax
 - **Mar 19, 2025** 实现了一个简单的 Loader.
 - **Mar 20, 2025** 使用 I/O 处理机传送方式优化 in/out 的传送方式。
 - **Mar 24, 2025** 吐血，使用 NASM 重构……进入保护模式、GDB 实模式拓展脚本。
+- **Apr 2, 2025** 检测可用 RAM 的总大小。
 
 # 书中的勘误
 
