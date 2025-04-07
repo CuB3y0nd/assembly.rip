@@ -34,7 +34,7 @@
     "@swup/astro": "^1.5.0",
     "@tailwindcss/typography": "^0.5.16",
     "astro": "5.5.6",
-    "astro-compress": "^2.3.7",
+    "astro-compress": "^2.3.8",
     "astro-expressive-code": "^0.40.2",
     "astro-icon": "^1.1.5",
     "hastscript": "^9.0.1",
@@ -58,7 +58,7 @@
     "sanitize-html": "^2.15.0",
     "sharp": "^0.33.5",
     "stylus": "^0.64.0",
-    "svelte": "^5.25.5",
+    "svelte": "^5.25.6",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.8.2",
     "unist-util-visit": "^5.0.0"
@@ -69,7 +69,7 @@
     "@rollup/plugin-yaml": "^4.1.2",
     "@types/markdown-it": "^14.1.2",
     "@types/mdast": "^4.0.4",
-    "@types/sanitize-html": "^2.13.0",
+    "@types/sanitize-html": "^2.15.0",
     "postcss-import": "^16.1.0",
     "postcss-nesting": "^13.0.1"
   },
