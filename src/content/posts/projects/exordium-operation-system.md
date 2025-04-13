@@ -1,7 +1,7 @@
 ---
 title: "Exordium Operating System Development Notes"
 published: 2025-03-09
-updated: 2025-04-03
+updated: 2025-04-13
 description: "Exordium operating system development notes. Mainly based on the book《操作系统真象还原》"
 tags: ["Operating System", "Notes"]
 category: "Operating System"
@@ -304,6 +304,7 @@ mov ds, ax
 - **Mar 20, 2025** 使用 I/O 处理机传送方式优化 in/out 的传送方式。
 - **Mar 24, 2025** 吐血，使用 NASM 重构……进入保护模式、GDB 实模式拓展脚本。
 - **Apr 2, 2025** 检测可用 RAM 的总大小。
+- **Apr 13, 2025** 开启内存分页机制。
 
 # 书中的勘误
 
@@ -422,3 +423,9 @@ DESC_LIMIT_VIDEO2 equ 0000_000000000000000b
 ```asm wrap=false showLineNumbers=false
 DESC_LIMIT_VIDEO2 equ 0000_0000000000001011b
 ```
+
+## 第 5 章：保护模式进阶，向内核迈进
+
+- **5.2.5 启用分页机制**
+
+对代码 5-4 的解释，「第 152~153 行，是为了重启加载 GDT 做准备。」，这应该是「重新」吧，怎么能是「重启」。
