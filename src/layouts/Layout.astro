@@ -4,8 +4,8 @@ import ConfigCarrier from "@components/ConfigCarrier.astro";
 import {
 	AUTO_MODE,
 	BANNER_HEIGHT,
-	BANNER_HEIGHT_EXTEND,
 	BANNER_HEIGHT_HOME,
+	BANNER_HEIGHT_EXTEND,
 	DARK_MODE,
 	DEFAULT_THEME,
 	LIGHT_MODE,
@@ -321,15 +321,15 @@ function initCustomScrollbar() {
 }
 
 function showBanner() {
-	if (!siteConfig.banner.enable) {
-		return;
-	}
+  if (!siteConfig.banner.enable) return;
+
 	const banner = document.getElementById('banner')
 	if (!banner) {
-		console.error('Failed to find the banner element')
-		return
+    console.error('Banner element not found');
+    return;
 	}
-	banner.classList.remove('opacity-0', 'scale-105')
+
+  banner.classList.remove('opacity-0', 'scale-105');
 }
 
 function init() {
