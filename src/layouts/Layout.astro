@@ -1,11 +1,15 @@
 ---
+import "@fontsource/roboto/400.css";
+import "@fontsource/roboto/500.css";
+import "@fontsource/roboto/700.css";
+
 import { profileConfig, siteConfig } from "@/config";
 import ConfigCarrier from "@components/ConfigCarrier.astro";
 import {
 	AUTO_MODE,
 	BANNER_HEIGHT,
-	BANNER_HEIGHT_HOME,
 	BANNER_HEIGHT_EXTEND,
+	BANNER_HEIGHT_HOME,
 	DARK_MODE,
 	DEFAULT_THEME,
 	LIGHT_MODE,
@@ -204,8 +208,7 @@ import {
 	BANNER_HEIGHT,
 	BANNER_HEIGHT_HOME,
 	BANNER_HEIGHT_EXTEND,
-	MAIN_PANEL_OVERLAPS_BANNER_HEIGHT,
-	PAGE_WIDTH
+	MAIN_PANEL_OVERLAPS_BANNER_HEIGHT
 } from "../constants/constants";
 import { siteConfig } from '../config';
 
@@ -302,34 +305,37 @@ function initCustomScrollbar() {
 			autoHideSuspend: false,
 		},
 	});
-	const katexElements = document.querySelectorAll('.katex-display') as NodeListOf<HTMLElement>;
-	katexElements.forEach((ele) => {
-		if (!ele.parentNode) return;
-		const container = document.createElement('div');
-		container.className = 'katex-display-container';
-		ele.parentNode.insertBefore(container, ele);
-		container.appendChild(ele);
-		OverlayScrollbars(container, {
+	const preElements = document.querySelectorAll('pre');
+	preElements.forEach((ele) => {
+		OverlayScrollbars(ele, {
 			scrollbars: {
-				theme: 'scrollbar-base scrollbar-auto',
+				theme: 'scrollbar-base scrollbar-dark px-2',
 				autoHide: 'leave',
 				autoHideDelay: 500,
 				autoHideSuspend: false
 			}
 		});
 	});
+	const katexElements = document.querySelectorAll('.katex-display') as NodeListOf<HTMLElement>;
+	katexElements.forEach((ele) => {
+		OverlayScrollbars(ele, {
+			scrollbars: {
+				theme: 'scrollbar-base scrollbar-auto py-1',
+			}
+		});
+	});
 }
 
 function showBanner() {
-  if (!siteConfig.banner.enable) return;
+	if (!siteConfig.banner.enable) return;
 
-	const banner = document.getElementById('banner')
+	const banner = document.getElementById('banner');
 	if (!banner) {
-    console.error('Banner element not found');
-    return;
+		console.error('Banner element not found');
+		return;
 	}
 
-  banner.classList.remove('opacity-0', 'scale-105');
+	banner.classList.remove('opacity-0', 'scale-105');
 }
 
 function init() {
@@ -402,7 +408,7 @@ const setup = () => {
 			heightExtend.classList.remove('hidden')
 		}
 	});
-	window.swup.hooks.on('visit:end', (visit: {to: {url: string}}) => {
+	window.swup.hooks.on('visit:end', (_visit: {to: {url: string}}) => {
 		setTimeout(() => {
 			const heightExtend = document.getElementById('page-height-extend')
 			if (heightExtend) {
