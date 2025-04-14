@@ -19,7 +19,7 @@ import { defaultFavicons } from "../constants/icon";
 import type { Favicon } from "../types/config";
 import { url, pathsEqual } from "../utils/url-utils";
 import "katex/dist/katex.css";
-import Analytics from '@vercel/analytics/astro';
+import VercelAnalytics from "../components/misc/VercelAnalytics.svelte";
 
 interface Props {
 	title?: string;
@@ -148,7 +148,7 @@ const bannerOffset =
 
 		<link rel="alternate" type="application/rss+xml" title={profileConfig.name} href={`${Astro.site}rss.xml`}/>
 
-    <Analytics />
+    <VercelAnalytics client:only="svelte" />
 
 	</head>
 	<body class=" min-h-screen transition " class:list={[{"lg:is-home": isHomePage, "enable-banner": enableBanner}]}
