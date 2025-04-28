@@ -35,7 +35,7 @@
     "@swup/astro": "^1.6.0",
     "@tailwindcss/typography": "^0.5.16",
     "@vercel/analytics": "^1.5.0",
-    "astro": "5.7.5",
+    "astro": "5.7.7",
     "astro-compress": "^2.3.8",
     "astro-expressive-code": "^0.41.2",
     "astro-icon": "^1.1.5",
