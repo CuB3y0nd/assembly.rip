@@ -2,7 +2,6 @@ import sitemap from "@astrojs/sitemap";
 import svelte from "@astrojs/svelte";
 import tailwind from "@astrojs/tailwind";
 import swup from "@swup/astro";
-import Compress from "astro-compress";
 import icon from "astro-icon";
 import { defineConfig } from "astro/config";
 import expressiveCode from "astro-expressive-code";
@@ -51,11 +50,9 @@ export default defineConfig({
         pluginLanguageBadge(),
       ],
     }),
-    tailwind(
-      {
-        nesting: true,
-      }
-    ),
+    tailwind({
+      nesting: true,
+    }),
     swup({
       theme: false,
       animationClass: "transition-swup-", // see https://swup.js.org/options/#animationselector
@@ -80,18 +77,6 @@ export default defineConfig({
     }),
     svelte(),
     sitemap(),
-    Compress({
-      HTML: {
-        'html-minifier-terser': {
-          minifyCSS: false, // Explicitly set to avoid interfering with Expressive Code.
-        },
-      },
-      CSS: false,
-      Image: true,
-      Action: {
-        Passed: async () => true, // https://github.com/PlayForm/Compress/issues/376
-      },
-    })
   ],
   markdown: {
     remarkPlugins: [
