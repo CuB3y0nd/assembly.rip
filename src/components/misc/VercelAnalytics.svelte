@@ -1,11 +1,11 @@
 <script lang="ts">
-  import { onMount } from "svelte";
-  import { inject } from "@vercel/analytics";
+import { inject } from "@vercel/analytics";
+import { onMount } from "svelte";
 
-  onMount(() => {
-    if (!window.__vercelAnalyticsInjected) {
-      inject();
-      window.__vercelAnalyticsInjected = true;
-    }
-  });
+onMount(() => {
+	if (!window.__vercelAnalyticsInjected) {
+		inject();
+		window.__vercelAnalyticsInjected = true;
+	}
+});
 </script>
