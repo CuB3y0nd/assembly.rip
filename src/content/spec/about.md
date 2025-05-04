@@ -1,7 +1,7 @@
 # About
 
 <center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/222222222222222222.png" />
+  <img src="/about_cover.png" />
 </center>
 
 ### TL;DR
