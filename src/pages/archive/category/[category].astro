@@ -11,7 +11,7 @@ export async function getStaticPaths() {
 	const standardPaths = categories.map((category) => {
 		return {
 			params: {
-				category: encodeURIComponent(category.name.trim()),
+				category: encodeURIComponent(category.name.trim()).replace(/%20/g, "+"),
 			},
 			props: {
 				decodedCategory: category.name.trim(),
