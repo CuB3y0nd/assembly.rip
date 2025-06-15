@@ -85,5 +85,6 @@ export const licenseConfig: LicenseConfig = {
 };
 
 export const expressiveCodeConfig: ExpressiveCodeConfig = {
+	// Note: Some styles (such as background color) are being overridden, see the astro.config.mjs file.
 	themes: ["catppuccin-latte", "catppuccin-macchiato"],
 };

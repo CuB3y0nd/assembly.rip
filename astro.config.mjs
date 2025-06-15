@@ -1,12 +1,12 @@
 import sitemap from "@astrojs/sitemap";
 import svelte from "@astrojs/svelte";
 import tailwind from "@astrojs/tailwind";
-import swup from "@swup/astro";
-import icon from "astro-icon";
-import { defineConfig } from "astro/config";
-import expressiveCode from "astro-expressive-code";
 import { pluginCollapsibleSections } from '@expressive-code/plugin-collapsible-sections';
 import { pluginLineNumbers } from '@expressive-code/plugin-line-numbers';
+import swup from "@swup/astro";
+import expressiveCode from "astro-expressive-code";
+import icon from "astro-icon";
+import { defineConfig } from "astro/config";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeComponents from "rehype-components";/* Render the custom directive content */
 import rehypeKatex from "rehype-katex";
@@ -17,7 +17,7 @@ import remarkGithubAdmonitionsToDirectives from "remark-github-admonitions-to-di
 import remarkMath from "remark-math";
 import remarkSectionize from "remark-sectionize";
 import { expressiveCodeConfig } from "./src/config.ts";
-import { pluginLanguageBadge } from "./src/plugins/language-badge.ts";
+import { pluginLanguageBadge } from "./src/plugins/expressive-code/language-badge.ts";
 import { AdmonitionComponent } from "./src/plugins/rehype-component-admonition.mjs";
 import { GithubCardComponent } from "./src/plugins/rehype-component-github-card.mjs";
 import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
@@ -30,26 +30,6 @@ export default defineConfig({
   base: "/",
   trailingSlash: "always",
   integrations: [
-    expressiveCode({
-      themes: expressiveCodeConfig.themes,
-      styleOverrides: {
-        codeFontFamily: '"JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, Liberation Mono, Courier New, monospace',
-      },
-      defaultProps: {
-        wrap: true,
-        overridesByLang: {
-          'shellsession': {
-            showLineNumbers: false
-          },
-        },
-        showLineNumbers: true,
-      },
-      plugins: [
-        pluginLineNumbers(),
-        pluginCollapsibleSections(),
-        pluginLanguageBadge(),
-      ],
-    }),
     tailwind({
       nesting: true,
     }),
@@ -73,6 +53,35 @@ export default defineConfig({
         "fa6-brands": ["*"],
         "fa6-regular": ["*"],
         "fa6-solid": ["*"],
+      },
+    }),
+    expressiveCode({
+      themes: expressiveCodeConfig.themes,
+      plugins: [
+        pluginLineNumbers(),
+        pluginCollapsibleSections(),
+        pluginLanguageBadge(),
+      ],
+      defaultProps: {
+        wrap: true,
+        overridesByLang: {
+          'shellsession': {
+            showLineNumbers: false
+          },
+        },
+        showLineNumbers: true,
+      },
+      styleOverrides: {
+        borderRadius: "0.75rem",
+        borderColor: "none",
+        codeFontSize: "0.875rem",
+        codeFontFamily: "'JetBrains Mono Variable', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace",
+        codeLineHeight: "1.5rem",
+        textMarkers: {
+          delHue: 0,
+          insHue: 180,
+          markHue: 250
+        }
       },
     }),
     svelte(),

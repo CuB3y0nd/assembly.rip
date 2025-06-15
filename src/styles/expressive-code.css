@@ -1,7 +1,3 @@
-.expressive-code {
-	@apply mb-6;
-}
-
 .expressive-code .frame {
 	@apply !shadow-none;
 }
