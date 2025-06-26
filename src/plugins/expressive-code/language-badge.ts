@@ -6,22 +6,23 @@ import { definePlugin } from "@expressive-code/core";
 export function pluginLanguageBadge() {
 	return definePlugin({
 		name: "Language Badge",
-		baseStyles: ({ cssVar }) => `
+		// @ts-ignore
+		baseStyles: ({ _cssVar }) => `
       [data-language]::before {
         position: absolute;
         z-index: 2;
-        right: calc(${cssVar("borderWidth")} + ${cssVar("uiPaddingInline")} / 2);
-        top: calc(${cssVar("borderWidth")} + 0.35rem);
+        right: 0.5rem;
+        top: 0.5rem;
         padding: 0.1rem 0.5rem;
-        box-shadow: 0 0 1px 1px ${cssVar("codeBackground")};
         content: attr(data-language);
         font-size: 0.75rem;
+        font-weight: bold;
         text-transform: uppercase;
-        color: var(--btn-content);
-        background: var(--btn-regular-bg);
-        border-radius: ${cssVar("borderRadius")};
+        color: oklch(0.75 0.1 var(--hue));
+        background: oklch(0.33 0.035 var(--hue));
+        border-radius: 0.5rem;
         pointer-events: none;
-        transition: opacity 0.2s;
+        transition: opacity 0.3s;
         opacity: 0;
       }
       .frame:not(.has-title):not(.is-terminal) {
