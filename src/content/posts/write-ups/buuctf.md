@@ -706,7 +706,7 @@ Flag: `flag{b3e65f27-e5ed-4763-a83b-d582ac37b3ea}`
 
 ## Write-up
 
-```c ins={11-14} del={10}
+```c ins={11-14} del={10} collapse={18-40}
 int __cdecl main(int argc, const char **argv, const char **envp)
 {
   int v4; // [esp-14h] [ebp-20h]
