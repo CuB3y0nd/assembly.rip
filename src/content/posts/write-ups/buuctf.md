@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: BUUCTF"
 published: 2025-07-05
-updated: 2025-07-08
+updated: 2025-07-09
 description: "Write-ups for BUUCTF's pwn aspect."
 image: "./covers/buuctf.png"
 tags: ["Pwn", "Write-ups"]
