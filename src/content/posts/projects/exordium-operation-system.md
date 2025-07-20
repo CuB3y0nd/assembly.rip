@@ -4,7 +4,7 @@ published: 2025-03-09
 updated: 2025-04-13
 description: "Exordium operating system development notes. Mainly based on the book《操作系统真象还原》"
 tags: ["Operating System", "Notes"]
-category: "Operating System"
+category: "Notes"
 draft: false
 ---
 

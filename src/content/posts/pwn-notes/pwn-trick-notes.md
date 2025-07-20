@@ -5,7 +5,7 @@ updated: 2025-02-04
 description: "This special topic is about some tricky tricks i've learned so far in Pwn field. Keep updating as the mood strikes."
 image: "./covers/pwn-trick-notes.png"
 tags: ["Pwn", "Tricks", "Notes"]
-category: "Pwn"
+category: "Notes"
 draft: false
 ---
 
