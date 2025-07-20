@@ -1,7 +1,7 @@
 ---
 title: "The CSAPP Notebook"
 published: 2025-07-16
-updated: 2025-07-20
+updated: 2025-07-21
 description: "CMU 15213/15513 CSAPP learning notes."
 image: "./covers/CSAPP.png"
 tags: ["CSAPP", "Notes"]
@@ -19,12 +19,14 @@ draft: false
 
 ### Everything is bits
 
-### By encoding/interpreting sets of bits in various ways
+#### Each bit is 0 or 1
+
+#### By encoding/interpreting sets of bits in various ways
 
 - Computers determine what to do (instructions)
 - ... and represent and manipulate numbers, sets, strings, etc...
 
-### Why bits? Electronic Implementation
+#### Why bits? Electronic Implementation
 
 - Easy to store with bitsable elements
 - Reliably transmitted on noisy and inaccurate wires
@@ -78,20 +80,22 @@ In a more mathematical representation way:
 
 ## Integers
 
-### Unsigned
+### Representation: unsigned and signed
+
+#### Unsigned
 
 $$\displaystyle B2U( X) =\sum _{i=0}^{w-1} x_{i} \cdot 2^{i}$$
 
-### Two's Complement
+#### Two's Complement
 
 $$\displaystyle B2T( X) =-x_{w-1} \cdot 2^{w-1} +\sum _{i=0}^{w-2} x_{i} \cdot 2^{i}$$
 
-#### Invert mappings
+##### Invert mappings
 
 - $U2B( x) =B2U^{-1}( x)$
 - $T2B( x) =B2T^{-1}( x)$
 
-### Numeric Ranges
+#### Numeric Ranges
 
 - Unsigned Values
 
@@ -106,13 +110,13 @@ $$\displaystyle B2T( X) =-x_{w-1} \cdot 2^{w-1} +\sum _{i=0}^{w-2} x_{i} \cdot 2
 In C, these ranges are declared in `limits.h`. e.g., `ULONG_MAX`, `LONG_MAX`, `LONG_MIN`. Values are platform specific.
 :::
 
-#### Observations
+##### Observations
 
 - $|TMin|=TMax+1$
   - Asymmetric range (Every positive value can be represented as a negative value, but $TMin$ cannot be represented as a positive value)
 - $UMax\ =\ 2\cdot TMax+1$
 
-### Difference between Unsigned & Signed Numeric Values
+#### Difference between Unsigned & Signed Numeric Values
 
 The difference between Unsigned & Signed Numeric Values is $2^{w}$.
 
@@ -166,7 +170,7 @@ For example, casting a signed value to its unsigned form, the most significant b
   <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-090746.png" />
 </center>
 
-:::note
+:::warning
 Converting from smaller to larger integer data type. C automatically performs sign extension.
 :::
 
@@ -407,7 +411,256 @@ Just do: $\sim u+1$
 
 ### Representation Strings
 
-In C, either LSB or MSB machine, strings in memory represented in same way, because a string is essentially an array of characters ends with `\x00`, each character is one byte encoded in ASCII format and single byte (character) do not obey the LSB or MSB rule.
+In C, either little endian or big endian machine, strings in memory represented in the same way, because a string is essentially an array of characters ends with `\x00`, each character is one byte encoded in ASCII format and single byte (character) do not obey the byte ordering rule.
+
+# Floating Point
+
+## Background: Fractional binary numbers
+
+### Representing
+
+- Bits to right of "binary point" represent fractional powers of 2
+- Represents rational number: $\displaystyle \sum _{k=-j}^{i} b_{k} \cdot 2^{k}$
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-165903.png" />
+</center>
+
+| Value                        | Representation |
+| ---------------------------- | -------------- |
+| $\displaystyle5\frac{3}{4}$  | $101.11_{2}$   |
+| $\displaystyle2\frac{7}{8}$  | $10.111_{2}$   |
+| $\displaystyle1\frac{7}{16}$ | $1.0111_{2}$   |
+
+### Observations
+
+- Divide by 2 by shifting right (unsigned)
+- Multiply by 2 by shifting left
+- Numbers of form $0.111111\dots_{2}$ are just below $1.0$
+  - $\displaystyle \frac{1}{2} +\frac{1}{4} +\frac{1}{8} +\dots+\frac{1}{2^{i}} +\dots\rightarrow 1.0$
+  - Use notation $1.0$−$\epsilon $ ($\epsilon $ depends on how many bits you have to the right of the binary point. If it gets smaller the more, the more of those bits you have there, and it gets closer to $1$)
+
+### Limitation 1
+
+- Can only exactly represent numbers of the form $\displaystyle\frac{x}{2^{k}}$
+  - Other rational numbers have repeating bit representations, but cause computer system can only hold a finite number of bits, so $0.1+0.2\neq 0.3$
+
+| Value                       | Representation                     |
+| --------------------------- | ---------------------------------- |
+| $\displaystyle\frac{1}{3}$  | $0.0101010101[ 01] \dots_{2}$      |
+| $\displaystyle\frac{1}{5}$  | $0.001100110011[ 0011] \dots_{2}$  |
+| $\displaystyle\frac{1}{10}$ | $0.0001100110011[ 0011] \dots_{2}$ |
+
+### Limitation 2
+
+- Just one setting of binary point within the $w$ bits
+  - Limited range of numbers (very small values? very large? we have to move the binary point to represent sort of wide as wide a range as possible with as much precision given the number of bits)
+
+## Definition: IEEE Floating Point Standard
+
+### IEEE Standard 754
+
+Established in 1985 as uniform standard for floating point arithmetic. Before that, many idiosyncratic formats.
+
+Although it provided nice standards for rounding, overflow, underflow... It is hard to make fast in hardware (Numerical analysts predominated over hardware designers in defining standard)
+
+## Floating Point Representation
+
+Numerical form: $( -1)^{s} \cdot M\cdot 2^{E}$
+
+- Sign bit `s` determines whether number is negative or positive
+- Significand `M (Mantissa)` normally a fractional value in range $[ 1.0,2.0)$
+- Exponent `E` weights value by power of two
+
+### Encoding
+
+- MSB `s` is sign bit `s`
+- `exp` field encodes `E` (but is not equal to `E`)
+- `frac` field encodes `M` (but is not equal to `M`)
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-200011.png" />
+</center>
+
+#### Normalized Values
+
+When: $exp\neq 000\dotsc 0$ and $exp\neq 111\dotsc 1$
+
+- Exponent coded as a biased value: $E=exp-bias$
+  - $exp$ is unsigned value of exp field
+  - $bias=2^{k-1} -1$, where $k$ is number of exponent bits
+    - Single precision: $127$ ($exp\in [ 1,254]$, $E\in [ -126,127]$)
+    - Double precision: $1023$ ($exp\in [ 1,2046]$, $E\in [ -1022,1023]$)
+- Significand coded with implied leading $1$: $M=1.xxx\dotsc x_{2}$
+  - $xxx\dotsc x$ is bits of frac field
+  - Minimum when $frac=000\dotsc 0\ ( M=1.0)$
+  - Maximum when $frac=111\dotsc 1\ ( M=2.0-\epsilon )$
+  - Get extra leading bit for "free"
+
+##### Normalized Encoding Example
+
+- Value: `float F = 15213.0;`
+
+  - $15213_{10} =11101101101101_{2} =1.1101101101101\times 2^{13}$
+
+- Significand
+
+  - $M=( 1.) 1101101101101_{2}$
+  - $frac=11011011011010000000000_{2}$
+
+- Exponent
+  - $E=13$
+  - $bias=127$
+  - $exp=140=10001100_{2}$
+
+So the result would be:
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-204714.png" />
+</center>
+
+```python
+# manually calculate
+((-1)**0)*(1+1/2+1/4+1/16+1/32+1/128+1/256+1/1024+1/2048+1/8192)*(2**13) == 15213.0
+
+# by struct package
+import struct
+
+bits = 0b01000110011011011011010000000000
+f = struct.unpack("f", struct.pack("I", bits))[0]
+
+print(f)
+```
+
+#### Denormalized Values
+
+- Condition: $exp=000\dotsc 0$
+- Exponent value: $E=1-bias\ ( instead\ of\ E=0-bias)$
+- Significand coded with implied leading $0$: $M=0.xxx\dotsc x_{2}$
+  - $xxx\dotsc x$ is bits of frac field
+- Cases
+  - $exp=000\dotsc 0,frac=000\dotsc 0$
+    - Represents zero value
+    - Note distinct values: $+0$ and $-0$
+  - $exp=000\dotsc 0,farc\neq 000\dotsc 0$
+    - Numbers closet to $0.0$
+    - Equispaced
+
+#### Special Values
+
+- Condition: $exp=111\dotsc 1$
+- Case: $exp=111\dotsc 1,frac=000\dotsc 0$
+
+  - Represents value $\infty $
+  - Operation that overflows
+  - Both positive and negative
+  - E.g., $1.0/0.0=-1.0/-0.0=+\infty ,1.0/-0.0=-\infty $
+
+- Case: $exp=111\dotsc 1,frac\neq 000\dotsc 0$
+  - Not-a-Number (NaN)
+  - Represents case when no numeric value can be determined
+  - E.g., $\sqrt{-1} ,\infty -\infty ,\infty \cdot 0$
+
+### Visualization: Floating Point Encodings
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-210940.png" />
+</center>
+
+### Example and properties
+
+#### Tiny Floating Point Example
+
+Think about this 8-bit Floating Point Representation below, it obeying the same general form as IEEE Format:
+
+<center>
+<img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-223652.png" />
+</center>
+
+#### Dynamic Range (Positive Only)
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-224537.png" />
+</center>
+
+#### Distribution of Values
+
+Still think about our tiny example, notice how the distribution gets denser toward zero.
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-232356.png" />
+</center>
+
+Here is a scaled close-up view:
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-232511.png" />
+</center>
+
+### Special Properties of the IEEE Encoding
+
+- FP Zero Same as Integer Zero
+  - All bits = 0
+- Can (Almost) Use Unsigned Integer Comparison
+  - Must first compare sign bits
+  - Must consider $-0=0$
+  - NaNs problematic
+    - What should comparison yield?
+  - Otherwise OK
+    - Denormalized vs. Normalized
+    - Normalized vs. Infinity
+
+## Rounding, addition, multiplication
+
+### Floating Point Operations: Basic Idea
+
+$x+_{f} y=round( x+y)$
+
+$x\times _{f} y=round( x\times y)$
+
+#### Basic idea
+
+- First compute exact result
+- Make it fit into desired precision
+  - Possibly overflow if exponent too large
+  - Possibly round to fit into frac
+
+### Rounding
+
+Rounding Modes (illustrate with $ rounding)
+
+|                         | $1.40 | $1.60 | $1.50 | $2.50 | -$1.50 |
+| ----------------------- | ----- | ----- | ----- | ----- | ------ |
+| Towards Zero            | $1    | $1    | $1    | $2    | -$1    |
+| Round Down ($-\infty $) | $1    | $1    | $1    | $2    | -$2    |
+| Round Up ($+\infty $)   | $2    | $2    | $2    | $3    | -$1    |
+| Nearest Even (default)  | $1    | $2    | $2    | $2    | -$2    |
+
+:::note[Round to Even]
+It means, if you have a value that's less than half way then you round down, if more than half way, round up. When you have something that's exactly half way, then what you do is round towards the nearest even number.
+:::
+
+#### Closer Look at Round-To-Even
+
+##### Default Rounding Mode
+
+- Hard to get any other kind without dropping into assembly
+- All others are statistically biased
+  - Sum of set of positive numbers will consistently be over or underestimated
+
+##### Applying to Other Decimal Places / Bit Positions
+
+- When exactly half way between two possible values
+  - Round so that least significant digit is even
+
+E.g., round to nearest hundredth:
+
+| Value     | Rounded |                       |
+| --------- | ------- | --------------------- |
+| 7.8949999 | 7.89    | Less than half way    |
+| 7.8950001 | 7.90    | Greater than half way |
+| 7.8950000 | 7.90    | Half way (round up)   |
+| 7.8850000 | 7.88    | Half way (rond down)  |
 
 # References
 
