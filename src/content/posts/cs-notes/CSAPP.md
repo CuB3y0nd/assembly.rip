@@ -109,7 +109,7 @@ In C, these ranges are declared in `limits.h`. e.g., `ULONG_MAX`, `LONG_MAX`, `L
 #### Observations
 
 - $|TMin|=TMax+1$
-  - Asymmetric range (Every positive value can represent as a negative value, but $TMin$ cannot represent as a positive value)
+  - Asymmetric range (Every positive value can be represented as a negative value, but $TMin$ cannot be represented as a positive value)
 - $UMax\ =\ 2\cdot TMax+1$
 
 ### Difference between Unsigned & Signed Numeric Values
@@ -135,7 +135,7 @@ For example, casting a signed value to its unsigned form, the most significant b
 
 #### Casting
 
-- Explicit casting between signed & unsigned same as `U2T` and `T2U`
+- Explicit casting between signed & unsigned same as $U2T$ and $T2U$
 - Implicit casting also occurs via assignments and procedure call (assignments will casting to lhs's type)
 
 #### Expression Evaluation
@@ -240,6 +240,10 @@ t = u + v;
 
 ##### TAdd Overflow
 
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-162350.png" />
+</center>
+
 - Functionality
   - True sum requires $w+1$ bits
   - Drop off MSB
@@ -309,7 +313,7 @@ t = u + v;
 #### Power-of-2 Multiply with Shift
 
 - Operation
-  - `u << k` gives $u\cdot 2^{k}$
+  - `u << k` gives $u\cdot 2^{k}$ (basically increases each bits weight)
   - Both signed and unsigned
 
 <center>
@@ -329,8 +333,23 @@ t = u + v;
 #### Signed Power-of-2 Divide with Shift
 
 - Quotient of Signed by Power of 2
-  - `u >> k` gives $u/2^{k} +bias\ ( 1)$
   - Uses arithmetic shift
+  - Want $\lceil x/2^{k} \rceil $ (Round toward 0)
+  - Compute as $\left\lfloor \left( x+2^{k} -1\right) /2^{k}\right\rfloor $
+    - In C: `(x + (1 << k) - 1) >> k`
+    - Biases dividend toward 0
+
+##### Case 1: No rounding
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-161412.png" />
+</center>
+
+##### Case 2: Rounding
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-160958.png" />
+</center>
 
 ### Handy tricks
 
@@ -392,4 +411,5 @@ In C, either LSB or MSB machine, strings in memory represented in same way, beca
 
 # References
 
+- [Computer Systems: A Programmer's Perspective, 3/E (CS:APP3e)](http://csapp.cs.cmu.edu/3e/home.html)
 - [15-213: Intro to Computer Systems: Schedule for Fall 2015](https://www.cs.cmu.edu/afs/cs/academic/class/15213-f15/www/schedule.html)
