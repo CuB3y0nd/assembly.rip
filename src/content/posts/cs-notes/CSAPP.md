@@ -40,7 +40,7 @@ draft: false
 
 ### Representing & Manipulating Sets
 
-#### Representation
+#### Representing Sets
 
 We can use bits to determine whether an element belongs to a set. Say each bit have index, which corresponds to a number from zero. If a bit is set to 1, it means the corresponding index (i.e., the element) is in the set. Otherwise, its not.
 
@@ -56,21 +56,22 @@ In a more mathematical representation way:
 - `~` is related to Complement
 - `^` is related to Symmetric difference
 
-#### Shift Operations
+### Shift Operations
 
-- Left Shift: `x << y`
+#### Left Shift: `x << y`
 
-  - Shift bit-vector `x` left `y` positions
-    - Throw away extra bits on left
-  - Fill with 0's on right
+- Shift bit-vector `x` left `y` positions
+  - Throw away extra bits on left
+- Fill with 0's on right
 
-- Right Shift: `x >> y`
-  - Shift bit-vector `x` right `y` positions
-    - Throw away extra bits on right
-  - Logical shift
-    - Fill with 0's on left
-  - Arithmetic shift
-    - Replicate most significant bit on left
+#### Right Shift: `x >> y`
+
+- Shift bit-vector `x` right `y` positions
+  - Throw away extra bits on right
+- Logical shift
+  - Fill with 0's on left
+- Arithmetic shift
+  - Replicate most significant bit on left
 
 #### Undefined Behaviour
 
@@ -90,7 +91,7 @@ $$\displaystyle B2U( X) =\sum _{i=0}^{w-1} x_{i} \cdot 2^{i}$$
 
 $$\displaystyle B2T( X) =-x_{w-1} \cdot 2^{w-1} +\sum _{i=0}^{w-2} x_{i} \cdot 2^{i}$$
 
-##### Invert mappings
+#### Invert mappings
 
 - $U2B( x) =B2U^{-1}( x)$
 - $T2B( x) =B2T^{-1}( x)$
@@ -107,10 +108,10 @@ $$\displaystyle B2T( X) =-x_{w-1} \cdot 2^{w-1} +\sum _{i=0}^{w-2} x_{i} \cdot 2
   - $\displaystyle TMax\ =\ 2^{w-1} -1$
 
 :::tip
-In C, these ranges are declared in `limits.h`. e.g., `ULONG_MAX`, `LONG_MAX`, `LONG_MIN`. Values are platform specific.
+In C, these ranges are declared in `limits.h`. E.g., `ULONG_MAX`, `LONG_MAX`, `LONG_MIN`. Values are platform specific.
 :::
 
-##### Observations
+#### Observations
 
 - $|TMin|=TMax+1$
   - Asymmetric range (Every positive value can be represented as a negative value, but $TMin$ cannot be represented as a positive value)
@@ -134,7 +135,7 @@ For example, casting a signed value to its unsigned form, the most significant b
 
 #### Constants
 
-- By default are considered to be signed integers.
+- By default are considered to be signed integers
 - Unsigned if have "U" as suffix
 
 #### Casting
@@ -231,7 +232,7 @@ Converting from smaller to larger integer data type. C automatically performs si
   <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-112117.png" />
 </center>
 
-Signed vs. unsigned addition in C:
+Signed vs. Unsigned Addition in C:
 
 ```c
 int s, t, u, v;
@@ -260,10 +261,8 @@ t = u + v;
 ##### Visualizing Two's Complement Addition
 
 - Values
-
   - 4-bit two's comp.
   - Range from $-8$ to $+7$
-
 - Wraps Around
   - If sum $\geqslant 2^{w-1}$
     - Becomes negative
@@ -363,7 +362,9 @@ Just do: $\sim u+1$
 
 ### When Should I Use Unsigned?
 
+:::caution
 **Don't use without understanding implications!**
+:::
 
 - Do use when performing modular arithmetic
   - Multiplication arithmetic
@@ -388,7 +389,7 @@ Just do: $\sim u+1$
   - Nominal size of integer-valued data
     - and of addresses
   - Until recently, most machines used 32 bits (4 bytes) as word size
-    - Limits addresses to 4GB ($2^{32}$ bytes)
+    - Limits addresses to 4 GB ($2^{32}$ bytes)
   - Increasingly, machines have 64‐bit word size
     - Potentially, could have 18 EB (exabytes) of addressable memory
     - That's $18.4\times 10^{18}$ bytes
@@ -468,15 +469,15 @@ Although it provided nice standards for rounding, overflow, underflow... It is h
 
 Numerical form: $( -1)^{s} \cdot M\cdot 2^{E}$
 
-- Sign bit `s` determines whether number is negative or positive
-- Significand `M (Mantissa)` normally a fractional value in range $[ 1.0,2.0)$
-- Exponent `E` weights value by power of two
+- Sign bit $s$ determines whether number is negative or positive
+- Significand $M$ (Mantissa) normally a fractional value in range $[ 1.0,2.0)$
+- Exponent $E$ weights value by power of two
 
 ### Encoding
 
-- MSB `s` is sign bit `s`
-- `exp` field encodes `E` (but is not equal to `E`)
-- `frac` field encodes `M` (but is not equal to `M`)
+- MSB `s` is sign bit $s$
+- `exp` field encodes $E$ (but is not equal to $E$)
+- `frac` field encodes $M$ (but is not equal to $M$)
 
 <center>
   <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-200011.png" />
@@ -484,8 +485,7 @@ Numerical form: $( -1)^{s} \cdot M\cdot 2^{E}$
 
 #### Normalized Values
 
-When: $exp\neq 000\dotsc 0$ and $exp\neq 111\dotsc 1$
-
+- Condition: $exp\neq 000\dotsc 0$ and $exp\neq 111\dotsc 1$
 - Exponent coded as a biased value: $E=exp-bias$
   - $exp$ is unsigned value of exp field
   - $bias=2^{k-1} -1$, where $k$ is number of exponent bits
@@ -500,14 +500,10 @@ When: $exp\neq 000\dotsc 0$ and $exp\neq 111\dotsc 1$
 ##### Normalized Encoding Example
 
 - Value: `float F = 15213.0;`
-
   - $15213_{10} =11101101101101_{2} =1.1101101101101\times 2^{13}$
-
 - Significand
-
   - $M=( 1.) 1101101101101_{2}$
   - $frac=11011011011010000000000_{2}$
-
 - Exponent
   - $E=13$
   - $bias=127$
@@ -599,7 +595,7 @@ Here is a scaled close-up view:
 
 ### Special Properties of the IEEE Encoding
 
-- FP Zero Same as Integer Zero
+- Floating Point Zero Same as Integer Zero
   - All bits = 0
 - Can (Almost) Use Unsigned Integer Comparison
   - Must first compare sign bits
@@ -661,6 +657,108 @@ E.g., round to nearest hundredth:
 | 7.8950001 | 7.90    | Greater than half way |
 | 7.8950000 | 7.90    | Half way (round up)   |
 | 7.8850000 | 7.88    | Half way (rond down)  |
+
+##### Rounding Binary Numbers
+
+Binary Fractional Numbers
+
+- "Even" when least significant bit is 0
+- "Half way" when bits to right of rounding position is $100\dotsc _{2}$
+
+E.g., round to nearest $\displaystyle \frac{1}{4}$ (2 bits right of binary point)
+
+| Value                         | Binary         | Rounded     | Action                           | Rounded Value                |
+| ----------------------------- | -------------- | ----------- | -------------------------------- | ---------------------------- |
+| $\displaystyle 2\frac{3}{32}$ | $10.00011_{2}$ | $10.00_{2}$ | Less than half way (round down)  | $2$                          |
+| $\displaystyle 2\frac{3}{16}$ | $10.00110_{2}$ | $10.01_{2}$ | Greater than half way (round up) | $\displaystyle 2\frac{1}{4}$ |
+| $\displaystyle 2\frac{7}{8}$  | $10.11100_{2}$ | $11.00_{2}$ | Half way (round up)              | $3$                          |
+| $\displaystyle 2\frac{5}{8}$  | $10.10100_{2}$ | $10.10_{2}$ | Half way (round down)            | $\displaystyle 2\frac{1}{2}$ |
+
+### Floating Point Multiplication
+
+$( -1)^{s_{1}} \cdot M_{1} \cdot 2^{E_{1}} \cdot ( -1)^{s_{2}} \cdot M_{2} \cdot 2^{E_{2}} =( -1)^{s} \cdot M \cdot 2^{E}$
+
+- Sign $s$ is $s_{1}$^$s_{2}$
+- Significand $M$ is $M_{1} \cdot M_{2}$
+- Exponent $E$ is $E_{1}+E_{2}$
+
+#### Fixing
+
+- If $M\geqslant 2$, shift $M$ right, increment $E$
+- If $E$ out of range, overflow
+- Round $M$ to fit frac precision
+
+_Biggest chore in implementation is multiplying significands_
+
+### Floating Point Addition
+
+$( -1)^{s_{1}} \cdot M_{1} \cdot 2^{E_{1}} +( -1)^{s_{2}} \cdot M_{2} \cdot 2^{E_{2}} =( -1)^{s} \cdot M \cdot 2^{E}$ (Assume $E_{1}>E_{2}$)
+
+- Sign $s$, significand $M$
+  - Result of signed align & add
+- Exponent $E$
+  - $E_{1}$
+
+#### Fixing
+
+- If $M\geqslant 2$, shift $M$ right, increment $E$
+- If $M<1$, shift $M$ left $k$ positions, decrement $E$ by $k$
+- Overflow if $E$ out of range
+- Round $M$ to fit frac precision
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-21-122719.png" />
+</center>
+
+### Mathematical Properties of Floating Point Add
+
+- Compare to those of Abelian Group
+  - Closed under addition? (Yes)
+    - But may generate infinity or NaN
+  - Commutative? (Yes)
+  - Associative? (No)
+    - Overflow and inexactness of rounding
+    - `(3.14+1e10)-1e10 = 0, 3.14+(1e10-1e10) = 3.14`
+  - $0$ is additive identity? (Yes)
+  - Every element has additive inverse? (Almost)
+    - Except for infinities & NaNs
+- Monotonicity
+  - $a\geqslant b\Rightarrow a+c\geqslant b+c$ ? (Almost)
+    - Except for infinities & NaNs
+
+### Mathematical Properties of Floating Point Mult
+
+- Compare to Commutative Ring
+  - Closed under multiplication? (Yes)
+    - But may generate infinity or NaN
+  - Multiplication Commutative? (Yes)
+  - Multiplication is Associative? (No)
+    - Possibility of overflow, inexactness of rounding
+    - `(1e20*1e20)*1e-20 = inf, 1e20*(1e20*1e-20) = 1e20`
+  - $1$ is multiplicative identity? (Yes)
+  - Multiplication distributes over addition? (No)
+    - Possibility of overflow, inexactness of rounding
+    - `1e20*(1e20-1e20) = 0.0, 1e20*1e20-1e20*1e20 = NaN`
+- Monotonicity
+  - $a\geqslant b\ \&\ c\geqslant 0\Rightarrow a\cdot c\geqslant b\cdot c$ ? (Almost)
+    - Except for infinities & NaNs
+
+## Floating Point in C
+
+### Conversions/Casting
+
+:::caution
+Casting between `int`, `float`, and `double` changes bit representation!
+:::
+
+- `double/float` to `int`
+  - Truncates fractional part
+  - Like rounding toward zero
+  - Not defined when out of range or $NaN$: Generally sets to $TMin$
+- `int` to `double`
+  - Exact conversion, as long as `int` has $\leqslant 53$ bit word size
+- `int` to `float`
+  - Will round according to rounding mode
 
 # References
 
