@@ -1,7 +1,7 @@
 ---
 title: "The CSAPP Notebook"
 published: 2025-07-16
-updated: 2025-07-21
+updated: 2025-07-22
 description: "CMU 15213/15513 CSAPP learning notes."
 image: "./covers/CSAPP.png"
 tags: ["CSAPP", "Notes"]
@@ -439,7 +439,7 @@ In C, either little endian or big endian machine, strings in memory represented 
 - Multiply by 2 by shifting left
 - Numbers of form $0.111111\dots_{2}$ are just below $1.0$
   - $\displaystyle \frac{1}{2} +\frac{1}{4} +\frac{1}{8} +\dots+\frac{1}{2^{i}} +\dots\rightarrow 1.0$
-  - Use notation $1.0$−$\epsilon $ ($\epsilon $ depends on how many bits you have to the right of the binary point. If it gets smaller the more, the more of those bits you have there, and it gets closer to $1$)
+  - Use notation $1.0−\epsilon $ ($\epsilon $ depends on how many bits you have to the right of the binary point. If it gets smaller the more, the more of those bits you have there, and it gets closer to $1$)
 
 ### Limitation 1
 
@@ -759,6 +759,166 @@ Casting between `int`, `float`, and `double` changes bit representation!
   - Exact conversion, as long as `int` has $\leqslant 53$ bit word size
 - `int` to `float`
   - Will round according to rounding mode
+
+# Machine-Level Programming
+
+## History of Intel processors and architectures
+
+Nobody (at least me), can keep these long history in mind! So I'll just skipping this part to save life~
+
+## C, Assembly, Machine Code
+
+### Definitions
+
+- Architecture: (also ISA: instruction set architecture) The parts of a processor design that one needs to understand or write assembly/machine code
+  - Examples: instruction set specification, registers
+- Microarchitecture: Implementation of the architecture
+  - Examples: cache sizes and core frequency
+
+### Assembly/Machine Code View
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-21-191922.png" />
+</center>
+
+### Turning C into Object Code
+
+- Code in files `p1.c` `p2.c`
+- Compile with command: `gcc -Og p1.c p2.c -o p`
+  - Use basic optimizations (`-Og`) [New to recent versions of GCC]
+  - Put resulting binary in file `p`
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-21-192121.png" />
+</center>
+
+### Assembly Characteristics: Data Types
+
+- "Integer" data of 1, 2, 4 or 8 bytes
+  - Data values
+  - Address (untyped pointers)
+- Floating Point data of 4, 8 or 10 bytes
+- Code: Byte sequences encoding series of instructions
+- No aggregate types such as arrays or structures
+  - Just contiguously allocated bytes in memory
+
+### Assembly Characteristics: Operations
+
+- Perform arithmetic function on register or memory data
+- Transfer data between memory and register
+  - Load data from memory into register
+  - Store register data into memory
+- Transfer control
+  - Conditional branches
+  - Unconditional jumps to/from procedures
+
+### Object Code
+
+- Assembler
+  - Translates `.s` into `.o`
+  - Binary encoding of each instruction
+  - Nearly-complete image of executable code
+  - Missing linkages between code in different files
+- Linker
+  - Resolves references between files
+  - Combines with static run-time libraries
+    - E.g., code for `malloc`, `printf`
+  - Some libraries are dynamically linked
+    - Linking occurs when program begins execution
+
+## Assembly Basics: Registers, Operands, Move
+
+### x86‐64 Integer Registers
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/register.png" />
+</center>
+
+### Moving Data
+
+- `movq src, dst`
+- Operand Types
+  - Immediate: Constant integer data
+    - E.g., `$0x400`, `$-533`
+    - Like C constant, but prefixed with `$`
+    - Encoded with 1, 2, or 4 bytes
+  - Register: One of 16 integer registers
+    - E.g., `%rax`, `%r13`
+    - But `%rsp` reserved for special use
+    - Others have special uses for particular instructions
+  - Memory: 8 consecutive bytes of memory at address given by register
+    - Simplest example: `(%rax)`
+    - Various other "address modes"
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-21-232345.png" />
+</center>
+
+### Complete Memory Addressing Modes
+
+- `D(Rb, Ri, S)`, `Mem[Reg[Rb] + S * Reg[Ri] + D]`
+  - `D`: Constant "displacement" 1, 2, or 4 bytes
+  - `Rb`: Base register: Any of 16 integer registers
+  - `Ri`: Index register: Any, except for `%rsp`
+  - `S`: Scale (1, 2, 4, or 8)
+- Special Cases
+  - `(Rb, Ri)`: `Mem[Reg[Rb] + Reg[Ri]]`
+  - `D(Rb, Ri)`: `Mem[Reg[Rb] + Reg[Ri] + D]`
+  - `(Rb, Ri, S)`: `Mem[Reg[Rb] + S * Reg[Ri]]`
+
+## Arithmetic & Logical Operations
+
+### Address Computation Instruction
+
+- `leaq src, dst`
+  - `src` is address mode expression
+  - Set `dst` to address denoted by expression
+- Uses
+  - Computing addresses without a memory reference
+    - E.g., translation of `p = &x[i];`
+  - Computing arithmetic expressions of the form `x + k * y`
+    - `k` equals to 1, 2, 4, or 8
+
+Here is an example of computing arithmetic expression with `leaq`:
+
+```c
+long m12(long x) {
+  return x * 12;
+}
+```
+
+Converted to ASM by compiler:
+
+```asm
+leaq (%rdi, %rdi, 2), %rax # t <- x + x * 2
+salq $2, %rax              # return t << 2
+```
+
+A bit more complex one:
+
+```c
+long arith(long x, long y, long z) {
+  long t1 = x + y;
+  long t2 = z + t1;
+  long t3 = x + 4;
+  long t4 = y * 48;
+  long t5 = t3 + t4;
+  long rval = t2 * t5;
+
+  return rval;
+}
+```
+
+```asm
+arith:
+  leaq (%rdi, %rsi), %rax     # t1
+  addq %rdx, %rax             # t2
+  leaq (%rsi, %rsi, 2), %rdx
+  salq $4, %rdx               # t4
+  leaq 4(%rdi, %rdx), %rcx    # t5
+  imulq $rcx, %rax            # rval
+  ret
+```
 
 # References
 
