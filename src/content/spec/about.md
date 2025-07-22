@@ -1,8 +1,6 @@
 # About
 
-<center>
-  <img src="/about_cover.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6pnt3jjnco.avif)
 
 ### TL;DR
 
