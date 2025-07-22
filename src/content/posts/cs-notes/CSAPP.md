@@ -745,7 +745,7 @@ $( -1)^{s_{1}} \cdot M_{1} \cdot 2^{E_{1}} +( -1)^{s_{2}} \cdot M_{2} \cdot 2^{E
 
 ## Floating Point in C
 
-### Conversions/Casting
+### Conversions / Casting
 
 :::caution
 Casting between `int`, `float`, and `double` changes bit representation!
@@ -919,6 +919,372 @@ arith:
   imulq $rcx, %rax            # rval
   ret
 ```
+
+## Control: Condition Codes
+
+### Condition Codes (Implicit Setting)
+
+Think of it as a side effect by arithmetic operations.
+
+`leaq` won't effect flags.
+
+### Condition Codes (Explicit Setting)
+
+- Compare Instrucion
+  - `cmpq src2, src1`: computing `src1 - src2` without setting destination
+- Test Instruction
+  - `testq src2, src1`: computing `src1 & src2` without setting destination
+  - Useful to have one of the operands be a mask
+
+### Reading Condition Codes
+
+- `setX` Instructions
+  - Set low‐order byte of destination (must one of addressable byte registers) to 0 or 1 based on combinations of
+    condition codes
+  - Does not alter remaining 7 bytes
+    - Typically use `movzbl` (Move with Zero-Extend from Byte to Long) to finish job
+      - 32‐bit instructions also set upper 32 bits to 0
+
+:::note
+Any computation where the result is a 32-bit result, it will zero out the higher 32-bits of the register. And its different for example the byte level operations only affect the bytes, the word operations only affect two bytes.
+:::
+
+| setX    | Condition          | Description               |
+| ------- | ------------------ | ------------------------- |
+| `sete`  | `ZF`               | Equal / Zero              |
+| `setne` | `~ZF`              | Not Equal / Not Zero      |
+| `sets`  | `SF`               | Negative                  |
+| `setns` | `~SF`              | Nonnegative               |
+| `setg`  | `~(SF ^ OF) & ~ZF` | Greater (Signed)          |
+| `setge` | `~(SF ^ OF)`       | Greater or Equal (Signed) |
+| `setl`  | `(SF ^ OF)`        | Less (Signed)             |
+| `setle` | `(SF ^ OF) \| ZF`  | Less or Equal (Signed)    |
+| `seta`  | `~CF & ~ZF`        | Above (Unsigned)          |
+| `setb`  | `CF`               | Below (Unsigned)          |
+
+:::note
+`sil`, `dil`, `spl`, `bpl` are all 1 byte registers.
+:::
+
+```c
+int gt(long x, long y) {
+  return x > y;
+}
+```
+
+```asm
+cmpq   %rsi, %rdi # Compare x:y
+setg   %al        # Set %al to 1 when >
+movzbl %al, %eax  # Zero rest of %rax
+ret
+```
+
+## Conditional Branches
+
+### Jumping
+
+- `jX` Instructions
+  - Jump to different part of code depending on condition codes
+
+| jX    | Condition          | Description               |
+| ----- | ------------------ | ------------------------- |
+| `jmp` | `1`                | Unconditional             |
+| `je`  | `ZF`               | Equal / Zero              |
+| `jne` | `~ZF`              | Not Equal / Not Zero      |
+| `js`  | `SF`               | Negative                  |
+| `jns` | `~SF`              | Nonnegative               |
+| `jg`  | `~(SF ^ OF) & ~ZF` | Greater (Signed)          |
+| `jge` | `~(SF ^ OF)`       | Greater or Equal (Signed) |
+| `jl`  | `SF ^ OF`          | Less (Signed)             |
+| `jle` | `(SF ^ OF) \| ZF`  | Less or Equal (Signed)    |
+| `ja`  | `~CF & ~ZF`        | Above (Unsigned)          |
+| `jb`  | `CF`               | Below (Unsigned)          |
+
+### Using Conditional Moves
+
+- Conditional Move Instructions
+  - Instruction supports: `if (Test) Dest <- Src`
+  - Supported in post-1995 x86 processors
+  - GCC tries to use them (but, only when known to be safe)
+    - Branches are very disruptive to instruction flow through pipelines
+    - Conditional moves do not require control transfer
+
+Here is a simple example of conditional move:
+
+```c
+long absdiff(long x, long y) {
+  long result;
+  if (x > y)
+    result = x - y;
+  else
+    result = y - x;
+  return result;
+}
+```
+
+```asm
+absdiff:
+  movq   %rdi, %rax # x
+  subq   %rsi, %rax # result = x - y
+  movq   %rsi, %rdx
+  subq   %rdi, %rdx # eval = y - x
+  cmpq   %rsi, %rdi # x:y
+  cmovle %rdx, %rax # if <=, result = eval
+  ret
+```
+
+#### Bad Cases for Conditional Move
+
+- Expensive Computations: `val = Test(x) ? Hard1(x) : Hard2(x);`
+  - Both values get computed
+  - Only makes sense when computations are very simple
+- Risky Computations: `val = p ? *p : 0;`
+  - Both values get computed
+  - May have undesirable effects
+- Computations with side effects: `val = x > 0 ? x *= 7 : x += 3;`
+  - Both values get computed
+  - Must be side-effect free
+
+## Loops
+
+:::important
+Each kind of loop will convert to their `goto` version and then assembly code.
+:::
+
+### "Do-While" Loop
+
+C Code:
+
+```c
+long pcount_do(unsigned long x) {
+  long result = 0;
+  do {
+    result += x & 0x1;
+    x >>= 1;
+  } while (x);
+  return result;
+}
+```
+
+Goto Version:
+
+```c
+long pcount_goto(unsigned long x) {
+  long result = 0;
+loop:
+  result += x & 0x1;
+  x >>= 1;
+  if (x) goto loop;
+  return result;
+}
+```
+
+Assembly Code:
+
+```asm
+  movl $0, %eax   # result = 0
+.L2:              # loop:
+  movq %rdi, %rdx
+  andl $1, %edx   # t = x & 0x1
+  addq %rdx, %rax # result += t
+  shrq %rdi       # x >>= 1
+  jne  .L2        # if (x) goto loop
+  rep; ret
+```
+
+#### General "Do-While" Translation
+
+```c
+do {
+  Body
+} while (Test);
+```
+
+```asm
+loop:
+  Body
+  if (Test)
+    goto loop
+```
+
+### "While" Loop
+
+#### General "While" Translation 1 ("Jump‐to-middle" translation, compiled with `-Og`)
+
+```c
+while (Test) {
+  Body
+}
+```
+
+```asm
+  goto test
+loop:
+  Body
+test:
+  if (Test)
+    goto loop
+done:
+```
+
+#### General "While" Translation 2 (Compiled with `-O1`)
+
+```c
+while (Test) {
+  Body
+}
+```
+
+To Do-While Version:
+
+```c
+  if (!Test)
+    goto done;
+  do {
+    Body
+  } while (Test);
+done:
+```
+
+Goto Version:
+
+```c
+  if (!Test)
+    goto done;
+loop:
+  Body
+  if (Test)
+    goto loop;
+done:
+```
+
+The initial conditional guards entrance to loop.
+
+### "For" Loop
+
+#### "For" Loop "While" Conversion
+
+For Version:
+
+```c
+for (Init; Test; Update)
+  Body
+```
+
+While Version:
+
+```c
+Init;
+while (Test) {
+  Body
+  Update;
+}
+```
+
+#### "For" Loop "Do-While" Conversion
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-22-160356.png" />
+</center>
+
+Initial test can be optimized away.
+
+## Switch Statements
+
+### Switch Statement Example
+
+```c
+long switch_eg(long x, long y, long z) {
+  long w = 1;
+  switch (x) {
+    case 1:
+      w = y * z;
+      break;
+    case 2:
+      w = y / z;
+    /* Fall Through */
+    case 3:
+      w += z;
+      break;
+    case 5:
+    case 6:
+      w -= z;
+      break;
+    default:
+      w = 2;
+    }
+  return w;
+}
+```
+
+- Multiple case labels: 5 & 6
+- Fall through cases: 2
+- Missing cases: 4
+
+### Switch Statement Example in Assembly
+
+```asm
+switch_eg:
+  movq %rdx, %rcx
+  cmpq $6, %rdi        # x:6
+  ja   .L8             # use default
+  jmp  *.L4(, %rdi, 8) # goto *JTab[x]
+```
+
+_Note that `w` not initialized here._
+
+### Jump Table Structure
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-22-161453.png" />
+</center>
+
+#### Jump Table
+
+```asm
+.section .rodata
+  .align 8
+.L4:
+  .quad .L8 # x = 0
+  .quad .L3 # x = 1
+  .quad .L5 # x = 2
+  .quad .L9 # x = 3
+  .quad .L8 # x = 4
+  .quad .L7 # x = 5
+  .quad .L7 # x = 6
+```
+
+- Table Structure
+  - Each target requires 8 bytes
+  - Base address at `.L4`
+- Jumping
+  - Direct: `jmp .L8`
+    - Jump target is denoted by label `.L8`
+  - Indirect: `jmp *.L4(, %rdi, 8)`
+    - Start of jump table: `.L4`
+    - Must scale by factor of 8 (addresses are 8 bytes)
+    - Fetch target from effective address `.L4 + %rdi * 8`
+      - Only for `0 <= x <= 6`
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-22-163749.png" />
+</center>
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-22-163245.png" />
+</center>
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-22-162919.png" />
+</center>
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-22-163054.png" />
+</center>
+
+<center>
+  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-22-163158.png" />
+</center>
 
 # References
 
