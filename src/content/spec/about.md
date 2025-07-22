@@ -8,7 +8,7 @@
 
 - ID: CuB3y0nd
 - ROAL: PWNER
-- TEAM: NO TEAM YET :(
+- TEAM: [RaptX](https://ctftime.org/team/357584)
 - Personality: INTJ-A 5w4 Tritype 513
 - E-Mail: `root -at- cubeyond -dot- net`
 - GPG Key: <a href="/public.key" download>My GPG Public Key.</a>

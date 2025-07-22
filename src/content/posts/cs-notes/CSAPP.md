@@ -3,7 +3,7 @@ title: "The CSAPP Notebook"
 published: 2025-07-16
 updated: 2025-07-22
 description: "CMU 15213/15513 CSAPP learning notes."
-image: "./covers/CSAPP.png"
+image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.23262tnnad.avif"
 tags: ["CSAPP", "Notes"]
 category: "Notes"
 draft: false
@@ -32,9 +32,7 @@ draft: false
 - Reliably transmitted on noisy and inaccurate wires
 - Easy to indicate low level/high level
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-17-001818.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1e8wit31ra.avif)
 
 ## Bit-level manipulations
 
@@ -129,9 +127,7 @@ Mappings between unsigned and two's complement numbers keep bit representations 
 
 For example, casting a signed value to its unsigned form, the most significant bit from large negative weight becomes to large positive weight and vice versa.
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-012230.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.86ty59tug4.avif)
 
 #### Constants
 
@@ -167,9 +163,7 @@ For example, casting a signed value to its unsigned form, the most significant b
 - Make $k$ copies of sign bit
 - $\displaystyle X\prime =X_{w-1} ,...,X_{w-1} ,X_{w-1} ,X_{w-2} ,...,X_{0}$
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-090746.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5trbo2gghg.avif)
 
 :::warning
 Converting from smaller to larger integer data type. C automatically performs sign extension.
@@ -198,9 +192,7 @@ Converting from smaller to larger integer data type. C automatically performs si
 - Implements Modular Arithmetic
   - $\displaystyle UAdd_{w}( u,v) =( u+v)\bmod 2^{w}$
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-110927.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.lw112nu4l.avif)
 
 ##### Visualizing (Mathematical) Integer Addition
 
@@ -210,9 +202,7 @@ Converting from smaller to larger integer data type. C automatically performs si
   - Values increase linearly with $u$ and $v$
   - Forms planar surface
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-111318.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4qrmd6lcsq.avif)
 
 ##### Visualizing Unsigned Addition
 
@@ -220,17 +210,13 @@ Converting from smaller to larger integer data type. C automatically performs si
   - If true sum $\geqslant 2^{w}$
   - At most once
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-111930.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.45hyqvrbgg.avif)
 
 #### Two's Complement Addition
 
 - $TAdd$ and $UAdd$ have Identical Bit-level Behaviour
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-112117.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1e8wit5juy.avif)
 
 Signed vs. Unsigned Addition in C:
 
@@ -245,18 +231,14 @@ t = u + v;
 
 ##### TAdd Overflow
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-162350.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7eh2njfkev.avif)
 
 - Functionality
   - True sum requires $w+1$ bits
   - Drop off MSB
   - Treat remaining bits as two's complement integer
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-113401.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6wr0yyekf9.avif)
 
 ##### Visualizing Two's Complement Addition
 
@@ -271,9 +253,7 @@ t = u + v;
     - Becomes positive
     - At most once
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-113721.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.pfmysj7jj.avif)
 
 #### Multiplication
 
@@ -298,9 +278,7 @@ t = u + v;
 - Implements Modular Arithmetic
   - $\displaystyle UMult_{w}( u,v) =( u\cdot v)\bmod 2^{w}$
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-115644.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5mo3smxcua.avif)
 
 ##### Signed Multiplication in C
 
@@ -309,9 +287,7 @@ t = u + v;
   - Some of which are different for signed vs. unsigned multiplication
   - Lower bits are the same
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-120148.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8vn7pal9ub.avif)
 
 #### Power-of-2 Multiply with Shift
 
@@ -319,9 +295,7 @@ t = u + v;
   - `u << k` gives $u\cdot 2^{k}$ (basically increases each bits weight)
   - Both signed and unsigned
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-120935.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5c19zhj0ap.avif)
 
 #### Unsigned Power-of-2 Divide with Shift
 
@@ -329,9 +303,7 @@ t = u + v;
   - `u >> k` gives $\left\lfloor u/2^{k}\right\rfloor $
   - Uses logical shift
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-123020.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.102gry07d5.avif)
 
 #### Signed Power-of-2 Divide with Shift
 
@@ -344,15 +316,11 @@ t = u + v;
 
 ##### Case 1: No rounding
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-161412.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5trbo2ldaa.avif)
 
 ##### Case 2: Rounding
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-160958.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8adk2zsm1r.avif)
 
 ### Handy tricks
 
@@ -423,9 +391,7 @@ In C, either little endian or big endian machine, strings in memory represented 
 - Bits to right of "binary point" represent fractional powers of 2
 - Represents rational number: $\displaystyle \sum _{k=-j}^{i} b_{k} \cdot 2^{k}$
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-165903.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.23262tx92l.avif)
 
 | Value                        | Representation |
 | ---------------------------- | -------------- |
@@ -479,9 +445,7 @@ Numerical form: $( -1)^{s} \cdot M\cdot 2^{E}$
 - `exp` field encodes $E$ (but is not equal to $E$)
 - `frac` field encodes $M$ (but is not equal to $M$)
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-200011.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2yynia7gbn.avif)
 
 #### Normalized Values
 
@@ -511,9 +475,7 @@ Numerical form: $( -1)^{s} \cdot M\cdot 2^{E}$
 
 So the result would be:
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-204714.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4g4sk1cfjd.avif)
 
 ```python
 # manually calculate
@@ -559,9 +521,7 @@ print(f)
 
 ### Visualization: Floating Point Encodings
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-210940.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4xuu8me5ea.avif)
 
 ### Example and properties
 
@@ -569,29 +529,21 @@ print(f)
 
 Think about this 8-bit Floating Point Representation below, it obeying the same general form as IEEE Format:
 
-<center>
-<img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-223652.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.26ls0jseh0.avif)
 
 #### Dynamic Range (Positive Only)
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-224537.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6pnt3iy9a6.avif)
 
 #### Distribution of Values
 
 Still think about our tiny example, notice how the distribution gets denser toward zero.
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-232356.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3gop6vb6vl.avif)
 
 Here is a scaled close-up view:
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-20-232511.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3gop6vbl8i.avif)
 
 ### Special Properties of the IEEE Encoding
 
@@ -706,9 +658,7 @@ $( -1)^{s_{1}} \cdot M_{1} \cdot 2^{E_{1}} +( -1)^{s_{2}} \cdot M_{2} \cdot 2^{E
 - Overflow if $E$ out of range
 - Round $M$ to fit frac precision
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-21-122719.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9gwvbllly4.avif)
 
 ### Mathematical Properties of Floating Point Add
 
@@ -777,9 +727,7 @@ Nobody (at least me), can keep these long history in mind! So I'll just skipping
 
 ### Assembly/Machine Code View
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-21-191922.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5c19zhouhx.avif)
 
 ### Turning C into Object Code
 
@@ -788,9 +736,7 @@ Nobody (at least me), can keep these long history in mind! So I'll just skipping
   - Use basic optimizations (`-Og`) [New to recent versions of GCC]
   - Put resulting binary in file `p`
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-21-192121.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8z6tn0l05d.avif)
 
 ### Assembly Characteristics: Data Types
 
@@ -830,9 +776,7 @@ Nobody (at least me), can keep these long history in mind! So I'll just skipping
 
 ### x86‐64 Integer Registers
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/register.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7axgptv3ep.avif)
 
 ### Moving Data
 
@@ -850,9 +794,7 @@ Nobody (at least me), can keep these long history in mind! So I'll just skipping
     - Simplest example: `(%rax)`
     - Various other "address modes"
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-21-232345.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7lkaizapzl.avif)
 
 ### Complete Memory Addressing Modes
 
@@ -1183,9 +1125,7 @@ while (Test) {
 
 #### "For" Loop "Do-While" Conversion
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-22-160356.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1e8witfdlk.avif)
 
 Initial test can be optimized away.
 
@@ -1235,9 +1175,7 @@ _Note that `w` not initialized here._
 
 ### Jump Table Structure
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-22-161453.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9rjp4r358w.avif)
 
 #### Jump Table
 
@@ -1266,25 +1204,17 @@ _Note that `w` not initialized here._
     - Fetch target from effective address `.L4 + %rdi * 8`
       - Only for `0 <= x <= 6`
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-22-163749.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3d5395ln4u.avif)
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-22-163245.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7p3wgp5cmz.avif)
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-22-162919.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6f0zadnyrf.avif)
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-22-163054.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8adk300sp3.avif)
 
-<center>
-  <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Shot-2025-07-22-163158.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8ojztv9het.avif)
+
+## Procedures
 
 # References
 

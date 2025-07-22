@@ -3,7 +3,7 @@ title: "微积分笔记"
 published: 2024-03-31
 updated: 2024-08-26
 description: "微积分学习笔记——从 1 到无穷大。主要记录各种公式定理的推导过程。"
-image: "./covers/calculus-notes.jpg"
+image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3gop6mwmr7.avif"
 tags: ["Mathematices", "Notes"]
 category: "Mathematices"
 draft: false
@@ -65,9 +65,7 @@ $g(x)$ 和 $h(x)$ 分别被称为 $f(x)$ 的下界和上界。
 
 ### Proof: $\displaystyle \lim _{\theta \rightarrow 0}\frac{\sin \theta }{\theta } =1$
 
-<center>
-  <img src="https://pic.imgdb.cn/item/66094d699f345e8d03de6f44.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3gop6n1vs3.avif)
 
 ### Proof: $\displaystyle \lim _{\theta \rightarrow 0}\frac{1-\cos \theta }{\theta } =0$
 
@@ -257,9 +255,7 @@ $$
 
 $\displaystyle 2.\ \frac{d}{dx}[\cos x] =-\sin x$
 
-<center>
-  <Image alt="1" src="https://pic.imgdb.cn/item/66122e7268eb935713987d7f.png" width={1920} height={1080} />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1apakvbze1.avif)
 
 ## Proof: The derivative of $e^{x}$ is $e^{x}$
 
@@ -414,9 +410,7 @@ $$
 
 For why if function $u$ is continuous at $x$, then $\Delta u\rightarrow 0$ as $\Delta x\rightarrow 0$:
 
-<center>
-  <img src="https://pic.imgdb.cn/item/661a87a868eb935713971ab1.png" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9kgh937d5y.avif)
 
 $\displaystyle The\ chain\ rule\ tell\ us:\ \frac{d}{dx}[ y( u( x))] =\frac{dy}{dx} =\frac{dy}{du} \cdot \frac{du}{dx}$
 
@@ -513,9 +507,7 @@ Let $f$ be a continuous real−valued function defined on $[ a,\ b]$. And $F$ be
 
 Then $F$ is uniformly continuous on $[ a,\ b]$ and differentiable on the open interval $( a,\ b)$, and $\displaystyle F^{\prime }( x) =f( x)$ for all $x$ in $( a,\ b)$ so $F$ is an antiderivative of $f$.
 
-<center>
-  <img src="https://s21.ax1x.com/2024/08/18/pACxH78.jpg" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.icf34xh5n.avif)
 
 # Second fundamental theorem of calculus / Newton–Leibniz theorem
 
@@ -523,9 +515,7 @@ Let $f$ be a continuous real−valued function defined on $[ a,\ b]$ and $F$ is 
 
 If $f$ is Riemann integrable on $[ a,\ b]$ then $\displaystyle \int _{a}^{b} f( x) dx=F( b) -F( a)$
 
-<center>
-  <img src="https://s21.ax1x.com/2024/08/18/pACzG3d.jpg" />
-</center>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3gop6n6enu.avif)
 
 # Reverse power rule
 

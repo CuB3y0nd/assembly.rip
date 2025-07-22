@@ -3,7 +3,7 @@ title: "Notes: Pwn heap fundamental knowledge"
 published: 2025-02-06
 updated: 2025-02-08
 description: "This note is for explaining some fundamental knowledge of heap (managed by the dynamic allocator). From the easiest things to even harder things."
-image: "./covers/pwn-heap-notes.png"
+image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1apal2wi8c.avif"
 tags: ["Pwn", "Heap", "Notes"]
 category: "Notes"
 draft: false
@@ -82,11 +82,7 @@ free_memory(firstname);
 free_memory(lastname);
 ```
 
-<a href="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Untitled-2024-02-06-132221.svg" data-fancybox data-caption>
-  <center>
-    <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Untitled-2024-02-06-132221.svg" />
-  </center>
-</a>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9kgh9atg76.svg)
 
 嗯……我们永远不是第一个有想法的人<s>_（真 TM 的令人难过）_</s>，事实上早已存在很多更成熟的解决方案了。
 
@@ -380,11 +376,7 @@ exit_group(0)
 
 ## Security vs Performance
 
-<a href="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Untitled-2024-02-07-132220.svg" data-fancybox data-caption="The lifecycle of allocator security.">
-  <center>
-    <img src="https://cdn.jsdelivr.net/gh/CuB3y0nd/IMAGES@master/assets/Untitled-2024-02-07-132220.svg" />
-  </center>
-</a>
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3rbj006vgd.svg)
 
 # How to detect issues?
 
