@@ -1377,6 +1377,272 @@ pcount_r:
 - Also works for mutual recursion
   - P calls Q; Q calls P
 
+## Arrays
+
+### One-dimensional Array
+
+#### Array Allocation
+
+- `T A[L];`
+  - Array of data type `T` and length `L`
+  - Contiguously allocated region of `L * sizeof(T)` bytes in memory
+
+#### Array Access
+
+- `T A[L];`
+  - Array of data type `T` and length `L`
+  - Identifier `A` can be used as a pointer to array element 0: Type `T *`
+
+#### Array Accessing Example
+
+```c
+#define ZLEN 5
+
+typedef int zip_dig[ZLEN];
+
+int get_digit(zip_dig z, int digit) {
+  return z[digit];
+}
+```
+
+```asm
+movl (%rdi, %rsi, 4), %eax # z[digit]
+```
+
+- Register `%rdi` contains starting address of array
+- Register `%rsi` contains array index
+- Desired digit at `%rdi + 4 * %rsi`
+
+#### Array Loop Example
+
+```c
+void zincr(zip_dig z) {
+  size_t i;
+  for (i = 0; i < ZLEN; i++) {
+    z[i]++;
+  }
+}
+```
+
+```asm
+  movl $0, %eax            # i = 0
+  jmp .L3                  # goto middle
+.L4:                       # loop:
+  addl $1, (%rdi, %rax, 4) # z[i]++
+  addq $1, %rax            # i++
+.L3:                       # middle
+  cmpq $4, %rax            # i:4
+  jbe .L4                  # if <=, goto loop
+  rep; ret
+```
+
+### Multidimensional (Nested) Arrays
+
+- `T A[R][C]`
+  - 2D array of data type `T`
+  - `R` rows, `C` columns
+  - Type `T` element requires `K` bytes
+- Array Size
+  - `R * C * K` bytes
+- Arrangement
+  - Row-Major Ordering
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7plbjvas4.avif" />
+</center>
+
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4cl6nntgbl.avif)
+
+#### Nested Array Example
+
+```c
+#define ZLEN 5
+#define PCOUNT 4
+
+typedef int zip_dig[ZLEN];
+
+zip_dig pgh[PCOUNT] = {
+  {1, 5, 2, 0, 6},
+  {1, 5, 2, 1, 3},
+  {1, 5, 2, 1, 7},
+  {1, 5, 2, 2, 1}
+}
+```
+
+`zip_dig pgh[4]` is equivalent to `int pgh[4][5]`.
+
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.175ooqal1z.avif)
+
+#### Nested Array Row Access
+
+- Row Vectors
+  - `A[i]` is array of `C` elements
+  - Each element of type `T` requires `K` bytes
+  - Starting address `A + i*(C*K)`
+
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6wr10b882r.avif)
+
+##### Nested Array Row Access Example
+
+```c
+int *get_pgh_zip(int index) {
+  return pgh[index];
+}
+```
+
+```asm
+leaq (%rdi, %rdi, 4), %rax # 5*index
+leaq pgh(, %rax, 4), %rax  # pgh + (20*index)
+```
+
+- Row Vector
+  - `pgh[index]` is array of 5 `int`'s
+  - Starting address `pgh + 20*index`
+- Machine Code
+  - Computes and returns address
+  - Compute as `pgh + 4*(index + 4*index)`
+
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9o038eo5qn.avif)
+
+##### Nested Array Element Access Example
+
+- Array Elements
+  - `A[i][j]` is element of type `T`, which requires `K` bytes
+  - Address `A + i*(C*K) + j*K = A + (i*C + j)*K`
+
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.41ycuj7kl1.avif)
+
+##### Nested Array Element Access Example
+
+```c
+int get_pgh_digit(int index, int dig) {
+  return pgh[index][dig];
+}
+```
+
+```asm
+leaq (%rdi, %rdi, 4), %rax # 5*index
+addl %rax, %rsi            # 5*index + dig
+movl pgh(, %rsi, 4), %eax  # M[pgh + 4*(5*index + dig)]
+```
+
+- Array Elements
+  - `pgh[index][dig]` is `int`
+  - Address: `Mem[pgh + 20*index + 4*dig] = Mem[pgh + 4*(5*index + dig)]`
+
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.175oor97dc.avif)
+
+### Multi-Level Array
+
+```c
+zip_dig cmu = {1, 5, 2, 1, 3};
+zip_dig mit = {0, 2, 1, 3, 9};
+zip_dig ucb = {9, 4, 7, 2, 0};
+
+#define UCOUNT 3
+
+int *univ[UCOUNT] = {mit, cmu, ucb};
+```
+
+- Variable `univ` denotes array of 3 elements
+- Each element is a pointer (8 bytes)
+- Each pointer points to array of `int`'s
+
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1vyy8s8cdr.avif)
+
+#### Element Access in Multi-Level Array
+
+```c
+int get_univ_digit(size_t index, size_t digit) {
+  return univ[index][digit];
+}
+```
+
+```asm
+salq $2, %rsi              # 4*digit
+addq univ(, %rdi, 8), %rsi # p = univ[index] + 4*digit
+movl (%rsi), %eax          # return *p
+ret
+```
+
+- Element access `Mem[Mem[univ + 8*index] + 4*digit]`
+- Must do two memory reads
+  - First get pointer to row array
+  - Then access element within array
+
+### N x N Matrix
+
+- Fixed dimensions
+  - Know value of `N` at compile time
+
+```c
+#define N 16
+
+typedef int fix_matrix[N][N];
+
+/* Get element A[i][j] */
+int fix_ele(fix_matrix A, size_t i, size_t j) {
+  return A[i][j];
+}
+```
+
+- Variable dimensions, explicit indexing
+  - Traditional way to implement dynamic arrays
+
+```c
+#define IDX(n, i, j) ((i)*(n)+(j))
+
+/* Get element A[i][j] */
+int vec_ele(size_t n, int *A, size_t i, size_t j) {
+  return A[IDX(n,i,j)];
+}
+```
+
+- Variable dimensions, explicit indexing
+  - Now supported by gcc
+
+```c
+/* Get element A[i][j] */
+int var_ele(size_t n, int A[n][n], size_t i, size_t j) {
+  return A[i][j];
+}
+```
+
+#### N x N Matrix Access
+
+- Array Elements
+  - `size_t n;`
+  - `int A[n][n];`
+  - Address `A + i*(C*K) + j*K`
+  - `C = n, K = 4`
+  - Must perform integer multiplication
+
+```c
+/* Get element A[i][j] */
+int var_ele(size_t n, int A[n][n], size_t i, size_t j) {
+  return A[i][j];
+}
+```
+
+```asm
+imulq %rdx, %rdi           # n*i
+leaq (%rsi, %rdi, 4), %rax # A + 4*n*i
+movl (%rax, %rcx, 4), %eax # A + 4*n*i + 4*j
+ret
+```
+
+### Understanding Pointers & Array
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.32i9hg2rcu.avif" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.54y25hs26z.avif" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.77dutjr9u7.avif" />
+</center>
+
+- Cmp: Compiles (Y/N)
+- Bad: Possible bad pointer reference (Y/N)
+- Size: Value returned by `sizeof`
+
 # References
 
 - [Computer Systems: A Programmer's Perspective, 3/E (CS:APP3e)](http://csapp.cs.cmu.edu/3e/home.html)
