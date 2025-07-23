@@ -1173,6 +1173,10 @@ switch_eg:
 
 _Note that `w` not initialized here._
 
+:::tip
+`ja .L8` considering the result is unsigned, so its a smart way to tackle negative number.
+:::
+
 ### Jump Table Structure
 
 ![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9rjp4r358w.avif)
@@ -1215,6 +1219,163 @@ _Note that `w` not initialized here._
 ![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8ojztv9het.avif)
 
 ## Procedures
+
+### Stack Structure
+
+#### x86-64 Stack
+
+- Region of memory managed with stack discipline
+- Grows toward lower addresses
+- Register `%rsp` contains lowest stack address
+  - address of "top" element
+
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6ikl8nrzmw.avif)
+
+##### Push
+
+- `pushq src`
+  - Fetch operand at `src`
+  - Decrement `%rsp` by 8
+  - Write operand at address given by `%rsp`
+
+##### Pop
+
+- `popq dest`
+  - Read value at address given by `%rsp`
+  - Increment `%rsp` by 8
+  - Store value at `dest` (must be register)
+
+### Calling Conventions
+
+#### Procedure Control Flow
+
+- Use stack to support procedure call and return
+- Procedure call: `call label`
+  - Push return address (address of the next instruction right after call) on stack
+  - Jump to label
+- Procedure return: `ret`
+  - Pop address from stack
+  - Jump to address
+
+#### Managing local data
+
+- First 6 arguments are passing by registers: `%rdi`, `%rsi`, `%rdx`, `%rcx`, `%r8`, `%r9`, other more arguments will store in stack
+- Only allocate stack space when needed
+- Return value store in `%rax`
+
+#### Stack Frames
+
+- Contents
+  - Return information
+  - Local storage (if needed)
+  - Temporary space (if needed)
+- Management
+  - Space allocated when enter procedure
+    - "Set-up" code
+    - Includes push by `call` instruction
+  - Deallocated when return
+    - "Finish" code
+    - Includes pop by `ret` instruction
+
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.39lhc0ris7.avif)
+
+#### x86-64 / Linux Stack Frame
+
+- Current Stack Frame ("Top" to Bottom)
+  - Argument build: Parameters for function about to call
+- Local variables
+  - If can't keep in registers
+- Saved register context
+- Old frame pointer (optional)
+
+- Caller Stack Frame
+  - Return address
+  - Arguments for this call
+
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5q7pqzavmk.avif)
+
+:::note
+As we often see the program often allocates more space on the stack than it really needs to, its because some conventions about trying to keep addresses on aligned.
+:::
+
+### Register Saving Conventions
+
+- Caller Saved
+  - Caller saves temporary values in its frame before the call
+- Callee Saved
+  - Callee saves temporary values in its frame before using
+  - Callee restores them before returning to caller
+
+#### x86-64 Linux Register Usage 1
+
+- `%rax`
+  - Return value
+  - Also caller-saved
+  - Can be modified by procedure
+- `%rdi`, `%rsi`, `%rdx`, `%rcx`, `%r8`, `%r9`
+  - Arguments
+  - Also caller-saved
+  - Can be modified by procedure
+- `%r10`, `%r11`
+  - Caller-saved
+  - Can be modified by procedure
+
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6ikl8s2wb5.avif)
+
+#### x86-64 Linux Register Usage 2
+
+- `%rbx`, `%r12`, `%r13`, `%r14`
+  - Callee-saved
+  - Callee must save & restore
+- `%rbp`
+  - Callee-saved
+  - Callee must save & restore
+  - May be used as frame pointer
+  - Can mix & match
+- `%rsp`
+  - Special form of callee save
+  - Restored to original value upon exit from procedure
+
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3nrx2zr8ta.avif)
+
+### Recursion Example
+
+```c
+long pcount_r(unsigned long x) {
+  if (x == 0)
+    return 0;
+  else:
+    return (x & 1) + pcount_r(x >> 1);
+}
+```
+
+```asm
+pcount_r:
+  movl  $0, %eax
+  testq %rdi, %rdi
+  je    .L6
+  pushq %rbx
+  movq  %rdi, %rbx
+  andl  $1, %ebx
+  shrq  %rdi
+  call  pcount_r
+  addq  %rbx, %rax
+  popq  %rbx
+.L6:
+  rep; ret
+```
+
+- Handled Without Special Consideration (just using normal calling conventions)
+  - Stack frames mean that each function call has private storage
+    - Saved registers & local variables
+    - Saved return pointer
+  - Register saving conventions prevent one function call from corrupting another's data
+    - Unless the C code explicitly does so
+  - Stack discipline follows call / return pattern
+    - If P calls Q, then Q returns before P
+    - Last-In, First-Out
+- Also works for mutual recursion
+  - P calls Q; Q calls P
 
 # References
 
