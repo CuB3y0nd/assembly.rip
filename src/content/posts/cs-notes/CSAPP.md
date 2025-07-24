@@ -1,7 +1,7 @@
 ---
 title: "The CSAPP Notebook"
 published: 2025-07-16
-updated: 2025-07-24
+updated: 2025-07-25
 description: "CMU 15213/15513 CSAPP learning notes."
 image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.23262tnnad.avif"
 tags: ["CSAPP", "Notes"]
@@ -1948,6 +1948,62 @@ ret
 - Similar to SSE
 
 Floating Point assembly instruction sets are very nasty, though it's principle thought is simple. So I am just skipping this chapter as TODO. Bro really don't want learn this chapter...
+
+## Memory Layout
+
+### x86-64 Linux Memory Layout
+
+- Stack
+  - Runtime stack (8MB limit, check by `limit` command)
+  - E.g., local variables
+- Heap
+  - Dynamically allocated as needed
+  - When call `malloc()`, `calloc()`, `new()`
+- Data
+  - Statically allocated data
+  - E.g., global vars, `static` vars, string constants
+- Text / Shared Libraries
+  - Executable machine instructions
+  - Read-only
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7lkalfi3x6.avif" alt="" />
+</center>
+
+:::tip
+In common, the canonical address range in x86-64 is 47 bits address. That is why the maximum address show as `0x00007FFFFFFFFFFF`.
+:::
+
+## Unions
+
+### Allocation
+
+- Allocate according to largest element
+- Can only use one field at a time
+
+```c
+union U1 {
+  char c;
+  int i[2];
+  double v;
+} *up;
+```
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7w74exlpis.avif" alt="" />
+</center>
+
+```c
+struct S1 {
+  char c;
+  int i[2];
+  double v;
+} *sp;
+```
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7lkals7ft7.avif" alt="" />
+</center>
 
 # References
 
