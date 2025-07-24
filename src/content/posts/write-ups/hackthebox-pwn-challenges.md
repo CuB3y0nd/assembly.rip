@@ -3,6 +3,7 @@ title: "Write-ups: HackTheBox"
 published: 2025-07-24
 updated: 2025-07-24
 description: "Write-ups for HackTheBox's pwn challenges."
+image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2rvfoyyezu.avif"
 tags: ["Pwn", "Write-ups"]
 category: "Write-ups"
 draft: false

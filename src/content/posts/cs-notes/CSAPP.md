@@ -1,7 +1,7 @@
 ---
 title: "The CSAPP Notebook"
 published: 2025-07-16
-updated: 2025-07-23
+updated: 2025-07-24
 description: "CMU 15213/15513 CSAPP learning notes."
 image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.23262tnnad.avif"
 tags: ["CSAPP", "Notes"]
@@ -1642,6 +1642,312 @@ ret
 - Cmp: Compiles (Y/N)
 - Bad: Possible bad pointer reference (Y/N)
 - Size: Value returned by `sizeof`
+
+## Structures
+
+### Allocation
+
+- Structure represented as block of memory
+  - Big enough to hold all of the fields
+- Fields ordered according to declaration
+  - Even if another ordering could yield a more compact representation
+- Compiler determines overall size + positions of fields
+  - Machine-level program has no understanding of the structures in the source code
+
+### Access
+
+#### Generating Pointer to Structure Member
+
+```c
+struct rec {
+  int a[4];
+  size_t i;
+  struct rec *next;
+};
+
+int *get_ap(struct rec *r, size_t idx) {
+  return &r->a[idx];
+}
+```
+
+```asm
+leaq (%rdi, %rsi, 4), %rax
+ret
+```
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.54y26bn705.avif" />
+</center>
+
+- Offset of each structure member determined at compile time
+- Compute as `r + 4*idx`
+
+#### Following Linked List
+
+```c
+struct rec {
+  int a[4];
+  int i;
+  struct rec *next;
+};
+
+void set_val(struct rec *r, int val) {
+  while (r) {
+    int i = r->i;
+    r->a[i] = val;
+    r = r->next;
+  }
+}
+```
+
+```asm
+.L11:                        # loop:
+  movslq 16(%rdi), %rax      # i = M[r + 16]
+  movl %esi, (%rdi, %rax, 4) # M[r + 4*i] = val
+  movq 24(%rdi), %rdi        # r = M[r + 24]
+  testq %rdi, %rdi           # Test r
+  jne .L11                   # if != 0 goto loop
+```
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3uv500dbuh.avif" />
+</center>
+
+### Alignment
+
+```c
+struct S1 {
+  char c;
+  int i[2];
+  double v;
+} *p;
+```
+
+- Unaligned Data
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.175opnv4vk.avif" />
+</center>
+
+- Aligned Data
+  - Primitive data type requires `K` bytes
+  - Address must be multiple of `K`
+  - Required on some machines; advised on x86-64
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5mo3ux8mbu.avif" />
+</center>
+
+- Motivation for Aligning Data
+
+  - Memory accessed by (aligned) chunks of 4 or 8 bytes (system dependent)
+    - Inefficient to load or store datum that spans quad word boundaries
+    - Virtual memory trickier when datum spans 2 pages
+
+- Compiler
+  - Inserts gaps in structure to ensure correct alignment of fields
+
+#### Specific Cases of Alignment (x86-64)
+
+- 1 byte: `char`, ...
+  - no restrictions on address
+- 2 bytes: `short`, ...
+  - lowest 1 bit of address must be $0_{2}$
+- 4 bytes: `int`, `float`, ...
+  - lowest 2 bits of address must be $00_{2}$
+- 8 bytes: `double`, `long`, `char *`, ...
+  - lowest 3 bits of address must be $000_{2}$
+
+:::important
+If an address requires alignment to $2^{n}$ bytes, then its lowest $n$ bits must be $0$.
+:::
+
+#### Satisfying Alignment with Structures
+
+- Within structure
+  - Must satisfy each element's alignment requirement
+- Overall structure placement
+
+  - Each structure has alignment requirement `K`
+    - `K` is largest alignment of any element
+  - Initial address & structure length must be multiples of `K`
+
+- Example
+
+```c
+struct S2 {
+  double v;
+  int i[2];
+  char c;
+} *p;
+```
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8dx6316864.avif" />
+</center>
+
+### Arrays of Structures
+
+- Overall structure length multiple of `K`
+- Satisfy alignment requirement for every element
+
+```c
+struct S2 {
+  double v;
+  int i[2];
+  char c;
+} a[10];
+```
+
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6m4784tavb.avif)
+
+### Accessing Array Elements
+
+- Compute array offset `12*idx`
+  - `sizeof(S3)`, including alignment spacers
+- Element `j` is at offset 8 within structure
+- Assembler gives offset `a+8`
+  - Resolved during linking
+
+```c
+struct S3 {
+  short i;
+  float v;
+  short j;
+} a[10];
+```
+
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.175opphsk3.avif)
+
+```c
+short get_j(int idx) {
+  return a[idx].j;
+}
+```
+
+```asm
+leaq   (%rdi, %rdi, 2), %rax # 3*idx
+movzwl a+8(, %rax, 4), %eax
+```
+
+### Saving Space
+
+- Put large data types first
+
+```c
+struct S4 {
+  char c;
+  int i;
+  char d;
+} *p;
+```
+
+```c
+struct S5 {
+  int i;
+  char c;
+  char d;
+} *p;
+```
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7i0onl94x5.avif" />
+</center>
+
+## Floating Point
+
+### x87 FP
+
+- Legacy, very ugly
+
+### SSE3 FP
+
+#### XMM Registers
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7eh2pxhyar.avif" />
+</center>
+
+#### Scalar & SIMD Operations
+
+`SIMD (Single instruction, multiple data)`, there are a ton of usage combinations, e.g.:
+
+- `addss (ADD Scalar Single-Precision Floating-Point Values)`
+- `addps (ADD Packed Single-Precision Floating-Point Values)`
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7snigsk2si.avif" />
+</center>
+
+#### Basics
+
+- Arguments passed in `%xmm0`, `%xmm1`, ...
+- Result returned in `%xmm0`
+- All `XMM` registers caller-saved
+
+```c
+float fadd(float x, float y) {
+  return x + y;
+}
+```
+
+```asm
+addss %xmm1, %xmm0
+ret
+```
+
+```c
+double dadd(double x, double y) {
+  return x + y;
+}
+```
+
+```asm
+addsd %xmm1, %xmm0
+ret
+```
+
+#### Memory Referencing
+
+- Integer (and pointer) arguments passed in regular registers
+- Floating Point values passed in `XMM` registers
+- Different `mov` instructions to move between `XMM` registers, and between memory and `XMM` registers
+
+```c
+double dincr(double *p, double v) {
+  double x = *p;
+  *p = x + v;
+  return x;
+}
+```
+
+```asm
+movapd %xmm0, %xmm1 # Copy v
+movsd (%rdi), %xmm0 # x = *p
+addsd %xmm0, %xmm1  # t = x + v
+movsd %xmm1, (%rdi) # *p = t
+ret
+```
+
+- `movapd (Move Aligned Packed Double-Precision Floating-Point Values)`
+
+#### Other Aspects of Floating Point Instructions
+
+- Lots of instructions
+  - Different operations, different formats, ...
+- Floating-point comparisons
+  - Instructions `ucomiss (Unordered Compare Scalar Single-Precision)` and `ucomisd (Unordered Compare Scalar Double-Precision)`
+  - Set condition codes `CF`, `ZF`, and `PF`
+- Using constant values
+  - Set `XMM0` register to 0 with instruction `xorpd %xmm0, %xmm0`
+  - Others loaded from memory
+
+### AVX FP
+
+- Newest version
+- Similar to SSE
+
+Floating Point assembly instruction sets are very nasty, though it's principle thought is simple. So I am just skipping this chapter as TODO. Bro really don't want learn this chapter...
 
 # References
 
