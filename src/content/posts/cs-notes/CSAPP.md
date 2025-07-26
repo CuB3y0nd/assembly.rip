@@ -2005,6 +2005,348 @@ struct S1 {
   <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7lkals7ft7.avif" alt="" />
 </center>
 
+# Program Optimization
+
+- There's more to performance than asymptotic complexity
+
+- Must optimize at multiple levels: algorithm, data representations, procedures, and loops
+
+## Optimizing Compilers
+
+- Provide efficient mapping of program to machine
+  - register allocation
+  - code selection and ordering (scheduling)
+  - dead code elimination
+  - eliminating minor inefficiencies
+- Don't (usually) improve asymptotic efficiency
+  - up to programmer to select best overall algorithm
+  - Big-O savings are (often) more important than constant factors
+    - but constant factors also matter
+- Have difficulty overcoming "optimization blockers"
+  - potential memory aliasing
+  - potential procedure side-effects
+
+### Limitations of Optimizing Compilers
+
+- Operate under fundamental constraint
+  - Must not cause any change in program behavior
+    - Except, possibly when program making use of nonstandard language features
+  - Often prevents it from making optimizations that would only affect behavior under pathological conditions.
+- Behavior that may be obvious to the programmer can be obfuscated by languages and coding styles
+  - E.g., Data ranges may be more limited than variable types suggest
+- Most analysis is performed only within procedures
+  - Whole-program analysis is too expensive in most cases
+  - Newer versions of GCC do interprocedural analysis within individual files
+    - But, not between code in different files
+- Most analysis is based only on static information
+  - Compiler has difficulty anticipating run-time inputs
+- When in doubt, the compiler must be conservative
+
+### Generally Useful Optimizations
+
+Optimizations that you or the compiler should do regardless of processor / compiler
+
+- Code Motion
+  - Reduce frequency with which computation performed
+    - If it will always produce same result
+    - Especially moving code out of loop
+
+```c
+void set_row(double *a, double *b, long i, long n) {
+  long j;
+  for (j = 0; j < n; j++)
+    a[n*i+j] = b[j];
+}
+```
+
+```c
+void set_row(double *a, double *b, long i, long n) {
+  long j;
+  int ni = n*i;
+  for (j = 0; j < n; j++)
+    a[ni+j] = b[j];
+}
+```
+
+#### Compiler-Generated Code Motion (-O1)
+
+```c
+void set_row(double *a, double *b, long i, long n) {
+  long j;
+  for (j = 0; j < n; j++)
+    a[n*i+j] = b[j];
+}
+```
+
+```asm
+set_row:
+  testq %rcx, %rcx             # Test n
+  jle .L1                      # If 0, goto done
+  imulq %rcx, %rdx             # ni = n*i
+  leaq (%rdi , %rdx, 8), %rdx  # rowp = A + ni*8
+  movl $0, %eax                # j = 0
+.L3:                           # loop:
+  movsd (%rsi, %rax, 8), %xmm0 # t = b[j]
+  movsd %xmm0, (%rdx, %rax, 8) # M[A + ni*8 + j*8] = t
+  addq $1, %rax                # j++
+  cmpq %rcx, %rax              # j:n
+  jne .L3                      # if !=, goto loop
+.L1:                           # done:
+  rep ; ret
+```
+
+To the C code:
+
+```c
+void set_row(double *a, double *b, long i, long n) {
+  long j;
+  long ni = n*i;
+  double *rowp = a+ni;
+  for (j = 0; j < n; j++)
+    *rowp++ = b[j];
+}
+```
+
+#### Reduction in Strength
+
+- Replace costly operation with simpler one
+- Shift, add instead of multiply or divide
+  - Utility machine dependent
+  - Depends on cost of multiply or divide instruction
+  - Recognize sequence of products
+
+```c
+for (i = 0; i < n; i++) {
+  int ni = n*i;
+  for (j = 0; j < n; j++)
+    a[ni + j] = b[j];
+}
+```
+
+```c
+int ni = 0;
+for (i = 0; i < n; i++) {
+  for (j = 0; j < n; j++)
+    a[ni + j] = b[j];
+  ni += n;
+}
+```
+
+#### Share Common Subexpressions
+
+- Reuse portions of expressions
+- GCC will do this with `–O1`
+
+```c
+up = val[(i-1)*n + j ];
+down = val[(i+1)*n + j ];
+left = val[i*n + j-1];
+right = val[i*n + j+1];
+sum = up + down + left + right;
+```
+
+```asm
+leaq 1(%rsi), %rax # i+1
+leaq -1(%rsi), %r8 # i-1
+imulq %rcx, %rsi   # i*n
+imulq %rcx, %rax   # (i+1)*n
+imulq %rcx, %r8    # (i-1)*n
+addq %rdx, %rsi    # i*n+j
+addq %rdx, %rax    # (i+1)*n+j
+addq %rdx, %r8     # (i-1)*n+j
+```
+
+- 3 multiplications: `i*n`, `(i–1)*n`, `(i+1)*n`
+
+```c
+long inj = i*n + j;
+up = val[inj - n];
+down = val[inj + n];
+left = val[inj - 1];
+right = val[inj + 1];
+sum = up + down + left + right;
+```
+
+```asm
+imulq %rcx, %rsi        # i*n
+addq %rdx, %rsi         # i*n+j
+movq %rsi, %rax         # i*n+j
+subq %rcx, %rax         # i*n+j-n
+leaq (%rsi, %rcx), %rcx # i*n+j+n
+```
+
+- 1 multiplication: `i*n`
+
+## Optimization Blockers
+
+:::note
+I'm just skipping this chapter, so the notes are seems disordered. Will retake this chapter later.
+:::
+
+### Optimization Blocker: Procedure Calls
+
+```c
+void lower(char *s) {
+  size_t i;
+  for (i = 0; i < strlen(s); i++)
+    if (s[i] >= 'A' && s[i] <= 'Z')
+      s[i] -= ('A' - 'a');
+}
+```
+
+- `strlen` executed every iteration
+- Time quadruples when double string length
+- Quadratic performance
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3yeqz6j6zd.avif" alt="" />
+</center>
+
+#### Calling strlen
+
+```c
+/* My version of strlen */
+size_t strlen(const char *s) {
+  size_t length = 0;
+  while (*s != '\0') {
+    s++;
+    length++;
+  }
+  return length;
+}
+```
+
+- strlen performance
+  - Only way to determine length of string is to scan its entire length, looking for null character
+- Overall performance, string of length N
+  - N calls to strlen
+  - Require times `N`, `N-1`, `N‐2`, ..., `1`
+  - Overall $O(N^{2})$ performance
+
+#### Improving Performance
+
+```c
+void lower(char *s) {
+  size_t i;
+  size_t len = strlen(s);
+  for (i = 0; i < len; i++)
+    if (s[i] >= 'A' && s[i] <= 'Z')
+      s[i] -= ('A' - 'a');
+}
+```
+
+- Move call to `strlen` outside of loop
+- Since result does not change from one iteration to another
+- Form of code motion
+
+#### Improved Lower Case Conversion Performance
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.67xriorxa3.avif" alt="" />
+</center>
+
+### Why couldn't compiler move strlen out of inner loop?
+
+- Procedure may have side effects
+  - Alters global state each time called
+- Function may not return same value for given arguments
+  - Depends on other parts of global state
+  - Procedure lower could interact with `strlen`
+- Warning
+  - Compiler treats procedure call as a black box
+  - Weak optimizations near them
+- Remedies
+  - Use of inline functions
+    - GCC does this with `–O1` within single file
+  - Do your own code motion
+
+### Memory Matters
+
+```c
+/* Sum rows is of n X n matrix a
+   and store in vector b */
+void sum_rows1(double *a, double *b, long n) {
+  long i, j;
+  for (i = 0; i < n; i++) {
+    b[i] = 0;
+    for (j = 0; j < n; j++)
+      b[i] += a[i*n + j];
+  }
+}
+```
+
+```asm
+# sum_rows1 inner loop
+.L4:
+  movsd (%rsi, %rax, 8), %xmm0 # FP load
+  addsd (%rdi), %xmm0          # FP add
+  movsd %xmm0, (%rsi, %rax, 8) # FP store
+  addq $8, %rdi
+  cmpq %rcx, %rdi
+  jne .L4
+```
+
+#### Memory Aliasing
+
+- Code updates `b[i]` on every iteration
+- Must consider possibility that these updates will affect program behavior
+
+##### Removing Aliasing
+
+```c
+/* Sum rows is of n X n matrix a
+   and store in vector b */
+void sum_rows2(double *a, double *b, long n) {
+  long i, j;
+  for (i = 0; i < n; i++) {
+    double val = 0;
+    for (j = 0; j < n; j++)
+      val += a[i*n + j];
+    b[i] = val;
+  }
+}
+```
+
+```asm
+# sum_rows2 inner loop
+.L10:
+  addsd (%rdi), %xmm0 # FP load + add
+  addq $8, %rdi
+  cmpq %rax, %rdi
+  jne .L10
+```
+
+- No need to store intermediate results
+
+### Optimization Blocker: Memory Aliasing
+
+- Aliasing
+  - Two different memory references specify single location
+  - Easy to have happen in C
+    - Since allowed to do address arithmetic
+    - Direct access to storage structures
+  - Get in habit of introducing local variables
+    - Accumulating within loops
+    - Your way of telling compiler not to check for aliasing
+
+## Exploiting Instruction‐Level Parallelism
+
+TODO
+
+## Dealing with Conditionals
+
+TODO
+
+# The Memory Hierarchy
+
+TODO
+
+# Cache Memories
+
+TODO
+
+# Linking
+
 # References
 
 - [Computer Systems: A Programmer's Perspective, 3/E (CS:APP3e)](http://csapp.cs.cmu.edu/3e/home.html)
