@@ -2837,6 +2837,596 @@ linux>
 
 - The `LD_PRELOAD` environment variable tells the dynamic linker to resolve unresolved refs (e.g., to `malloc`) by looking in `mymalloc.so` first
 
+# Exceptional Control Flow
+
+## Control Flow
+
+- Processors do only one thing:
+  - From startup to shutdown, a CPU simply reads and executes (interprets) a sequence of instructions, one at a time
+  - This sequence is the CPU's control flow (or flow of control)
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3yer7zxizc.avif" alt="" />
+</center>
+
+Up to now, we have learned two mechanisms for changing control flow:
+
+- Jumps and branches
+- Call and return
+
+They react to changes in program state.
+
+But its insufficient for a useful system: difficult to react to changes in system state:
+
+- Data arrives from a disk or a network adapter
+- Instruction divides by zero
+- User hits `Ctrl-C` at the keyboard
+- System timer expires
+
+That's why we need mechanisms for "exceptional control flow".
+
+## Exceptional Control Flow
+
+- Exists at all levels of a computer system
+- Low level mechanisms
+  - Exceptions
+    - Change in control flow in response to a system event (i.e., change in system state)
+    - Implemented using combination of hardware and OS software
+- Higher level mechanisms
+  - Process context switch
+    - Implemented by OS software and hardware timer
+  - Signals
+    - Implemented by OS software
+  - Nonlocal jumps: `setjmp()` and `longjmp()`
+    - Implemented by C runtime library
+
+## Exceptions
+
+- An exception is a transfer of control to the OS kernel in response to some event (i.e., change in processor state)
+  - Kernel is the memory-resident part of the OS
+  - Examples of events: Divide by 0, arithmetic overflow, page fault, I/O request completes, typing `Ctrl‐C`
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8hgsb06g7p.avif" alt="" />
+</center>
+
+### Exception Tables
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8ok06fxc1p.avif" alt="" />
+</center>
+
+### Synchronous Exceptions
+
+- Caused by events that occur as a result of executing an instruction
+  - Traps
+    - Intentional (e.g., system calls, breakpoint traps, special instructions)
+    - Returns control to "next" instruction
+  - Faults
+    - Unintentional but possibly recoverable (e.g., page faults (recoverable), protection faults (unrecoverable), floating point exceptions)
+    - Either re-executes faulting ("current") instruction or aborts
+  - Aborts
+    - Unintentional and unrecoverable (e.g., illegal instruction, parity error, machine check)
+    - Aborts current program
+
+### Asynchronous Exceptions (Interrupts)
+
+- Caused by events external to the processor
+  - Indicated by setting the processor’s interrupt pin
+  - Handler returns to "next" instruction
+- Examples:
+  - Timer interrupt
+    - Every few ms, an external timer chip triggers an interrupt
+    - Used by the kernel to take back control from user programs
+  - I/O interrupt from external device
+    - Hitting `Ctrl-C` at the keyboard
+    - Arrival of a packet from a network
+    - Arrival of data from a disk
+
+## Processes
+
+- Definition: A process is an instance of a running program
+  - One of the most profound ideas in computer science
+  - Not the same as "program" or "processor"
+- Process provides each program with two key abstractions:
+  - Logical control flow
+    - Each program seems to have exclusive use of the CPU
+    - Provided by kernel mechanism called context switching
+  - Private address space
+    - Each program seems to have exclusive use of main memory
+    - Provided by kernel mechanism called virtual memory
+
+### Multiprocessing: The Illusion
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.58hoediwx5.avif" alt="" />
+</center>
+
+- Computer runs many processes simultaneously
+  - Applications for one or more users
+    - Web browsers, email clients, editors, ...
+  - Background tasks
+    - Monitoring network & I/O devices
+
+### Multiprocessing: The (Traditional) Reality
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3nrxewo9gw.avif" alt="" />
+</center>
+
+- Single processor executes multiple processes concurrently
+  - Process executions interleaved (multitasking)
+  - Address spaces managed by virtual memory system
+  - Register values for non-executing processes saved in memory
+- Save current registers in memory
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7i0oxvaq6t.avif" alt="" />
+</center>
+
+- Schedule next process for execution
+- Load saved registers and switch address space (context switch)
+
+### Multiprocessing: The (Modern) Reality
+
+- Multicore processors
+  - Multiple CPUs on single chip
+  - Share main memory (and some of the caches)
+  - Each can execute a separate process
+    - Scheduling of processors onto cores done by kernel
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.pfnbf3vjq.avif" alt="" />
+</center>
+
+### Concurrent Processes
+
+- Each process is a logical control flow
+- Two processes run concurrently (are concurrent) if their flows overlap in time
+- Otherwise, they are sequential
+- Examples (running on single core):
+  - Concurrent: A & B, A & C
+  - Sequential: B & C
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7eh3065rhl.avif" alt="" />
+</center>
+
+#### User View of Concurrent Processes
+
+- Control flows for concurrent processes are physically disjoint in time
+- However, we can think of concurrent processes as running in parallel with each other
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9rjphdkyax.avif" alt="" />
+</center>
+
+### Context Switching
+
+- Processes are managed by a shared chunk of memory-resident OS code called the kernel
+  - Important: the kernel is not a separate process, but rather runs as part of some existing process
+- Control flow passes from one process to another via a context switch
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3d53lsj1f0.avif" alt="" />
+</center>
+
+## Process Control
+
+### System Call Error Handling
+
+- On error, Linux system-level functions typically return `‐1` and set global variable `errno` to indicate cause
+- Hard and fast rule:
+  - You must check the return status of every system-level function
+  - Only exception is the handful of functions that return `void`
+
+```c
+if ((pid = fork()) < 0) {
+  fprintf(stderr, "fork error: %s\n", strerror(errno));
+  exit(0);
+}
+```
+
+#### Error-reporting functions
+
+- Can simplify somewhat using an error-reporting function:
+
+```c
+/* Unix-style error */
+void unix_error(char *msg) {
+  fprintf(stderr, "%s: %s\n", msg, strerror(errno));
+  exit(0);
+}
+
+if ((pid = fork()) < 0)
+  unix_error("fork error");
+```
+
+#### Error-handling Wrappers
+
+- Simplify the present code even further by using Stevens-style error-handling wrappers:
+
+```c
+pid_t Fork(void) {
+  pid_t pid;
+
+  if ((pid = fork()) < 0)
+    unix_error("Fork error");
+  return pid;
+}
+
+pid = Fork();
+```
+
+### Processes States
+
+From a programmer's perspective, we can think of a process as being in one of three states:
+
+- Running
+  - Process is either executing, or waiting to be executed and will eventually be scheduled (i.e., chosen to execute) by the kernel
+- Stopped
+  - Process execution is suspended and will not be scheduled until further notice
+- Terminated
+  - Process is stopped permanently
+
+### Creating Processes
+
+- Parent process creates a new running child process by calling `fork`
+- `int fork(void)`
+  - Returns `0` to the child process, child's PID to parent process
+  - Child is almost identical to parent:
+    - Child get an identical (but separate) copy of the parent's virtual address space
+    - Child gets identical copies of the parent's open file descriptors
+    - Child has a different PID than the parent
+- `fork` is interesting (and often confusing) because it is called once but returns twice
+
+#### fork Example
+
+```c
+int main() {
+  pid_t pid;
+  int x = 1;
+
+  pid = Fork();
+  if (pid == 0) { /* Child */
+    printf("child: x=%d\n", ++x);
+    exit(0);
+  }
+
+  /* Parent */
+  printf("parent: x=%d\n", --x);
+  exit(0);
+}
+```
+
+```bash
+linux> ./fork
+parent: x=0
+child: x=2
+```
+
+- Call once, return twice
+- Concurrent execution
+  - Can’t predict execution order of parent and child
+- Duplicate but separate address space
+  - `x` has a value of 1 when fork returns in parent and child
+  - Subsequent changes to `x` are independent
+- Shared open files
+  - `stdout` is the same in both parent and child
+
+### Terminating Processes
+
+- Process becomes terminated for one of three reasons:
+  - Receiving a signal whose default action is to terminate
+  - Returning from the `main` routine
+  - Calling the `exit` function
+- `void exit(int status)`
+  - Terminates with an exit status of status
+  - Convention: normal return status is `0`, nonzero on error
+  - Another way to explicitly set the exit status is to return an integer value from the main routine
+- `exit` is called once but never returns
+
+### Modeling fork with Process Graphs
+
+- A process graph is a useful tool for capturing the partial ordering of statements in a concurrent program:
+  - Each vertex is the execution of a statement
+  - `a ‐> b` means `a` happens before `b`
+  - Edges can be labeled with current value of variables
+  - `printf` vertices can be labeled with output
+  - Each graph begins with a vertex with no inedges
+- Any topological sort of the graph corresponds to a feasible total ordering
+  - Total ordering of vertices where all edges point from left to right
+
+#### Process Graph Example
+
+```c
+int main() {
+  pid_t pid;
+  int x = 1;
+
+  pid = Fork();
+  if (pid == 0) { /* Child */
+    printf("child: x=%d\n", ++x);
+    exit(0);
+  }
+
+  /* Parent */
+  printf("parent: x=%d\n", --x);
+  exit(0);
+}
+```
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.361vqf3v66.avif" alt="" />
+</center>
+
+#### Interpreting Process Graphs
+
+- Original graph:
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.361vqf3v66.avif" alt="" />
+</center>
+
+- Relabled graph:
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.sz997t4sc.avif" alt="" />
+</center>
+
+- Feasible total ordering:
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3d53luu0e1.avif" alt="" />
+</center>
+
+- Infeasible total ordering:
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2obu1u7581.avif" alt="" />
+</center>
+
+#### fork Example: Two consecutive forks
+
+```c
+void fork2() {
+  printf("L0\n");
+  fork();
+  printf("L1\n");
+  fork();
+  printf("Bye\n");
+}
+```
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.lw1dsgms3.avif" alt="" />
+</center>
+
+#### fork Example: Nested forks in parent
+
+```c
+void fork4() {
+  printf("L0\n");
+  if (fork() != 0) {
+    printf("L1\n");
+    if (fork() != 0) {
+      printf("L2\n");
+    }
+  }
+  printf("Bye\n");
+}
+```
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.sz9984x39.avif" alt="" />
+</center>
+
+#### fork Example: Nested forks in children
+
+```c
+void fork5() {
+  printf("L0\n");
+  if (fork() == 0) {
+    printf("L1\n");
+    if (fork() == 0) {
+      printf("L2\n");
+    }
+  }
+  printf("Bye\n");
+}
+```
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.mdrhqki8.avif" alt="" />
+</center>
+
+### Reaping Child Processes
+
+- Idea
+  - When process terminates, it still consumes system resources (e.g., Exit status, various OS tables)
+  - Called a `zombie` (Living corpse, half alive and half dead)
+- Reaping
+  - Performed by parent on terminated child (using `wait` or `waitpid`)
+  - Parent is given exit status information
+  - Kernel then deletes zombie child process
+- What if parent doesn't reap?
+  - If any parent terminates without reaping a child, then the orphaned child will be reaped by `init` process (`pid == 1`)
+  - So, only need explicit reaping in long-running processes (e.g., shells and servers)
+
+#### Zombie Example
+
+```c
+void fork7() {
+  if (fork() == 0) {
+    /* Child */
+    printf("Terminating Child, PID = %d\n", getpid());
+    exit(0);
+  } else {
+    printf("Running Parent, PID = %d\n", getpid());
+    while (1)
+      ; /* Infinite loop */
+  }
+}
+```
+
+```bash
+linux> ./forks 7 &
+[1] 6639
+Running Parent, PID = 6639
+Terminating Child, PID = 6640
+linux> ps
+PID TTY TIME CMD
+6585 ttyp9 00:00:00 tcsh
+6639 ttyp9 00:00:03 forks
+6640 ttyp9 00:00:00 forks <defunct>
+6641 ttyp9 00:00:00 ps
+linux> kill 6639
+[1] Terminated
+linux> ps
+PID TTY TIME CMD
+6585 ttyp9 00:00:00 tcsh
+6642 ttyp9 00:00:00 ps
+```
+
+- `ps` shows child process as "defunct" (i.e., a zombie)
+- Killing parent allows child to be reaped by `init`
+
+#### Non-terminating Child Example
+
+```c
+void fork8() {
+  if (fork() == 0) {
+    /* Child */
+    printf("Running Child, PID = %d\n", getpid());
+    while (1)
+      ; /* Infinite loop */
+  } else {
+    printf("Terminating Parent, PID = %d\n", getpid());
+    exit(0);
+  }
+}
+```
+
+```bash
+linux> ./forks 8
+Terminating Parent, PID = 6675
+Running Child, PID = 6676
+linux> ps
+PID TTY TIME CMD
+6585 ttyp9 00:00:00 tcsh
+6676 ttyp9 00:00:06 forks
+6677 ttyp9 00:00:00 ps
+linux> kill 6676
+linux> ps
+PID TTY TIME CMD
+6585 ttyp9 00:00:00 tcsh
+6678 ttyp9 00:00:00 ps
+```
+
+- Child process still active even though parent has terminated
+- Must kill child explicitly, or else will keep running indefinitely
+
+### wait: Synchronizing with Children
+
+- Parent reaps a child by calling the `wait` function
+- `int wait(int *child_status)`
+  - Suspends current process until one of its children terminates
+  - Return value is the `pid` of the child process that terminated
+  - If `child_status != NULL`, then the integer it points to will be set to a value that indicates reason the child terminated and the exit status:
+    - Checked using macros defined in `wait.h`
+      - `WIFEXITED`, `WEXITSTATUS`, `WIFSIGNALED`, `WTERMSIG`, `WIFSTOPPED`, `WSTOPSIG`, `WIFCONTINUED`
+
+#### wait Example
+
+```c
+void fork9() {
+  int child_status;
+
+  if (fork() == 0) {
+    printf("HC: hello from child\n");
+    exit(0);
+  } else {
+    printf("HP: hello from parent\n");
+    wait(&child_status);
+    printf("CT: child has terminated\n");
+  }
+  printf("Bye\n");
+}
+```
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1ovqopl1uh.avif" alt="" />
+</center>
+
+#### Another wait Example
+
+- If multiple children completed, will take in arbitrary order
+- Can use macros `WIFEXITED` and `WEXITSTATUS` to get information about exit status
+
+```c
+void fork10() {
+  pid_t pid[N];
+  int i, child_status;
+
+  for (i = 0; i < N; i++)
+    if ((pid[i] = fork()) == 0)
+      exit(100+i); /* Child */
+  for (i = 0; i < N; i++) { /* Parent */
+    pid_t wpid = wait(&child_status);
+  if (WIFEXITED(child_status))
+    printf("Child %d terminated with exit status %d\n", wpid, WEXITSTATUS(child_status));
+  else
+    printf("Child %d terminate abnormally\n", wpid);
+  }
+}
+```
+
+### waitpid: Waiting for a Specific Process
+
+- `pid_t waitpid(pid_t pid, int &status, int options)`
+  - Suspends current process until specific process terminates
+
+```c
+void fork11() {
+  pid_t pid[N];
+  int i;
+  int child_status;
+
+  for (i = 0; i < N; i++)
+    if ((pid[i] = fork()) == 0)
+      exit(100+i); /* Child */
+  for (i = N-1; i >= 0; i--) {
+    pid_t wpid = waitpid(pid[i], &child_status, 0);
+    if (WIFEXITED(child_status))
+      printf("Child %d terminated with exit status %d\n", wpid, WEXITSTATUS(child_status));
+    else
+      printf("Child %d terminate abnormally\n", wpid);
+    }
+}
+```
+
+### execve: Loading and Running Programs
+
+- `int execve(char *filename, char *argv[], char *envp[])`
+- Loads and runs in the current process:
+  - Executable file `filename`
+    - Can be object file or script file beginning with `#!interpreter`
+  - ...with argument list `argv`
+    - By convention `argv[0] == filename`
+  - ...and environment variable list `envp`
+    - `name=value` strings (e.g., `USER=root`)
+    - `getenv`, `putenv`, `printenv`
+- Overwrites code, data, and stack
+  - Retains PID, open files and signal context
+- Called once and never returns
+  - ...except if there is an error
+
+#### Structure of the stack when a new program starts
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.102h4pubgz.avif" alt="" />
+</center>
+
 # References
 
 - [Computer Systems: A Programmer's Perspective, 3/E (CS:APP3e)](http://csapp.cs.cmu.edu/3e/home.html)

