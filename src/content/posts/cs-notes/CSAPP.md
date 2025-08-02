@@ -1,7 +1,7 @@
 ---
 title: "The CSAPP Notebook"
 published: 2025-07-16
-updated: 2025-07-31
+updated: 2025-08-03
 description: "CMU 15213/15513 CSAPP learning notes."
 image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.23262tnnad.avif"
 tags: ["CSAPP", "Notes"]
@@ -3426,6 +3426,667 @@ void fork11() {
 <center>
   <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.102h4pubgz.avif" alt="" />
 </center>
+
+## Signals and Nonlocal Jumps
+
+### Linux Process Hierarchy
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7p3wvr5kt0.avif" alt="" />
+</center>
+
+:::tip
+You can view the hierarchy using the `pstree` command.
+:::
+
+### Shell Programs
+
+- A shell is an application program that runs programs on behalf of the user
+  - `sh`: Original Unix shell (Stephen Bourne, AT&T Bell Labs, 1977)
+  - `csh/tcsh`: BSD Unix C shell
+  - `bash`: "Bourne-Again" Shell (default Linux shell)
+- Execution is a sequence of read/evaluate steps
+
+```c
+int main() {
+  char cmdline[MAXLINE]; /* command line */
+
+  while (1) {
+    /* read */
+    printf("> ");
+    fgets(cmdline, MAXLINE, stdin);
+
+    if (feof(stdin))
+      exit(0);
+
+    /* evaluate */
+    eval(cmdline);
+  }
+}
+```
+
+```c
+void eval(char *cmdline) {
+  char *argv[MAXARGS]; /* Argument list execve() */
+  char buf[MAXLINE];   /* Holds modified command line */
+  int bg;              /* Should the job run in bg or fg? */
+  pid_t pid;           /* Process id */
+
+  strcpy(buf, cmdline);
+  bg = parseline(buf, argv);
+
+  if (argv[0] == NULL)
+    return; /* Ignore empty lines */
+
+  if (!builtin_command(argv)) {
+    if ((pid = Fork()) == 0) { /* Child runs user job */
+      if (execve(argv[0], argv, environ) < 0) {
+        printf("%s: Command not found.\n", argv[0]);
+        exit(0);
+      }
+    }
+
+    /* Parent waits for foreground job to terminate */
+    if (!bg) {
+      int status;
+      if (waitpid(pid, &status, 0) < 0)
+        unix_error("waitfg: waitpid error");
+    }
+    else
+      printf("%d %s", pid, cmdline);
+  }
+  return;
+}
+```
+
+#### Problem with Simple Shell Example
+
+- Our example shell correctly waits for and reaps foreground jobs
+- But what about background jobs?
+  - Will become zombies when they terminate
+  - Will never be reaped because shell (typically) will not terminate
+  - Will create a memory leak that could run the kernel out of memory
+
+##### Solution: Exceptional Control Flow
+
+- The kernel will interrupt regular processing to alert us when a background process completes
+- In Unix, the alert mechanism is called a _signal_
+
+### Signals
+
+- A _signal_ is a small message that notifies a process that an event of some type has occurred in the system
+  - Akin to exceptions and interrupts
+  - Sent from the kernel (sometimes at the request of another process) to a process
+  - Signal type is identified by small integer ID's (1-30)
+  - Only information in a signal is its ID and the fact that it arrived
+
+| ID  | Name     | Default Action   | Corresponding Event                      |
+| --- | -------- | ---------------- | ---------------------------------------- |
+| 2   | SIGINT   | Terminate        | User typed Ctrl-C                        |
+| 9   | SIGKILL  | Terminate        | Kill program (cannot override or ignore) |
+| 11  | SIGSEGV  | Terminate & Dump | Segmentation violation                   |
+| 14  | SIGALARM | Terminate        | Timer signal                             |
+| 17  | SIGCHLD  | Ignore           | Child stopped or terminated              |
+
+#### Sending a Signal
+
+- Kernel _sends (delivers)_ a signal to a _destination process_ by updating some state in the context of the destination process
+- Kernel sends a signal for one of the following reasons:
+  - Kernel has detected a system event such as _divide-by-zero (SIGFPE)_ or the _termination of a child process (SIGCHLD)_
+  - Another process has invoked the `kill` system call to explicitly request the kernel to send a signal to the destination process
+
+#### Receiving a Signal
+
+- A destination process _receives_ a signal when it is forced by the kernel to react in some way to the delivery of the signal
+- Some possible ways to react:
+  - `Ignore` the signal (do nothing)
+  - `Terminate` the process (with optional core dump)
+  - `Catch` the signal by executing a user-level function called `signal handler`
+    - Akin to a hardware exception handler being called in response to an asynchronous interrupt:
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6m47kwd250.avif" alt="" />
+</center>
+
+#### Pending and Blocked Signals
+
+- A signal is _pending_ if sent but not yet received
+  - There can be at most one pending signal of any particular type
+  - Signals are not queued
+    - For each signal type, one bit indicates whether or not signal is pending
+    - Thus at most one pending signal of any particular type
+    - Then subsequent signals of the same type that are sent to that process are discarded
+- A process can _block_ the receipt of certain signals
+  - Blocked signals can be delivered, but will not be received until the signal is unblocked
+- A pending signal is received at most once
+
+#### Pending/Blocked Bits
+
+- Kernel maintains pending and blocked bit vectors in the context of each process
+  - `pending`: represents the set of pending signals
+    - Kernel sets bit $k$ in pending when a signal of type $k$ is delivered
+    - Kernel clears bit $k$ in pending when a signal of type $k$ is received
+  - `blocked`: represents the set of blocked signals
+    - Can be set and cleared by using the `sigprocmask` function
+    - Also referred to as the _signal mask_
+
+### Sending Signals
+
+#### Process Groups
+
+- Every process belongs to exactly one process group
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8ok08z1t1v.avif" alt="" />
+</center>
+
+- `getpgrp()` Return process group of current process
+- `setpgid()` Change process group of a process
+
+#### /bin/kill Program
+
+- `/bin/kill` program sends arbitrary signal to a process or process group
+- Examples
+  - `/bin/kill –9 24818` Send SIGKILL to process 24818
+  - `/bin/kill –9 –24817` Send SIGKILL to every process in process group 24817
+
+```bash
+linux> ./forks 16
+Child1: pid=24818 pgrp=24817
+Child2: pid=24819 pgrp=24817
+linux> ps
+PID TTY TIME CMD
+24788 pts/2 00:00:00 tcsh
+24818 pts/2 00:00:02 forks
+24819 pts/2 00:00:02 forks
+24820 pts/2 00:00:00 ps
+linux> /bin/kill -9 -24817
+linux> ps
+PID TTY TIME CMD
+24788 pts/2 00:00:00 tcsh
+24823 pts/2 00:00:00 ps
+linux>
+```
+
+#### From the Keyboard
+
+- Typing `Ctrl-C` (`Ctrl-Z`) causes the kernel to send a SIGINT (SIGTSTP) to every job in the foreground process group
+  - SIGINT – default action is to terminate each process
+  - SIGTSTP – default action is to stop (suspend) each process
+
+##### Example of Ctrl-C and Ctrl-Z
+
+- STAT (process state) Legend:
+  - First letter:
+    - `S`: Sleeping
+    - `T`: Stopped
+    - `R`: Running
+  - Second letter:
+    - `s`: Session leader
+    - `+`: Foreground proc group
+
+```bash
+bluefish> ./forks 17
+Child: pid=28108 pgrp=28107
+Parent: pid=28107 pgrp=28107
+<types ctrl-z>
+Suspended
+bluefish> ps w
+PID TTY STAT TIME COMMAND
+27699 pts/8 Ss 0:00 -tcsh
+28107 pts/8 T 0:01 ./forks 17
+28108 pts/8 T 0:01 ./forks 17
+28109 pts/8 R+ 0:00 ps w
+bluefish> fg
+./forks 17
+<types ctrl-c>
+bluefish> ps w
+PID TTY STAT TIME COMMAND
+27699 pts/8 Ss 0:00 -tcsh
+28110 pts/8 R+ 0:00 ps w
+```
+
+#### kill Function
+
+```c
+void fork12() {
+  pid_t pid[N];
+  int i;
+  int child_status;
+
+  for (i = 0; i < N; i++)
+    if ((pid[i] = fork()) == 0) {
+      /* Child: Infinite Loop */
+      while(1)
+        ;
+    }
+
+  for (i = 0; i < N; i++) {
+    printf("Killing process %d\n", pid[i]);
+    kill(pid[i], SIGINT);
+  }
+
+  for (i = 0; i < N; i++) {
+    pid_t wpid = wait(&child_status);
+    if (WIFEXITED(child_status))
+      printf("Child %d terminated with exit status %d\n", wpid, WEXITSTATUS(child_status));
+    else
+      printf("Child %d terminated abnormally\n", wpid);
+  }
+}
+```
+
+### Receiving Signals
+
+- Suppose kernel is returning from an exception handler and is ready to pass control to process $p$
+
+:::important
+All context switches are initiated by calling some exception handler.
+:::
+
+- Kernel computes `pnb = pending & ~blocked`
+  - The set of pending nonblocked signals for process $p$
+- If `pnb == 0`
+  - Pass control to next instruction in the logical flow for $p$
+- Else
+  - Choose least nonzero bit $k$ in `pnb` and force process $p$ to receive signal $k$
+  - The receipt of the signal triggers some _action_ by $p$
+  - Repeat for all nonzero $k$ in `pnb`
+  - Pass control to next instruction in logical flow for $p$
+
+#### Default Actions
+
+- Each signal type has a predefined default ac)on, which is one of:
+  - The process terminates
+  - The process terminates and dumps core
+  - The process stops until restarted by a SIGCONT signal
+  - The process ignores the signal
+
+### Installing Signal Handlers
+
+- The signal function modifies the default action associated with the receipt of signal `signum`:
+  - `handler_t *signal(int signum, handler_t *handler)`
+- Different values for handler:
+  - `SIG_IGN`: Ignore signals of type **signum**
+  - `SIG_DFL`: Revert to the default action on receipt of signals of type **signum**
+  - Otherwise, `handler` is the address of a user-level _signal handler_
+    - Called when process receives signal of type **signum**
+    - Referred to as _"installing"_ the handler
+    - Executing handler is called _"catching"_ or _"handling"_ the signal
+    - When the handler executes its return statement, control passes back to instruction in the control flow of the process that was interrupted by receipt of the signal
+
+```c
+/* SIGINT handler */
+void sigint_handler(int sig) {
+  printf("So you think you can stop the bomb with ctrl-c, do you?\n");
+  sleep(2);
+  printf("Well...");
+  fflush(stdout);
+  sleep(1);
+  printf("OK. :-)\n");
+  exit(0);
+}
+
+int main() {
+  /* Install the SIGINT handler */
+  if (signal(SIGINT, sigint_handler) == SIG_ERR)
+    unix_error("signal error");
+
+  /* Wait for the receipt of a signal */
+  pause();
+
+  return 0;
+}
+```
+
+### Signals Handlers as Concurrent Flows
+
+- A signal handler is a separate logical flow (not process) that runs concurrently with the main program
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.67xru5q4nt.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5fkwcfa6bb.avif" alt="" />
+</center>
+
+### Nested Signal Handlers
+
+- Handlers can be interrupted by other handlers
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6m47l103is.avif" alt="" />
+</center>
+
+### Blocking and Unblocking Signals
+
+- Implicit blocking mechanism
+  - Kernel blocks any pending signals of type currently being handled
+  - E.g., A SIGINT handler can't be interrupted by another SIGINT
+- Explicit blocking and unblocking mechanism
+  - `sigprocmask` function
+- Supporting functions
+  - `sigemptyset` – Create empty set
+  - `sigfillset` – Add every signal number to set
+  - `sigaddset` – Add signal number to set
+  - `sigdelset` – Delete signal number from set
+
+#### Temporarily Blocking Signals
+
+```c
+sigset_t mask, prev_mask;
+
+sigemptyset(&mask);
+sigaddset(&mask, SIGINT);
+
+/* Block SIGINT and save previous blocked set */
+sigprocmask(SIG_BLOCK, &mask, &prev_mask);!
+
+/* Code region that will not be interrupted by SIGINT */
+
+/* Restore previous blocked set, unblocking SIGINT */
+sigprocmask(SIG_SETMASK, &prev_mask, NULL);
+```
+
+### Safe Signal Handling Guidelines
+
+Handlers are tricky because they are concurrent with main program and share the same global data structures. Shared data structures can become corrupted.
+
+- G0: Keep your handlers as simple as possible
+  - E.g., Set a global flag and return
+- G1: Call only async-signal-safe functions in your handlers
+  - `printf`, `sprintf`, `malloc`, and `exit` are not safe !
+- G2: Save and restore `errno` on entry and exit
+  - So that other handlers don't overwrite your value of **errno**
+- G3: Protect accesses to shared data structures by temporarily blocking all signals
+  - To prevent possible corruption
+- G4: Declare global variables as `volatile`
+  - To prevent compiler from storing them in a register
+- G5: Declare global flags as `volatile sig_atomic_t`
+  - flag: variable that is only read or written (e.g. `flag = 1`, not `flag++`)
+  - Flag declared this way does not need to be protected like other globals
+
+#### Async-Signal-Safety
+
+- Function is async-signal-safe if either reentrant (e.g., all variables stored on stack frame) or non-interruptible by signals
+- Posix guarantees 117 functions to be async-signal-safe
+  - Source: `man 7 signal`
+  - Popular functions on the list:
+    - `_exit`, `write`, `wait`, `waitpid`, `sleep`, `kill`
+  - Popular functions that are not on the list:
+    - `printf`, `sprintf`, `malloc`, `exit`
+    - Unfortunate fact: `write` is the only async-signal-safe output function
+
+#### Correct Signal Handling Example
+
+You can't use signals to count events, such as children terminating.
+
+```c
+#define N 5
+
+int ccount = 0;
+
+void child_handler(int sig) {
+  int olderrno = errno;
+  pid_t pid;
+
+  if ((pid = wait(NULL)) < 0)
+    Sio_error("wait error");
+
+  ccount--;
+  Sio_puts("Handler reaped child ");
+  Sio_putl((long)pid);
+  Sio_puts(" \n");
+  sleep(1);
+  errno = olderrno;
+}
+
+void fork14() {
+  pid_t pid[N];
+  int i;
+  ccount = N;
+
+  signal(SIGCHLD, child_handler);
+
+  for (i = 0; i < N; i++) {
+    if ((pid[i] = fork()) == 0) {
+      sleep(1);
+      exit(0); /* Child exits */
+    }
+  }
+
+  while (ccount > 0) /* Parent spins */
+    ;
+}
+```
+
+```bash
+whaleshark> ./forks 14
+Handler reaped child 23240
+Handler reaped child 23241
+```
+
+Must wait for all terminated child processes. Put `wait` in a loop to reap all terminated children.
+
+```c
+void child_handler2(int sig) {
+  int olderrno = errno;
+  pid_t pid;
+
+  while ((pid = wait(NULL)) > 0) {
+    ccount--;
+    Sio_puts("Handler reaped child ");
+    Sio_putl((long)pid);
+    Sio_puts(" \n");
+  }
+  if (errno != ECHILD)
+    Sio_error("wait error");
+  errno = olderrno;
+}
+```
+
+```bash
+whaleshark> ./forks 15
+Handler reaped child 23246
+Handler reaped child 23247
+Handler reaped child 23248
+Handler reaped child 23249
+Handler reaped child 23250
+whaleshark>
+```
+
+### Portable Signal Handling
+
+- Ugh ! Different versions of Unix can have different signal handling semantics
+  - Some older systems restore action to default after catching signal
+  - Some interrupted system calls can return with `errno == EINTR`
+  - Some systems don't block signals of the type being handled
+- Solution: `sigaction`
+
+```c
+handler_t *signal(int signum, handler_t *handler) {
+  struct sigaction action, old_action;
+
+  action.sa_handler = handler;
+  sigemptyset(&action.sa_mask); /* Block sigs of type being handled */
+  action.sa_flags = SA_RESTART; /* Restart syscalls if possible */
+
+  if (sigaction(signum, &action, &old_action) < 0)
+    unix_error("Signal error");
+  return (old_action.sa_handler);
+}
+```
+
+### Synchronizing Flows to Avoid Races
+
+- Simple shell with a subtle synchronization error because it assumes parent runs before child
+
+```c
+int main(int argc, char **argv) {
+  int pid;
+  sigset_t mask_all, prev_all;
+
+  sigfillset(&mask_all);
+  signal(SIGCHLD, handler);
+  initjobs(); /* Initialize the job list */
+
+  while (1) {
+    if ((pid = Fork()) == 0) { /* Child */
+      execve("/bin/date", argv, NULL);
+    }
+    sigprocmask(SIG_BLOCK, &mask_all, &prev_all); /* Parent */
+    addjob(pid); /* Add the child to the job list */
+    sigprocmask(SIG_SETMASK, &prev_all, NULL);
+  }
+  exit(0);
+}
+```
+
+```c
+void handler(int sig) {
+  int olderrno = errno;
+  sigset_t mask_all, prev_all;
+  pid_t pid;
+
+  sigfillset(&mask_all);
+  while ((pid = waitpid(-1, NULL, 0)) > 0) { /* Reap child */
+    sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
+    deletejob(pid); /* Delete the child from the job list */
+    sigprocmask(SIG_SETMASK, &prev_all, NULL);
+  }
+  if (errno != ECHILD)
+    Sio_error("waitpid error");
+  errno = olderrno;
+}
+```
+
+#### Corrected Shell Program without Race
+
+```c
+int main(int argc, char **argv) {
+  int pid;
+  sigset_t mask_all, mask_one, prev_one;
+
+  sigfillset(&mask_all);
+  sigemptyset(&mask_one);
+  sigaddset(&mask_one, SIGCHLD);
+  signal(SIGCHLD, handler);
+  initjobs(); /* Initialize the job list */
+
+  while (1) {
+    sigprocmask(SIG_BLOCK, &mask_one, &prev_one); /* Block SIGCHLD */
+    if ((pid = Fork()) == 0) { /* Child process */
+      sigprocmask(SIG_SETMASK, &prev_one, NULL); /* Unblock SIGCHLD */
+      execve("/bin/date", argv, NULL);
+    }
+    sigprocmask(SIG_BLOCK, &mask_all, NULL); /* Parent process */
+    addjob(pid); /* Add the child to the job list */
+    sigprocmask(SIG_SETMASK, &prev_one, NULL); /* Unblock SIGCHLD */
+  }
+  exit(0);
+}
+```
+
+### Explicitly Waiting for Signals
+
+- Handlers for program explicitly waiting for SIGCHLD to arrive
+
+```c
+volatile sig_atomic_t pid;
+
+void sigchld_handler(int s) {
+  int olderrno = errno;
+  pid = waitpid(-1, NULL, 0); /* Main is waiting for nonzero pid */
+  errno = olderrno;
+}
+
+void sigint_handler(int s) {}
+```
+
+Similar to a shell waiting for a foreground job to terminate:
+
+```c
+int main(int argc, char **argv) {
+  sigset_t mask, prev;
+
+  signal(SIGCHLD, sigchld_handler);
+  signal(SIGINT, sigint_handler);
+  sigemptyset(&mask);
+  sigaddset(&mask, SIGCHLD);
+
+  while (1) {
+    sigprocmask(SIG_BLOCK, &mask, &prev); /* Block SIGCHLD */
+    if (fork() == 0) /* Child */
+      exit(0);
+
+    /* Parent */
+    pid = 0;
+    sigprocmask(SIG_SETMASK, &prev, NULL); /* Unblock SIGCHLD */
+
+    /* Wait for SIGCHLD to be received (wasteful!) */
+    while (!pid)
+      ;
+
+    /* Do some work after receiving SIGCHLD */
+    printf(".");
+  }
+  exit(0);
+}
+```
+
+- Program is correct, but very wasteful
+
+Other options:
+
+```c
+while (!pid) /* Race! */
+  pause();
+```
+
+```c
+while (!pid) /* Too slow! */
+  sleep(1);
+```
+
+- Solution: `sigsuspend`
+
+### Waiting for Signals with sigsuspend
+
+- `int sigsuspend(const sigset_t *mask)`
+
+Equivalent to atomic (uninterruptable) version of:
+
+```c
+sigprocmask(SIG_BLOCK, &mask, &prev);
+pause();
+sigprocmask(SIG_SETMASK, &prev, NULL);
+```
+
+```c
+int main(int argc, char **argv) {
+  sigset_t mask, prev;
+
+  signal(SIGCHLD, sigchld_handler);
+  signal(SIGINT, sigint_handler);
+  sigemptyset(&mask);
+  sigaddset(&mask, SIGCHLD);
+
+  while (1) {
+    sigprocmask(SIG_BLOCK, &mask, &prev); /* Block SIGCHLD */
+    if (fork() == 0) /* Child */
+      exit(0);
+
+    /* Wait for SIGCHLD to be received */
+    pid = 0;
+    while (!pid)
+      sigsuspend(&prev);
+
+    /* Optionally unblock SIGCHLD */
+    sigprocmask(SIG_SETMASK, &prev, NULL);
+    /* Do some work after receiving SIGCHLD */
+    printf(".");
+  }
+  exit(0);
+}
+```
 
 # References
 

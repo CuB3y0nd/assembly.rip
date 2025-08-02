@@ -479,7 +479,7 @@ if __name__ == "__main__":
 
 Jesus, its a Rust Pwn challenge! 迎接地狱难度的逆向分析吧。
 
-先运行看看，感觉一下程序的基本逻辑：
+先运行看看，感受一下程序的基本逻辑：
 
 <center>
   <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2yynw63u8w.avif" alt="" />
