@@ -21,7 +21,7 @@ const postsCollection = defineCollection({
 });
 
 const specCollection = defineCollection({
-	schema: z.object({}).partial(),
+	schema: z.object({}),
 });
 
 export const collections = {
