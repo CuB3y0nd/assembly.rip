@@ -3427,7 +3427,7 @@ void fork11() {
   <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.102h4pubgz.avif" alt="" />
 </center>
 
-## Signals and Nonlocal Jumps
+## Signals
 
 ### Linux Process Hierarchy
 
@@ -4051,14 +4051,7 @@ while (!pid) /* Too slow! */
 ### Waiting for Signals with sigsuspend
 
 - `int sigsuspend(const sigset_t *mask)`
-
-Equivalent to atomic (uninterruptable) version of:
-
-```c
-sigprocmask(SIG_BLOCK, &mask, &prev);
-pause();
-sigprocmask(SIG_SETMASK, &prev, NULL);
-```
+  - It'll temporarily use `const sigset_t *mask` instead of currently signal block mask, then hang on program. Once catch signal, revert the signal block mask to original one
 
 ```c
 int main(int argc, char **argv) {
@@ -4087,6 +4080,154 @@ int main(int argc, char **argv) {
   exit(0);
 }
 ```
+
+## Nonlocal Jumps
+
+- Powerful (but dangerous) user-level mechanism for transferring control to an arbitrary location
+
+  - Controlled to way to break the procedure call / return discipline
+  - Useful for error recovery and signal handling
+
+- `int setjmp(jmp_buf buf)`
+  - Must be called before **longjmp**
+  - Identifies a return site for a subsequent **longjmp**
+  - Called once, returns one or more times
+  - Implementation:
+    - Remember where you are by storing the current _register context_, _stack pointer_, and _PC_ value in `buf`
+    - Return `0`
+- `int sigsetjmp(sigjmp_buf buf, int save);`
+  - Similar as **setjmp**, `save` indicates whether save signal block mask (can only be `0` (don't save) or `1` (save))
+- `void longjmp(jmp_buf buf, int val)`
+  - Meaning:
+    - return from the **setjmp** remembered by jump buffer `buf` again...
+    - ...this time returning `val` instead of `0` (if `val` is `0`, force return `1`)
+  - Called after **setjmp**
+  - Called once, but never returns
+  - Implementation:
+    - Restore _register context_, _stack pointer_, _base pointer_, _PC_ value from jump buffer `buf`
+    - Set **%eax** to `val`
+    - Jump to the location indicated by the _PC_ stored in jump buf `buf`
+- `void siglongjmp(sigjmp_buf buf, int val);`
+  - Same as **longjmp**, just using with **sigsetjmp**
+
+### setjmp/longjmp Example
+
+- Goal: return directly to original caller from a deeply-nested function
+
+```c
+jmp_buf buf;
+
+int error1 = 0;
+int error2 = 1;
+
+void foo(void), bar(void);
+
+int main() {
+  switch(setjmp(buf)) {
+  case 0:
+    foo();
+    break;
+  case 1:
+    printf("Detected an error1 condition in foo\n");
+    break;
+  case 2:
+    printf("Detected an error2 condition in foo\n");
+    break;
+  default:
+    printf("Unknown error condition in foo\n");
+  }
+  exit(0);
+}
+
+/* Deeply nested function foo */
+void foo(void) {
+  if (error1)
+    longjmp(buf, 1);
+  bar();
+}
+
+void bar(void) {
+  if (error2)
+    longjmp(buf, 2);
+}
+
+// Output: Detected an error2 condition in foo
+```
+
+### sigsetjmp/siglongjmp Example
+
+This program restarts itself when Ctrl-C'd:
+
+```c
+sigjmp_buf buf;
+
+void handler(int sig) {
+  siglongjmp(buf, 1);
+}
+
+int main() {
+  if (!sigsetjmp(buf, 1)) {
+    signal(SIGINT, handler);
+    Sio_puts("starting\n");
+  }
+  else
+    Sio_puts("restarting\n");
+
+  while(1) {
+    sleep(1);
+    Sio_puts("processing...\n");
+  }
+  exit(0); /* Control never reaches here */
+}
+```
+
+### Limitations of Nonlocal Jumps
+
+- Works within stack discipline
+  - Can only long jump to environment of function that has been called but not yet completed
+
+```c
+jmp_buf env;
+
+P1() {
+  if (setjmp(env)) {
+    /* Long Jump to here */
+  } else {
+    P2();
+  }
+}
+P2() { . . . P2(); . . . P3(); }
+P3() {
+  longjmp(env, 1);
+}
+```
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1lc4v4zquz.avif" alt="" />
+</center>
+
+```c
+jmp_buf env;
+
+P1() {
+  P2();
+  P3();
+}
+
+P2() {
+  if (setjmp(env)) {
+    /* Long Jump to here */
+  }
+}
+
+P3() {
+  longjmp(env, 1);
+}
+```
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5j4ibtsb04.avif" alt="" />
+</center>
 
 # References
 
