@@ -1,7 +1,7 @@
 ---
 title: "The CSAPP Notebook"
 published: 2025-07-16
-updated: 2025-08-03
+updated: 2025-08-05
 description: "CMU 15213/15513 CSAPP learning notes."
 image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.23262tnnad.avif"
 tags: ["CSAPP", "Notes"]
@@ -4228,6 +4228,387 @@ P3() {
 <center>
   <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5j4ibtsb04.avif" alt="" />
 </center>
+
+# System-Level I/O
+
+## Unix I/O
+
+- A Linux file is a sequence of _m_ bytes
+- All I/O devices are represented as files
+- Even the kernel is represented as a file
+  - `/boot/vmlinuz-3.13.0-55-generic`: kernel image
+  - `/proc`: kernel data structures
+
+## File Types
+
+- Each file has a type indicating its role in the system
+  - Regular file: Contains arbitrary data
+  - Directory: Index for a related group of files
+  - Socket: For communicating with a process on another machine
+- And more file types...
+  - Named pipes (FIFOs)
+  - Symbolic links
+  - Character and block devices
+  - ...
+
+### Regular Files
+
+- A regular file contains arbitrary data
+- Applications open distinguish between text files and binary files
+  - Text files are regular files with only ASCII or Unicode characters
+  - Binary files are everything else
+    - e.g., object files, JPEG images
+  - Kernel doesn't know the difference !
+- Text file is sequence of text lines
+  - Text line is sequence of chars terminated by newline char `\n`
+    - Newline is `0x0a`, same as ASCII line feed character LF
+- End Of Line (EOL) indicators in different systems:
+  - Linux and Mac OS: `\n` (`0x0a`)
+    - Line Feed (LF)
+  - Windows and Internet protocols: `\r\n` (`0x0d` `0x0a`)
+    - Carriage return (CR) followed by line feed (LF)
+
+### Directories
+
+- Directory consists of an array of links
+  - Each link maps a filename to a file
+- Each directory contains at least two entries
+  - `.` (dot) is a link to itself
+  - `..` (dot dot) is a link to the parent directory
+
+#### Directory Hierarchy
+
+- All files are organized as a hierarchy anchored by root directory named `/` (slash)
+- Kernel maintains current working directory (cwd) for each process
+
+### Opening Files
+
+- Opening a file informs the kernel that you are getting ready to access that file
+
+```c
+int fd; /* file descriptor */
+
+if ((fd = open("/etc/hosts", O_RDONLY)) < 0) {
+  perror("open");
+  exit(1);
+}
+```
+
+- Returns a small identifying integer _file descriptor_
+  - `fd == -1` indicates that an error occurred
+- Each process created by a linux shell begins life with three open files associated with a terminal:
+  - `0`: standard input (`stdin`)
+  - `1`: standard output (`stdout`)
+  - `2`: standard error (`stderr`)
+
+### Closing Files
+
+- Closing a file informs the kernel that you are finished accessing that file
+
+```c
+int fd;     /* file descriptor */
+int retval; /* return value */
+
+if ((retval = close(fd)) < 0) {
+  perror("close");
+  exit(1);
+}
+```
+
+- Closing an already closed file is a recipe for disaster in threaded programs
+- Moral: Always check return codes, even for seemingly benign functions such as `close()`
+
+### Reading Files
+
+- Reading a file copies bytes from the current file position to memory, and then updates file position
+
+```c
+char buf[512];
+int fd;     /* file descriptor */
+int nbytes; /* number of bytes read */
+
+/* Open file fd ... */
+/* Then read up to 512 bytes from file fd */
+if ((nbytes = read(fd, buf, sizeof(buf))) < 0) {
+  perror("read");
+  exit(1);
+}
+```
+
+- Returns number of bytes read from file _fd_ into _buf_
+
+### Writing Files
+
+- Writing a file copies bytes from memory to the current file position, and then updates current file position
+
+```c
+char buf[512];
+int fd;     /* file descriptor */
+int nbytes; /* number of bytes read */
+
+/* Open the file fd ... */
+/* Then write up to 512 bytes from buf to file fd */
+if ((nbytes = write(fd, buf, sizeof(buf)) < 0) {
+  perror("write");
+  exit(1);
+}
+```
+
+- Returns number of bytes written from _buf_ to file _fd_
+
+### Short Counts
+
+- Short counts can occur in these situations:
+  - Encountering (end-of-file) EOF on reads
+  - Reading text lines from a terminal
+  - Reading and writing network sockets
+- Short counts never occur in these situations:
+  - Reading from disk files (except for EOF)
+  - Writing to disk files
+- Best practice is to always allow for short counts
+
+```c
+ssize_t readn(int fd, void *buf, size_t size) {
+  char *ptr = buf;
+  size_t nleft = size;
+  ssize_t nread;
+
+  while (nleft > 0) {
+    nread = read(fd, ptr, nleft);
+
+    if (nread < 0)
+      return -1; // error
+    if (nread == 0)
+      break; // EOF
+
+    nleft -= nread;
+    ptr += nread;
+  }
+
+  return (size - nleft);
+}
+```
+
+## Buffered I/O
+
+### Motivation
+
+- Applications open read/write one character at a time
+  - Read line of text one character at a time, stopping at newline
+- Implementing as Unix I/O calls expensive
+  - `read` and `write` require Unix kernel calls
+    - $> 10000$ clock cycles
+- Solution: Buffered read
+  - Use Unix _read_ to grab block of bytes
+  - User input functions take one byte at a time from buffer
+    - Refill buffer when empty
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.32i9yxiff2.avif" alt="" />
+</center>
+
+### Example
+
+- Goal: Copying `stdin` to `stdout`, one byte at a time
+
+#### Without builtin buffer
+
+```c
+int main() {
+  char c;
+  while (read(STDIN_FILENO, &c, sizeof(char)))
+    write(STDOUT_FILENO, &c, sizeof(char));
+
+  return 0;
+}
+```
+
+- To many `read` system calls, wasteful !
+
+#### With builtin buffer
+
+```c
+#define BUFFER_SIZE 1024
+
+ssize_t buffered_getchar(int fd, char *c) {
+  static char buf[BUFFER_SIZE];
+  static size_t size = 0;
+  static size_t pos = 0;
+
+  if (pos >= size) {
+    size = read(fd, buf, BUFFER_SIZE);
+
+    if (size <= 0) {
+      return -1; // EOF or error
+    }
+    pos = 0;
+  }
+  *c = buf[pos++];
+
+  return 1; // success got 1 character
+}
+```
+
+- Only one `read` system call.
+
+## Metadata, Sharing, and Redirection
+
+### File Metadata
+
+- Metadata is data about data, in this case file data
+- Per-file metadata maintained by kernel
+  - Accessed by users with the `stat` and `fstat` functions
+
+```c
+/* Metadata returned by the stat and fstat functions */
+struct stat {
+  dev_t st_dev;             /* Device */
+  ino_t st_ino;             /* inode */
+  mode_t st_mode;           /* Protection and file type */
+  nlink_t st_nlink;         /* Number of hard links */
+  uid_t st_uid;             /* User ID of owner */
+  gid_t st_gid;             /* Group ID of owner */
+  dev_t st_rdev;            /* Device type (if inode device) */
+  off_t st_size;            /* Total size, in bytes */
+  unsigned long st_blksize; /* Blocksize for filesystem I/O */
+  unsigned long st_blocks;  /* Number of blocks allocated */
+  time_t st_atime;          /* Time of last access */
+  time_t st_mtime;          /* Time of last modification */
+  time_t st_ctime;          /* Time of last change */
+};
+```
+
+#### Example of Accessing Metadata
+
+```c
+int main(int argc, char **argv) {
+  struct stat file_stat;
+  char *type, *readok;
+
+  stat(argv[1], &file_stat);
+
+  if (S_ISREG(file_stat.st_mode))    /* Determine file type */
+    type = "regular";
+  else if (S_ISDIR(file_stat.st_mode))
+    type = "directory";
+  else
+    type = "other";
+  if ((file_stat.st_mode & S_IRUSR)) /* Check read access */
+    readok = "yes";
+  else
+    readok = "no";
+
+  printf("type: %s, read: %s\n", type, readok);
+  exit(0);
+}
+```
+
+### Represents Open Files
+
+- Two descriptors referencing two distinct open files. Descriptor 1 (stdout) points to terminal, and descriptor 4 points to open disk file
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.77dvalgr0d.avif" alt="" />
+</center>
+
+### File Sharing
+
+- Two distinct descriptors sharing the same disk file through two distinct open file table entries
+  - E.g., Calling open twice with the same filename argument
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6t7fjqff22.avif" alt="" />
+</center>
+
+### Processes Share Files: fork
+
+- A child process inherits its parent's open files
+  - Note: situation unchanged by exec functions (use `fcntl` to change)
+
+Before fork call:
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5fkwfp776w.avif" alt="" />
+</center>
+
+After fork call:
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5q7q8unvle.avif" alt="" />
+</center>
+
+- Child's table same as parent's, and +1 to each refcnt
+
+### I/O Redirection
+
+- `dup2(oldfd, newfd)`
+  - Copies (per-process) descriptor table entry `oldfd` to entry `newfd`
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.b97qg02me.avif" alt="" />
+</center>
+
+#### Example
+
+- Open file to which stdout should be redirected
+  - Happens in child executing shell code, before `exec`
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5fkwfp776w.avif" alt="" />
+</center>
+
+- Call `dup2(4,1)`
+  - Cause fd=1 (stdout) to refer to disk file pointed at by fd=4
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.64e5zqr4gh.avif" alt="" />
+</center>
+
+## Standard I/O
+
+### Standard I/O Streams
+
+- Standard I/O models open files as streams
+  - Abstraction for a file descriptor and a buffer in memory
+- C programs begin life with three open streams (defined in `stdio.h`)
+  - `stdin`: standard input
+  - `stdout`: standard output
+  - `stderr`: standard error
+
+```c
+#include <stdio.h>
+
+extern FILE *stdin;  /* standard input (descriptor 0) */
+extern FILE *stdout; /* standard output (descriptor 1) */
+extern FILE *stderr; /* standard error (descriptor 2) */
+
+int main() {
+  fprintf(stdout, "Hello, world\n");
+}
+```
+
+### Buffering in Standard I/O
+
+- Standard I/O functions use buffered I/O
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.86tyo7q78o.avif" alt="" />
+</center>
+
+```c
+int main() {
+  printf("h");
+  printf("e");
+  printf("l");
+  printf("l");
+  printf("o");
+  printf("\n");
+  fflush(stdout);
+  exit(0);
+}
+```
+
+- Buffer flushed to output fd on `\n`, call to `fflush` or `exit`, or `return` from main
 
 # References
 
