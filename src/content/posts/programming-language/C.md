@@ -1,7 +1,7 @@
 ---
 title: "The C Notebook"
 published: 2025-07-17
-updated: 2025-07-18
+updated: 2025-08-06
 description: "The C Programming Language learning notes."
 tags: ["C", "Notes"]
 category: "Notes"
@@ -565,3 +565,49 @@ typedef union Color {
 Only 4 bytes are used. And, unlike in 99% of scenarios, it makes sense to both set and get values from this union through both the `components` and `rgba` fields! Both fields in the union are exactly 32 bits in size, which means that we can "safely" (?) access the entire set of colors through the `.rgba` field, or get a single color component through the `.components` field.
 
 The convenience of additional fields, with the efficiency of a single memory location!
+
+# Memory-Related Perils and Pitfalls
+
+- Dereferencing bad pointers
+- Reading uninitialized memory
+- Overwriting memory
+- Referencing nonexistent variables
+- Freeing blocks multiple times
+- Referencing freed blocks
+- Failing to free blocks
+
+## Operators Precedence
+
+| Operators                                                          | Associativity |
+| ------------------------------------------------------------------ | ------------- |
+| `()`, `[]`, `->`, `.`                                              | left to right |
+| `!`, `~`, `++`, `--`, `+`, `-`, `*`, `&`, `(type)`, `sizeof`       | right to left |
+| `*` `/`, `%`                                                       | left to right |
+| `+`, `-`                                                           | left to right |
+| `<<`, `>>`                                                         | left to right |
+| `<`, `<=`, `>`, `>=`                                               | left to right |
+| `==`, `!=`                                                         | left to right |
+| `&`                                                                | left to right |
+| `^`                                                                | left to right |
+| `\|`                                                               | left to right |
+| `&&`                                                               | left to right |
+| `\|\|`                                                             | left to right |
+| `?:`                                                               | right to left |
+| `=`, `+=`, `-=`, `*=`, `/=`, `%=`, `&=`, `^=`, `\|=`, `<<=`, `>>=` | right to left |
+| `,`                                                                | left to right |
+
+:::important
+Unary `+`, `-`, and `*` have higher precedence than binary forms.
+:::
+
+## Pointer Declarations Quiz
+
+- `int *p`: **p** is a pointer to **int**
+- `int *p[13]`: **p** is an **array[13]** of pointer to **int**
+- `int *(p[13])`: **p** is an **array[13]** of pointer to **int**
+- `int **p`: **p** is a pointer to a pointer to an **int**
+- `int (*p)[13]`: **p** is a pointer to an **array[13]** of **int**
+- `int *f()`: **f** is a function returning a pointer to **int**
+- `int (*f)()`: **f** is a pointer to a function returning **int**
+- `int (*(*f())[13])()`: **f** is a function returning pointer to an **array[13]** of pointers to functions returning **int**
+- `int (*(*x[3])())[5]`: **x** is an **array[3]** of pointers to functions returning pointers to **array[5]** of **int**s

@@ -4556,7 +4556,7 @@ void free_block(ptr p) {
 - Internal fragmentation
 - **malloc**'d blocks don't need the footer tag
 
-### Implicit Lists Summary
+#### Implicit Lists Summary
 
 - Implementation: very simple
 - Allocate cost:
@@ -4571,10 +4571,147 @@ void free_block(ptr p) {
   - Used in many special purpose applications
 - However, the concepts of splitting and boundary tag coalescing are general to all allocators
 
+### Explicit List
+
+#### Explicit Free Lists
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.sz9hl07hh.avif" alt="" />
+</center>
+
+- Maintain list(s) of free blocks, not all blocks
+
+  - The "next" free block could be anywhere
+    - So we need to store forward/back pointers, not just sizes
+  - Still need boundary tags for coalescing
+  - Luckily we track only free blocks, so we can use payload area
+
+- Logically
+
+<center>
+<img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9rjpptl2pw.avif" alt="" />
+</center>
+
+- Physically
+  - Blocks can be in any order
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.96a23irl8y.avif" alt="" />
+</center>
+
+#### Allocating From Explicit Free Lists
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.96a23iucj4.avif" alt="" />
+</center>
+
+#### Freeing With Explicit Free Lists
+
+- Insertion policy
+  - LIFO (last-in-first-out) policy
+    - Insert freed block at the beginning of the free list
+    - Pro: Simple and constant time
+    - Con: Studies suggest fragmentation is worse than address ordered
+  - Address-ordered policy
+    - Insert freed blocks so that free list blocks are always in address order: _addr(prev) < addr(curr) < addr(next)_
+    - Pro: Studies suggest fragmentation is lower than LIFO
+    - Con: Requires search
+
+##### Freeing With a LIFO Policy (Case 1)
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.39lhwikezf.avif" alt="" />
+</center>
+
+- Insert the freed block at the root of the list
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8s3mcnt6bl.avif" alt="" />
+</center>
+
+##### Freeing With a LIFO Policy (Case 2)
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6pntolx1mb.avif" alt="" />
+</center>
+
+- Splice out successor block, coalesce both memory blocks and insert the new block at the root of the list
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5fkwiagcfc.avif" alt="" />
+</center>
+
+##### Freeing With a LIFO Policy (Case 3)
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.45zxljzf4.avif" alt="" />
+</center>
+
+- Splice out predecessor block, coalesce both memory blocks, and insert the new block at the root of the list
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6bhdxrgljf.avif" alt="" />
+</center>
+
+##### Freeing With a LIFO Policy (Case 4)
+
+<cneter>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.51egrg0by7.avif" alt="" />
+</cneter>
+
+- Splice out predecessor and successor blocks, coalesce all 3 memory blocks and insert the new block at the root of the list
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2vf25o9gb5.avif" alt="" />
+</center>
+
+#### Explicit List Summary
+
+- Comparison to implicit list:
+  - Allocate is linear time in number of free blocks instead of all blocks
+    - Much faster when most of the memory is full
+  - Slightly more complicated allocate and free since needs to splice blocks in and out of the list
+  - Some extra space for the links (2 extra words needed for each block)
+- Most common use of linked lists is in conjunction with segregated free lists
+  - Keep multiple linked lists of different size classes, or possibly for different types of objects
+
+### Segregated Free List
+
+- Each _size class_ of blocks has its own free list
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.lw1m8ofkw.avif" alt="" />
+</center>
+
+- Often have separate classes for each small size
+- For larger sizes: One class for each two-power size
+
+#### Seglist Allocator
+
+- Given an array of free lists, each one for some size class
+- To allocate a block of size _n_:
+  - Search appropriate free list for block of size _m > n_
+  - If an appropriate block is found:
+    - Split block and place fragment on appropriate list (optional)
+  - If no block is found, try next larger class
+  - Repeat until block is found
+- If no block is found:
+  - Request additional heap memory from OS (using `sbrk()`)
+  - Allocate block of _n_ bytes from this new memory
+  - Place remainder as a single free block in largest size class
+- To free a block:
+  - Coalesce and place on appropriate list
+- Advantages of seglist allocators
+  - Higher throughput
+    - log time for power-of-two size classes
+  - Better memory utilization
+    - First-fit search of segregated free list approximates a best-fit search of entire heap
+    - Extreme case: Giving each block its own size class is equivalent to best-fit
+
 ## Summary of Key Allocator Policies
 
 - Placement policy
-  - First-fit, next-fit, best-fit, etc.
+  - First-fit, next-fit, best-fit, etc
   - Trades off lower throughput for less fragmentation
   - Interesting observation: segregated free lists
     - Approximate a best fit placement policy without having to search entire free list
@@ -4582,10 +4719,135 @@ void free_block(ptr p) {
   - When do we go ahead and split free blocks ?
   - How much internal fragmentation are we willing to tolerate ?
 - Coalescing policy
-  - Immediate coalescing: coalesce each time free is called
-  - Deferred coalescing: try to improve performance of free by deferring coalescing until needed. Examples:
+  - Immediate coalescing: Coalesce each time free is called
+  - Deferred coalescing: Try to improve performance of free by deferring coalescing until needed. Examples:
     - Coalesce as you scan the free list for **malloc**
     - Coalesce when the amount of external fragmentation reaches some threshold
+
+## Garbage Collection
+
+- Automatic reclamation of heap-allocated storage -- application never has to free
+
+```c
+void foo() {
+  int *p = malloc(128);
+  return; /* p block is now garbage */
+}
+```
+
+- Common in many dynamic languages:
+  - Python, Ruby, Java, Perl, ML, Lisp, Mathematica
+- Variants ("conservative" garbage collectors) exist for C and C++
+
+  - However, cannot necessarily collect all garbage
+
+- How does the memory manager know when memory can be freed ?
+  - In general we cannot know what is going to be used in the future since it depends on conditionals
+  - But we can tell that certain blocks cannot be used if there are no pointers to them
+- Must make certain assumptions about pointers
+  - Memory manager can distinguish pointers from non-pointers
+  - All pointers point to the start of a block
+  - Cannot hide pointers (e.g., by coercing them to an **int**, and then back again)
+
+### Classical GC Algorithms
+
+- Mark-and-sweep collection (McCarthy, 1960)
+  - Does not move blocks (unless you also "compact")
+- Reference counting (Collins, 1960)
+  - Does not move blocks
+- Copying collection (Minsky, 1963)
+  - Moves blocks
+- Generational Collectors (Lieberman and Hewitt, 1983)
+  - Collection based on lifetimes
+    - Most allocations become garbage very soon
+    - So focus reclamation work on zones of memory recently allocated
+
+### Memory as a Graph
+
+- We view memory as a directed graph
+  - Each block is a node in the graph
+  - Each pointer is an edge in the graph
+  - Locations not in the heap that contain pointers into the heap are called _root_ nodes (e.g. registers, locations on the stack, global variables)
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5mo4du972h.avif" alt="" />
+</center>
+
+- A node (block) is _reachable_ if there is a path from any root to that node
+- Non-reachable nodes are _garbage_ (cannot be needed by the application)
+
+### Mark and Sweep Collecting
+
+- Can build on top of **malloc**/**free** package
+  - Allocate using **malloc** until you "run out of space"
+- When out of space:
+  - Use extra _mark bit_ in the head of each block
+  - Mark: Start at roots and set mark bit on each reachable block
+  - Sweep: Scan all blocks and free blocks that are not marked
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.77dvdbc32w.avif" alt="" />
+</center>
+
+### Assumptions For a Simple Implementation
+
+- Application
+  - `new(n)`: returns pointer to new block with all locations cleared
+  - `read(b, i)`: read location `i` of block `b` into register
+  - `write(b, i, v)`: write `v` into location `i` of block `b`
+- Each block will have a header word
+  - Addressed as `b[-1]`, for a block `b`
+  - Used for different purposes in different collectors
+- Instructions used by the Garbage Collector
+  - `is_ptr(p)`: determines whether `p` is a pointer
+  - `length(b)`: returns the length of block `b`, not including the header
+  - `get_roots()`: returns all the roots
+
+#### Example
+
+- Mark using depth-first traversal of the memory graph
+
+```c
+ptr mark(ptr p) {
+  if (!is_ptr(p)) return;       // do nothing if not pointer
+  if (markBitSet(p)) return;    // check if already marked
+  setMarkBit(p);                // set the mark bit
+  for (i=0; i < length(p); i++) // call mark on all words
+    mark(p[i]);                 // in the block
+  return;
+}
+```
+
+- Sweep using lengths to find next block
+
+```c
+ptr sweep(ptr p, ptr end) {
+  while (p < end) {
+    if markBitSet(p)
+      clearMarkBit();
+    else if (allocateBitSet(p))
+      free(p);
+    p += length(p);
+}
+```
+
+### Conservative Mark & Sweep in C
+
+- A "conservative garbage collector" for C programs
+  - `is_ptr()` determines if a word is a pointer by checking if it points to an allocated block of memory
+  - But, in C pointers can point to the middle of a block
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5xay70tuij.avif" alt="" />
+</center>
+
+- So how to find the beginning of the block ?
+  - Can use a balanced binary tree to keep track of all allocated blocks (key is start-of-block)
+  - Balanced-tree pointers can be stored in header (use two additional words)
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.102hd6hgaj.avif" alt="" />
+</center>
 
 # System-Level I/O
 
