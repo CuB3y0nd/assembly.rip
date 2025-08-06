@@ -10,7 +10,7 @@ import { LinkPreset } from "./types/config";
 export const siteConfig: SiteConfig = {
 	title: "熵餘記事",
 	subtitle: "Per aspera ad astra",
-	lang: "zh-CN",
+	lang: "zh_CN",
 	themeColor: {
 		hue: 250,
 		fixed: false,
