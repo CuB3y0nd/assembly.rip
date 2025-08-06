@@ -1,7 +1,7 @@
 ---
 title: "The CSAPP Notebook"
 published: 2025-07-16
-updated: 2025-08-05
+updated: 2025-08-06
 description: "CMU 15213/15513 CSAPP learning notes."
 image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.23262tnnad.avif"
 tags: ["CSAPP", "Notes"]
@@ -4228,6 +4228,364 @@ P3() {
 <center>
   <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5j4ibtsb04.avif" alt="" />
 </center>
+
+# Virtual Memory
+
+TODO
+
+# Dynamic Memory Allocation
+
+- Assumptions for following examples:
+  - Memory is word addressed
+  - Words are int-sized
+
+## Basic Concepts
+
+- Programmers use dynamic memory allocators (such as **malloc**) to acquire virtual memory at runtime
+  - For data structures whose size is only known at runtime
+- Dynamic memory allocators manage an area of process virtual memory known as the heap
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.99to01ffdl.avif" alt="" />
+</center>
+
+- Allocator maintains heap as collection of variable sized blocks, which are either allocated or free
+- Types of allocators
+  - Explicit allocator: application allocates and frees space
+    - E.g., **malloc** and **free** in C
+  - Implicit allocator: application allocates, but does not free space
+    - E.g. garbage collection in **Java**, **ML**, and **Lisp**
+
+## The malloc Package
+
+- `void *malloc(size_t size)`
+  - Successful:
+    - Returns a pointer to a memory block of at least size bytes aligned to an 8-byte (x86) or 16-byte (x86-64) boundary
+    - If `size == 0`, returns NULL
+  - Unsuccessful: returns NULL (0) and sets **errno**
+- `void free(void *p)`
+  - Returns the block pointed at by **p** to pool of available memory
+  - **p** must come from a previous call to **malloc** or **realloc**
+- Other functions
+  - `calloc`: Version of **malloc** that initializes allocated block to zero
+  - `realloc`: Changes the size of a previously allocated block
+  - `sbrk`: Used internally by allocators to grow or shrink the heap
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+void foo(int n) {
+  int i, *p;
+
+  /* Allocate a block of n ints */
+  p = (int *) malloc(n * sizeof(int));
+  if (p == NULL) {
+    perror("malloc");
+    exit(0);
+  }
+
+  /* Initialize allocated block */
+  for (i=0; i<n; i++)
+    p[i] = i;
+
+
+  /* Return allocated block to the heap */!
+  free(p);
+}
+```
+
+### Constrains
+
+- Applications
+  - Can issue arbitrary sequence of **malloc** and **free** requests
+  - **free** request must be to a **malloc**'d block
+- Allocators
+  - Can't control number or size of allocated blocks
+  - Must respond immediately to **malloc** requests
+    - i.e., can't reorder or buffer requests
+  - Must allocate blocks from free memory
+    - i.e., can only place allocated blocks in free memory
+  - Must align blocks so they satisfy all alignment requirements
+    - 8-byte (x86) or 16-byte (x86-64) alignment on Linux boxes
+  - Can manipulate and modify only free memory
+  - Can't move the allocated blocks once they are **malloc**'d
+    - i.e., compaction is not allowed
+
+## Performance Goal
+
+- Goals: maximize throughput and peak memory utilization
+  - These goals are often conflicting
+
+### Throughput
+
+- Given some sequence of **malloc** and **free** requests:
+  - $R_{0} ,R_{1} ,...,R_{k} ,...,R_{n-1}$
+- Throughput
+  - Number of completed requests per unit time
+  - Example:
+    - 5,000 **malloc** calls and 5,000 **free** calls in 10 seconds
+    - Throughput is 1,000 operations/second
+
+### Peak Memory Utilization
+
+- Given some sequence of **malloc** and **free** requests:
+  - $R_{0} ,R_{1} ,...,R_{k} ,...,R_{n-1}$
+- Def: Aggregate payload $P_{k}$
+  - `malloc(p)` results in a block with a _payload_ of **p** bytes
+  - After request $R_{k}$ has completed, the _aggregate payload_ $P_{k}$ is the sum of currently allocated payloads
+- Def: Current heap size $H_{k}$
+  - Assume $H_{k}$ is monotonically nondecreasing
+    - i.e., heap only grows when allocator uses **sbrk**
+- Def: Peak memory utilization after $k+1$ requests
+  - $\displaystyle U_{k} =( max_{i\leqslant k} \ P_{i}) /H_{k}$
+
+## Fragmentation
+
+- Poor memory utilization caused by fragmentation
+  - internal fragmentation
+  - external fragmentation
+
+### Internal Fragmentation
+
+- For a given block, _internal fragmentation_ occurs if payload is smaller than block size
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5j4iev728s.avif" alt="" />
+</center>
+
+- Caused by
+  - Overhead of maintaining heap data structures
+  - Padding for alignment purposes
+  - Explicit policy decisions
+    - E.g., to return a big block to satisfy a small request
+- Depends only on the pattern of previous requests
+  - Thus, easy to measure
+
+### External Fragmentation
+
+- Occurs when there is enough aggregate heap memory, but no single free block is large enough
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8ok0dtbq9w.avif" alt="" />
+</center>
+
+- Depends on the pattern of future requests
+  - Thus, difficult to measure
+
+## Implementation Issues
+
+- How do we know how much memory to free given just a pointer ?
+- How do we keep track of the free blocks ?
+- What do we do with the extra space when allocating a structure that is smaller than the free block it is placed in ?
+- How do we pick a block to use for allocation -- many might fit ?
+- How do we reinsert freed block ?
+
+## Knowing How Much to Free
+
+- Standard method
+  - Keep the length of a block in the word preceding the block
+    - This word is often called the header field or header
+  - Requires an extra word for every allocated block
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.67xryw937x.avif" alt="" />
+</center>
+
+## Keeping Track of Free Blocks
+
+- Method 1: _Implicit list_ using length-links all blocks
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7eh37i35k3.avif" alt="" />
+</center>
+
+- Method 2: _Explicit list_ among the free blocks using pointers
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.96a22enk2p.avif" alt="" />
+</center>
+
+- Method 3: _Segregated free list_
+  - Different free lists for different size classes
+- Method 4: _Blocks sorted by size_
+  - Can use a balanced tree (e.g. Red-Black tree) with pointers within each free block, and the length used as a key
+
+### Implicit List
+
+- For each block we need both size and allocation status
+  - Could store this information in two words: wasteful !
+- Standard trick
+  - If blocks are aligned, some low-order address bits are always 0
+  - Instead of storing an always-0 bit, use it as a allocated/free flag
+  - When reading size word, must mask out this bit
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.sz9ghda3u.avif" alt="" />
+</center>
+
+#### Detailed Implicit Free List Example
+
+- Payload must be double-word aligned
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.51egqb4ltk.avif" alt="" />
+</center>
+
+- We have an internal fragmentation in first allocated block because of payload is only 2 words but allocated 4 words
+
+#### Finding a Free Block
+
+- First fit
+  - Search list from beginning, choose first free block that fits:
+
+```c
+p = start;
+while ((p < end) &&  // not passed end
+      ((*p & 1) ||   // already allocated
+      (*p <= len)))  // too small
+  p = p + (*p & -2); // goto next block (word addressed)
+```
+
+- Can take linear time in total number of blocks (allocated and free)
+- In practice it can cause "splinters" at beginning of list
+- Next fit
+  - Like first fit, but search list starting where previous search finished
+  - Should often be faster than first fit: avoids re-scanning unhelpful blocks
+  - Some research suggests that fragmentation is worse
+- Best fit
+  - Search the list, choose the best free block: fits, with fewest bytes left over
+  - Keeps fragments small — usually improves memory utilization
+  - Will typically run slower than first fit
+
+#### Allocating in Free Block
+
+- Splitting
+  - Since allocated space might be smaller than free space, we might want to split the block
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8z6u7er5p4.avif" alt="" />
+</center>
+
+```c
+void addblock(ptr p, int len) {
+  int newsize = ((len + 1) >> 1) << 1; // round up to even
+  int oldsize = *p & -2;               // mask out low bit
+  *p = newsize | 1;                    // set new length
+  if (newsize < oldsize)
+    *(p+newsize) = oldsize - newsize;  // set length in remaining
+}
+```
+
+#### Freeing a Block
+
+- Simplest implementation
+  - Need only clear the _allocated_ flag
+    - `void free_block(ptr p) { *p = *p & -2 }`
+  - But can lead to "false fragmentation"
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5q7qar6trr.avif" alt="" />
+</center>
+
+- There is enough free space, but the allocator won't be able to find it
+
+#### Coalescing
+
+- Join (coalesce) with next/previous blocks, if they are free
+  - Coalescing with next block
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.26lsky9ul8.avif" alt="" />
+</center>
+
+```c
+void free_block(ptr p) {
+  *p = *p & -2;         // clear allocated flag
+  next = p + *p;        // find next block
+  if ((*next & 1) == 0)
+    *p = *p + *next;    // add to this block if
+}                       // not allocated
+```
+
+- But how do we coalesce with previous block ?
+
+#### Bidirectional Coalescing
+
+- _Boundary tags_ [Knuth73]
+  - Replicate size/allocated word at "bottom" (end) of free blocks
+  - Allows us to traverse the "list" backwards, but requires extra space
+  - Important and general technique !
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.175p7t1o10.avif" alt="" />
+</center>
+
+#### Constant Time Coalescing
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.70anh3q3vv.avif" alt="" />
+</center>
+
+##### Case 1
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2obu9k7i8c.avif" alt="" />
+</center>
+
+##### Case 2
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.60uk3xpdgb.avif" alt="" />
+</center>
+
+##### Case 3
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4xuut1u639.avif" alt="" />
+</center>
+
+##### Case 4
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.51egqrns7m.avif" alt="" />
+</center>
+
+#### Disadvantages of Boundary Tags
+
+- Internal fragmentation
+- **malloc**'d blocks don't need the footer tag
+
+### Implicit Lists Summary
+
+- Implementation: very simple
+- Allocate cost:
+  - Linear time worst case
+- Free cost:
+  - Constant time worst case
+  - Even with coalescing
+- Memory usage:
+  - Will depend on placement policy
+  - First-fit, next-fit or best-fit
+- Not used in practice for **malloc**/**free** because of linear-time allocation
+  - Used in many special purpose applications
+- However, the concepts of splitting and boundary tag coalescing are general to all allocators
+
+## Summary of Key Allocator Policies
+
+- Placement policy
+  - First-fit, next-fit, best-fit, etc.
+  - Trades off lower throughput for less fragmentation
+  - Interesting observation: segregated free lists
+    - Approximate a best fit placement policy without having to search entire free list
+- Splitting policy
+  - When do we go ahead and split free blocks ?
+  - How much internal fragmentation are we willing to tolerate ?
+- Coalescing policy
+  - Immediate coalescing: coalesce each time free is called
+  - Deferred coalescing: try to improve performance of free by deferring coalescing until needed. Examples:
+    - Coalesce as you scan the free list for **malloc**
+    - Coalesce when the amount of external fragmentation reaches some threshold
 
 # System-Level I/O
 
