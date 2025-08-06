@@ -105,7 +105,6 @@ onMount(async () => {
           {i18n(
             group.posts.length === 1 ? I18nKey.postCount : I18nKey.postsCount,
           )}
-          {i18n(I18nKey.postsCount)}
         </div>
       </div>
 
