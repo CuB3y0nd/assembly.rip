@@ -8,6 +8,7 @@
 - ROAL: PWNER
 - Personality: INTJ-A 5w4 Tritype 513
 - E-Mail: `root -at- cubeyond -dot- net`
+- Discord: `CuB3y0nd#6307`
 - GPG Key: <a href="/public.key" download>My GPG Public Key.</a>
 - Landing page: [My personal landing page.](https://cubeyond.net/)
 - Memos: [My life moments.](https://memos.cubeyond.net/)
