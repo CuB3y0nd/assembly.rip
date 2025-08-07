@@ -1,7 +1,7 @@
 ---
 title: "The CSAPP Notebook"
 published: 2025-07-16
-updated: 2025-08-06
+updated: 2025-08-07
 description: "CMU 15213/15513 CSAPP learning notes."
 image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.23262tnnad.avif"
 tags: ["CSAPP", "Notes"]
@@ -5229,6 +5229,419 @@ int main() {
 ```
 
 - Buffer flushed to output fd on `\n`, call to `fflush` or `exit`, or `return` from main
+
+# Network Programming
+
+## A Client-Server Transaction
+
+- Most network applications are based on the client-server model:
+  - A server process and one or more client processes
+  - Server manages some resources
+  - Server provides service by manipulating resource for clients
+  - Server activated by request from client (vending machine analogy)
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.39lhxow3xq.avif" alt="" />
+</center>
+
+## Hardware Organization of a Network Host
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6ikluckl12.avif" alt="" />
+</center>
+
+## Computer Networks
+
+- A _network_ is a hierarchical system of boxes and wires organized by geographical proximity
+  - SAN (System Area Network) spans cluster or machine room
+    - Switched Ethernet, Quadrics QSW, ...
+  - LAN (Local Area Network) spans a building or campus
+    - Ethernet is most prominent example
+  - WAN (Wide Area Network) spans country or world
+    - Typically high-speed point-to-point phone lines
+- An _internetwork (internet)_ is an interconnected set of networks
+  - The Global IP Internet (uppercase "I") is the most famous example of an internet (lowercase "i")
+
+### Lowest Level: Ethernet Segment
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2h8mfz4s04.avif" alt="" />
+</center>
+
+- Ethernet segment consists of a collection of _hosts_ connected by wires (twisted pairs) to a _hub_
+- Spans room or floor in a building
+- Operation
+  - Each Ethernet adapter has a unique 48-bit address (MAC address)
+    - E.g., `00:16:ea:e3:54:e6`
+  - Hosts send bits to any other host in chunks called _frames_
+  - Hub slavishly copies each bit from each port to every other port
+    - Every host sees every bit
+    - Note: Hubs are on their way out. Bridges (switches, routers) became cheap enough to replace them
+
+### Next Level: Bridged Ethernet Segment
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3uv5k0i2h2.avif" alt="" />
+</center>
+
+- Spans building or campus
+- Bridges cleverly learn which hosts are reachable from which ports and then selectively copy frames from port to port
+
+#### Conceptual View of LANs
+
+- For simplicity, hubs, bridges, and wires are often shown as a collection of hosts attached to a single wire:
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6t7fnixz7p.avif" alt="" />
+</center>
+
+### Next Level: internets (lower case)
+
+- Multiple incompatible LANs can be physically connected by specialized computers called _routers_
+- The connected networks are called an _internet (lower case)_
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6f0zwnrlpo.avif" alt="" />
+</center>
+
+#### Logical Structure of an internet
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.102he8lxu9.avif" alt="" />
+</center>
+
+- Ad hoc interconnection of networks
+  - No particular topology
+  - Vastly different router & link capacities
+- Send packets from source to destination by hopping through networks
+  - Router forms bridge from one network to another
+  - Different packets may take different routes
+
+## The Notion of an internet Protocol
+
+- How is it possible to send bits across incompatible LANs and WANs?
+- Solution: _protocol_ software running on each host and router
+  - Protocol is a set of rules that governs how hosts and routers should cooperate when they transfer data from network to network
+  - Smooths out the differences between the different networks
+
+### What Does an internet Protocol Do?
+
+- Provides a _naming scheme_
+  - An internet protocol defines a uniform format for _host addresses_
+  - Each host (and router) is assigned at least one of these internet addresses that uniquely identifies it
+- Provides a _delivery mechanism_
+  - An internet protocol defines a standard transfer unit (_packet_)
+  - Packet consists of _header_ and _payload_
+    - Header: contains info such as packet size, source and destination addresses
+    - Payload: contains data bits sent from source host
+
+## Transferring internet Data Via Encapsulation
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3nrxombk5z.avif" alt="" />
+</center>
+
+## Other Issues
+
+- We are glossing over a number of important questions:
+  - What if different networks have different maximum frame sizes ? (segmentation)
+  - How do routers know where to forward frames ?
+  - How are routers informed when the network topology changes ?
+  - What if packets get lost ?
+- These (and other) questions are addressed by the area of systems known as _computer networking_
+
+## Global IP Internet (upper case)
+
+- Most famous example of an internet
+- Based on the TCP/IP protocol family
+  - IP (Internet Protocol):
+    - Provides basic naming scheme and unreliable delivery capability of packets (datagrams) from host-to-host
+  - UDP (Unreliable Datagram Protocol)
+    - Uses IP to provide unreliable datagram delivery from process-to-process
+  - TCP (Transmission Control Protocol)
+    - Uses IP to provide reliable byte streams from process-to-process over connections
+- Accessed via a mix of Unix file I/O and functions from the sockets interface
+
+### Hardware and Software Organization of an Internet Application
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.70anj0giea.avif" alt="" />
+</center>
+
+## A Programmer's View of the Internet
+
+1. Hosts are mapped to a set of 32-bit _IP addresses_
+2. The set of IP addresses is mapped to a set of identifiers called Internet _domain names_
+3. A process on one Internet host can communicate with a process on another Internet host over a _connection_
+
+## Aside: IPv4 and IPv6
+
+- The original Internet Protocol, with its 32-bit addresses, is
+  known as _Internet Protocol Version 4 (IPv4)_
+- 1996: Internet Engineering Task Force (IETF) introduced _Internet Protocol Version 6 (IPv6)_ with 128-bit addresses
+  - Intended as the successor to IPv4
+
+## IP Addresses
+
+- 32-bit IP addresses are stored in an _IP address struct_
+  - IP addresses are always stored in memory in _network byte order_ (big-endian byte order)
+  - True in general for any integer transferred in a packet header from one machine to another
+    - E.g., the port number used to identify an Internet connection
+
+```c
+/* Internet address structure */
+struct in_addr {
+  uint32_t s_addr; /* network byte order (big-endian) */
+};
+```
+
+### Dotted Decimal Notation
+
+- By convention, each byte in a 32-bit IP address is represented by its decimal value and separated by a period
+  - IP address: `0x8002C2F2 = 128.2.194.242`
+- Use `getaddrinfo` and `getnameinfo` functions to convert between IP addresses and dotted decimal format
+
+### IP Address Structure
+
+- IP (V4) Address space divided into classes:
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.361w0affk7.avif" alt="" />
+</center>
+
+- Network ID Written in form `w.x.y.z/n`
+  - n = number of bits in network address (Net ID)
+  - E.g., CMU written as 128.2.0.0/16
+    - Class B address
+- Unrouted (private) IP addresses:
+  - `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`
+
+## Internet Domain Names
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.54y2qeyeg2.avif" alt="" />
+</center>
+
+## Domain Naming System (DNS)
+
+- The Internet maintains a mapping between IP addresses and domain names in a huge worldwide distributed database called _DNS_
+- Conceptually, programmers can view the DNS database as a collection of millions of _host entries_
+  - Each host entry defines the mapping between a set of domain names and IP addresses
+  - In a mathematical sense, a host entry is an equivalence class of domain names and IP addresses
+
+## Basic Internet Components
+
+- Internet backbone
+  - Collection of routers (nationwide or worldwide) connected by high-speed point-to-point networks
+- Internet Exchange Points (IXP)
+  - Router that connects multiple backbones (often referred to as peers)
+  - Also called Network Access Points (NAP)
+- Regional networks
+  - Smaller backbones that cover smaller geographical areas (e.g., cities or states)
+- Point of presence (POP)
+  - Machine that is connected to the Internet
+- Internet Service Providers (ISPs)
+  - Provide dial-­‐up or direct access to POPs
+
+### Internet Connection Hierarchy
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7axhcdd0ob.avif" alt="" />
+</center>
+
+## Internet Connections
+
+- Clients and servers communicate by sending streams of bytes over _connections_. Each connection is:
+  - Point-to-point: connects a pair of processes
+  - Full-duplex: data can flow in both directions at the same time
+  - Reliable: stream of bytes sent by the source is eventually received by the destination in the same order it was sent
+- A _socket_ is an endpoint of a connection
+  - Socket address is an **IPaddress\:Port** pair
+- A _port_ is a 16-bit integer that identifies a process:
+  - Ephemeral port: Assigned automatically by client kernel when client makes a connection request
+  - Well‐known port: Associated with some _service_ provided by a server (e.g., port 80 is associated with Web servers)
+
+### Well-known Ports and Service Names
+
+- Popular services have permanently assigned _well-known ports_ and corresponding _well-known service names_:
+  - echo server: 7/echo
+  - ssh servers: 22/ssh
+  - email server: 25/smtp
+  - web servers: 80/http
+- Mappings between well-known ports and service names is contained in the file `/etc/services` on each Linux machine
+
+### Anatomy of a Connection
+
+- A connection is uniquely identified by the socket addresses of its endpoints (_socket pair_)
+  - **(cliaddr\:cliport, servaddr\:servport)**
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4cl78pkn70.avif" alt="" />
+</center>
+
+### Using Ports to Identify Services
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8dx6n3pxbi.avif" alt="" />
+</center>
+
+## Sockets
+
+- What is a socket ?
+  - To the kernel, a socket is an endpoint of communication
+  - To an application, a socket is a file descriptor that lets the application read/write from/to the network
+    - Remember: All Unix I/O devices, including networks, are modeled as files
+- Clients and servers communicate with each other by reading from and writing to socket descriptors
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.lw1nh894p.avif" alt="" />
+</center>
+
+- The main distinction between regular file I/O and socket I/O is how the application "opens" the socket descriptors
+
+### Socket Address Structures
+
+- Generic socket address:
+  - For address arguments to `connect`, `bind`, and `accept`
+  - Necessary only because C did not have generic (**void \***) pointers when the sockets interface was designed
+  - For casting convenience, we adopt the Stevens convention: `typedef struct sockaddr SA;`
+
+```c
+struct sockaddr {
+  uint16_t sa_family; /* Protocol family */
+  char sa_data[14];   /* Address data */
+};
+```
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.60uk5wqkow.avif" alt="" />
+</center>
+
+- Internet-specific socket address:
+  - Must cast (`struct sockaddr_in *`) to (`struct sockaddr *`) for functions that take socket address arguments
+
+```c
+struct sockaddr_in {
+  uint16_t sin_family;       /* Protocol family (always AF_INET) */
+  uint16_t sin_port;         /* Port num in network byte order */
+  struct in_addr sin_addr;   /* IP addr in network byte order */
+  unsigned char sin_zero[8]; /* Pad to sizeof(struct sockaddr) */
+};
+```
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.175p9siabs.avif" alt="" />
+</center>
+
+### Sockets Interface
+
+- Set of system-level functions used in conjunction with Unix I/O to build network applications
+- Created in the early 80's as part of the original Berkeley distribution of Unix that contained an early version of the Internet protocols
+- Available on all modern systems
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.icfpssdsb.avif" alt="" />
+</center>
+
+### Host and Service Conversion: getaddrinfo
+
+- `getaddrinfo` is the modern way to convert string representations of hostnames, host addresses, ports, and service names to socket address structures
+  - Replaces obsolete `gethostbyname` and `getservbyname` functions
+- Advantages:
+  - Reentrant (can be safely used by threaded programs)
+  - Allows us to write portable protocol-independent code
+    - Works with both IPv4 and IPv6
+- Disadvantages:
+  - Somewhat complex
+  - Fortunately, a small number of usage patterns suffice in most cases
+
+```c
+int getaddrinfo(const char *host,             /* Hostname or address */
+                const char *service,          /* Port or service name */
+                const struct addrinfo *hints, /* Input parameters */
+                struct addrinfo **result);    /* Output linked list */
+
+void freeaddrinfo(struct addrinfo *result);   /* Free linked list */
+
+const char *gai_strerror(int errcode);        /* Return error msg */
+```
+
+- Given host and service, `getaddrinfo` returns result that points to a linked list of `addrinfo` structs, each of which points to a corresponding socket address struct, and which contains arguments for the sockets interface functions
+- Helper functions:
+  - `freeadderinfo` frees the entire linked list
+  - `gai_strerror` converts error code to an error message
+
+#### Linked List Returned by getaddrinfo
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9gwvy3bd6e.avif" alt="" />
+</center>
+
+- Clients: walk this list, trying each socket address in turn, until the calls to `socket` and `connect` succeed
+- Servers: walk the list until calls to `socket` and `bind` succeed
+
+#### addrinfo Struct
+
+```c
+struct addrinfo {
+  int ai_flags;             /* Hints argument flags */
+  int ai_family;            /* First arg to socket function */
+  int ai_socktype;          /* Second arg to socket function */
+  int ai_protocol;          /* Third arg to socket function */
+  char *ai_canonname;       /* Canonical host name */
+  size_t ai_addrlen;        /* Size of ai_addr struct */
+  struct sockaddr *ai_addr; /* Ptr to socket address structure */
+  struct addrinfo *ai_next; /* Ptr to next item in linked list */
+};
+```
+
+- Each addrinfo struct returned by `getaddrinfo` contains arguments that can be passed directly to socket function
+- Also points to a socket address struct that can be passed directly to `connect` and `bind` functions
+
+### Host and Service Conversion: getnameinfo
+
+- `getnameinfo` is the inverse of `getaddrinfo`, converting a socket address to the corresponding host and service
+  - Replaces obsolete `gethostbyaddr` and `getservbyport` functions
+  - Reentrant and protocol independent
+
+```c
+int getnameinfo(const SA *sa, socklen_t salen, /* In: socket addr */
+                char *host, size_t hostlen,    /* Out: host */
+                char *serv, size_t servlen,    /* Out: service */
+                int flags);                    /* optional flags */
+```
+
+### Conversion Example
+
+```c
+int main(int argc, char **argv) {
+  struct addrinfo *p, *listp, hints;
+  char buf[MAXLINE];
+  int rc, flags;
+
+  /* Get a list of addrinfo records */
+  memset(&hints, 0, sizeof(struct addrinfo));
+  hints.ai_family = AF_INET;       /* IPv4 only */
+  hints.ai_socktype = SOCK_STREAM; /* Connections only */
+
+  if ((rc = getaddrinfo(argv[1], NULL, &hints, &listp)) != 0) {
+    fprintf(stderr, "getaddrinfo error: %s\n", gai_strerror(rc));
+    exit(1);
+  }
+
+  /* Walk the list and display each IP address */
+  flags = NI_NUMERICHOST; /* Display address instead of name */
+  for (p = listp; p; p = p->ai_next) {
+    getnameinfo(p->ai_addr, p->ai_addrlen,
+                buf, MAXLINE, NULL, 0, flags);
+    printf("%s\n", buf);
+  }
+
+  /* Clean up */
+  freeaddrinfo(listp);
+  exit(0);
+}
+```
 
 # References
 
