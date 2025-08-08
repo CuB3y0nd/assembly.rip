@@ -1,7 +1,7 @@
 ---
 title: "The CSAPP Notebook"
 published: 2025-07-16
-updated: 2025-08-07
+updated: 2025-08-08
 description: "CMU 15213/15513 CSAPP learning notes."
 image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.23262tnnad.avif"
 tags: ["CSAPP", "Notes"]
@@ -5543,7 +5543,71 @@ struct sockaddr_in {
   <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.icfpssdsb.avif" alt="" />
 </center>
 
-### Host and Service Conversion: getaddrinfo
+#### socket
+
+- Clients and servers use the `socket` function to create a _socket descriptor_: `int socket(int domain, int type, int protocol)`
+- Example: `int clientfd = socket(AF_INET, SOCK_STREAM, 0);`
+
+:::tip
+Protocol specific ! Best practice is to use **getaddrinfo** to generate the parameters automatically, so that code is protocol independent.
+:::
+
+#### bind
+
+- A server uses bind to ask the kernel to associate the server's socket address with a socket descriptor: `int bind(int sockfd, SA *addr, socklen_t addrlen);`
+- The process can read bytes that arrive on the connection whose endpoint is _addr_ by reading from descriptor _sockfd_
+- Similarly, writes to _sockfd_ are transferred along connection whose endpoint is _addr_
+
+:::tip
+Best practice is to use **getaddrinfo** to supply the arguments _addr_ and _addrlen_.
+:::
+
+#### listen
+
+- By default, kernel assumes that descriptor from socket function is an _active socket_ that will be on the client end of a connection
+- A server calls the listen function to tell the kernel that a descriptor will be used by a server rather than a client: `int listen(int sockfd, int backlog);`
+- Converts _sockfd_ from an _active socket_ to a _listening (passive) socket_ that can accept connection requests from clients
+- _backlog_ is a hint about the number of outstanding connection requests that the kernel should queue up before starting to refuse requests
+
+#### accept
+
+- Servers wait for connection requests from clients by calling `accept`: `int accept(int listenfd, SA *addr, int *addrlen);`
+- Waits for connection request to arrive on the connection bound to _listenfd_, then fills in client's socket address in _addr_ and size of the socket address in _addrlen_
+- Returns a _connected descriptor_ that can be used to communicate with the client via Unix I/O routines
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9rjps6vs6d.avif" alt="" />
+</center>
+
+#### connect
+
+- A client establishes a connection with a server by calling connect: `int connect(int clientfd, SA *addr, socklen_t addrlen);`
+- Attempts to establish a connection with server at socket address _addr_
+  - If successful, then _clientfd_ is now ready for reading and writing
+  - Resulting connection is characterized by socket pair `(x:y, addr.sin_addr:addr.sin_port)`
+    - `x` is client address
+    - `y` is ephemeral port that uniquely identifies client process on client host
+
+:::tip
+Best practice is to use **getaddrinfo** to supply the arguments _addr_ and _addrlen_.
+:::
+
+#### Connected vs. Listening Descriptors
+
+- Listening descriptor
+  - End point for client connection requests
+  - Created once and exists for lifetime of the server
+- Connected descriptor
+  - End point of the connection between client and server
+  - A new descriptor is created each time the server accepts a connection request from a client
+  - Exists only as long as it takes to service client
+- Why the distinction ?
+  - Allows for concurrent servers that can communicate over many client connections simultaneously
+    - E.g., Each time we receive a new request, we fork a child to handle the request
+
+### Host and Service Conversion
+
+#### getaddrinfo
 
 - `getaddrinfo` is the modern way to convert string representations of hostnames, host addresses, ports, and service names to socket address structures
   - Replaces obsolete `gethostbyname` and `getservbyname` functions
@@ -5563,7 +5627,7 @@ int getaddrinfo(const char *host,             /* Hostname or address */
 
 void freeaddrinfo(struct addrinfo *result);   /* Free linked list */
 
-const char *gai_strerror(int errcode);        /* Return error msg */
+const char *gai_strerror(int errcode);        /* Return error msg. */
 ```
 
 - Given host and service, `getaddrinfo` returns result that points to a linked list of `addrinfo` structs, each of which points to a corresponding socket address struct, and which contains arguments for the sockets interface functions
@@ -5571,7 +5635,7 @@ const char *gai_strerror(int errcode);        /* Return error msg */
   - `freeadderinfo` frees the entire linked list
   - `gai_strerror` converts error code to an error message
 
-#### Linked List Returned by getaddrinfo
+##### Linked List Returned by getaddrinfo
 
 <center>
   <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9gwvy3bd6e.avif" alt="" />
@@ -5580,7 +5644,7 @@ const char *gai_strerror(int errcode);        /* Return error msg */
 - Clients: walk this list, trying each socket address in turn, until the calls to `socket` and `connect` succeed
 - Servers: walk the list until calls to `socket` and `bind` succeed
 
-#### addrinfo Struct
+##### addrinfo Struct
 
 ```c
 struct addrinfo {
@@ -5598,7 +5662,7 @@ struct addrinfo {
 - Each addrinfo struct returned by `getaddrinfo` contains arguments that can be passed directly to socket function
 - Also points to a socket address struct that can be passed directly to `connect` and `bind` functions
 
-### Host and Service Conversion: getnameinfo
+#### getnameinfo
 
 - `getnameinfo` is the inverse of `getaddrinfo`, converting a socket address to the corresponding host and service
   - Replaces obsolete `gethostbyaddr` and `getservbyport` functions
@@ -5611,16 +5675,25 @@ int getnameinfo(const SA *sa, socklen_t salen, /* In: socket addr */
                 int flags);                    /* optional flags */
 ```
 
-### Conversion Example
+#### Conversion Example
 
 ```c
+#include <netdb.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAXLINE NI_MAXHOST
+
+typedef struct addrinfo SA;
+
 int main(int argc, char **argv) {
-  struct addrinfo *p, *listp, hints;
+  SA *p, *listp, hints;
   char buf[MAXLINE];
   int rc, flags;
 
   /* Get a list of addrinfo records */
-  memset(&hints, 0, sizeof(struct addrinfo));
+  memset(&hints, 0, sizeof(SA));
   hints.ai_family = AF_INET;       /* IPv4 only */
   hints.ai_socktype = SOCK_STREAM; /* Connections only */
 
@@ -5632,8 +5705,7 @@ int main(int argc, char **argv) {
   /* Walk the list and display each IP address */
   flags = NI_NUMERICHOST; /* Display address instead of name */
   for (p = listp; p; p = p->ai_next) {
-    getnameinfo(p->ai_addr, p->ai_addrlen,
-                buf, MAXLINE, NULL, 0, flags);
+    getnameinfo(p->ai_addr, p->ai_addrlen, buf, MAXLINE, NULL, 0, flags);
     printf("%s\n", buf);
   }
 
@@ -5642,6 +5714,512 @@ int main(int argc, char **argv) {
   exit(0);
 }
 ```
+
+#### Echo Client Example
+
+##### open_clientfd
+
+- Establish a connection with a server
+
+```c
+int open_clientfd(char *hostname, char *port) {
+  int clientfd;
+  struct addrinfo hints, *listp, *p;
+
+  /* Get a list of potential server addresses */
+  memset(&hints, 0, sizeof(struct addrinfo));
+  hints.ai_socktype = SOCK_STREAM; /* Open a connection */
+  hints.ai_flags = AI_NUMERICSERV; /* Using numeric port arg. */
+  hints.ai_flags |= AI_ADDRCONFIG; /* Recommended for connections */
+
+  getaddrinfo(hostname, port, &hints, &listp);
+
+  /* Walk the list for one that we can successfully connect to */
+  for (p = listp; p; p = p->ai_next) {
+    /* Create a socket descriptor */
+    if ((clientfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0)
+      continue; /* Socket failed, try the next */
+
+    /* Connect to the server */
+    if (connect(clientfd, p->ai_addr, p->ai_addrlen) != -1)
+      break; /* Success */
+    close(clientfd); /* Connect failed, try another */
+  }
+
+  /* Clean up */
+  freeaddrinfo(listp);
+
+  if (!p) /* All connects failed */
+    return -1;
+  else    /* The last connect succeeded */
+    return clientfd;
+}
+```
+
+##### open_listenfd
+
+- Create a listening descriptor that can be used to accept connection requests from clients
+
+```c
+int open_listenfd(char *port) {
+  struct addrinfo hints, *listp, *p;
+  int listenfd, optval = 1;
+
+  /* Get a list of potential server addresses */
+  memset(&hints, 0, sizeof(struct addrinfo));
+  hints.ai_socktype = SOCK_STREAM;             /* Accept connect. */
+  hints.ai_flags = AI_PASSIVE | AI_ADDRCONFIG; /* On any IP addr */
+  hints.ai_flags |= AI_NUMERICSERV;            /* Using port no. */
+
+  getaddrinfo(NULL, port, &hints, &listp);
+
+  /* Walk the list for one that we can bind to */
+  for (p = listp; p; p = p->ai_next) {
+    /* Create a socket descriptor */
+    if ((listenfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) < 0)
+      continue; /* Socket failed, try the next */
+
+    /* Eliminates "Address already in use" error from bind */
+    setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&optval , sizeof(int));
+
+    /* Bind the descriptor to the address */
+    if (bind(listenfd, p->ai_addr, p->ai_addrlen) == 0)
+      break; /* Success */
+    close(listenfd); /* Bind failed, try the next */
+  }
+
+  /* Clean up */
+  freeaddrinfo(listp);
+
+  if (!p) /* No address worked */
+    return -1;
+
+  /* Make it a listening socket ready to accept conn. requests */
+  if (listen(listenfd, LISTENQ) < 0) {
+    close(listenfd);
+    return -1;
+  }
+  return listenfd;
+}
+```
+
+:::note
+**open_clientfd** and **open_listenfd** are both independent of any particular version of IP.
+:::
+
+##### Echo Client
+
+```c title="echoclient.c"
+#include <csapp.h>
+
+int main(int argc, char **argv) {
+  int clientfd;
+  char *host, *port, buf[MAXLINE];
+  rio_t rio;
+
+  host = argv[1];
+  port = argv[2];
+
+  clientfd = open_clientfd(host, port);
+  rio_readinitb(&rio, clientfd);
+
+  while (fgets(buf, MAXLINE, stdin) != NULL) {
+    rio_writen(clientfd, buf, strlen(buf));
+    rio_readlineb(&rio, buf, MAXLINE);
+    fputs(buf, stdout);
+  }
+  close(clientfd);
+  exit(0);
+}
+```
+
+##### Iterative Echo Server
+
+```c title="echoserver.c"
+#include <csapp.h>
+
+void echo(int connfd);
+
+int main(int argc, char **argv) {
+  int listenfd, connfd;
+  socklen_t clientlen;
+  struct sockaddr_storage clientaddr; /* Enough room for any addr */
+  char client_hostname[MAXLINE], client_port[MAXLINE];
+
+  listenfd = open_listenfd(argv[1]);
+  while (1) {
+    clientlen = sizeof(struct sockaddr_storage); /* Important! */
+    connfd = accept(listenfd, (SA *)&clientaddr, &clientlen);
+    getnameinfo((SA *)&clientaddr, clientlen, client_hostname, MAXLINE, client_port, MAXLINE, 0);
+    printf("Connected to (%s, %s)\n", client_hostname, client_port);
+    echo(connfd);
+    close(connfd);
+  }
+  exit(0);
+}
+```
+
+##### echo
+
+- The server uses RIO to read and echo text lines until EOF (end-of-file) condition is encountered
+  - EOF condition caused by client calling **close(clientfd)**
+
+```c title="echo.c"
+void echo(int connfd) {
+  size_t n;
+  char buf[MAXLINE];
+  rio_t rio;
+
+  rio_readinitb(&rio, connfd);
+  while((n = rio_readlineb(&rio, buf, MAXLINE)) != 0) {
+    printf("server received %d bytes\n", (int)n);
+    rio_writen(connfd, buf, n);
+  }
+}
+```
+
+## Web Server Basics
+
+- Clients and servers communicate using the **Hyper Text Transfer Protocol (HTTP)**
+  - Client and server establish TCP connection
+  - Client requests content
+  - Server responds with requested content
+  - Client and server close connection (eventually)
+- HTTP/1.1 RFC 2616, June, 1999
+  - <https://www.w3.org/Protocols/rfc2616/rfc2616.html>
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1apb8pv8vn.avif" alt="" />
+</center>
+
+### HTTP Versions
+
+- Major differences between HTTP/1.1 and HTTP/1.0
+  - HTTP/1.0 uses a new connection for each transaction
+  - HTTP/1.1 also supports _persistent connections_
+    - Multiple transactions over the same connection
+    - `Connection: Keep-Alive`
+  - HTTP/1.1 requires `HOST` header
+    - `Host: www.cmu.edu`
+    - Makes it possible to host multiple websites at single Internet host
+  - HTTP/1.1 supports _chunked encoding_
+    - `Transfer-Encoding: chunked`
+  - HTTP/1.1 adds additional support for caching
+
+### Web Content
+
+- Web servers return _content_ to clients
+  - content: a sequence of bytes with an associated **MIME (Multipurpose
+    Internet Mail Extensions)** type
+- Example MIME types
+  - `text/html` -- HTML document
+  - `text/plain` -- Unformatted text
+  - `image/gif` -- Binary image encoded in GIF format
+  - `image/png` -- Binary image encoded in PNG format
+  - `image/jpeg` -- Binary image encoded in JPEG format
+- The complete list of MIME types: <https://www.iana.org/assignments/media-types/media-types.xhtml>
+
+### Static and Dynamic Content
+
+- The content returned in HTTP responses can be either _static_ or _dynamic_
+  - Static content: content stored in files and retrieved in response to an HTTP request
+    - E.g., HTML files, images, audio clips
+    - Request identifies which content file
+  - Dynamic content: content produced on-the-fly in response to an HTTP request
+    - E.g., content produced by a program executed by the server on behalf of the client
+    - Request identifies file containing executable code
+- Bottom line: Web content is associated with a file that is managed by the server
+
+### URLs
+
+- Unique name for a file: **URL (Universal Resource Locator)**
+  - Example URL: `http://www.cmu.edu:80/index.html`
+- Clients use prefix (`http://www.cmu.edu:80`) to infer:
+  - What kind (protocol) of server to contact (`HTTP`)
+  - Where the server is (`www.cmu.edu`)
+  - What port it is listening on (`80`)
+- Servers use suffix (`/index.html`) to:
+  - Determine if request is for static or dynamic content
+    - No hard and fast rules for this
+    - One convention: executables reside in `cgi-bin` directory
+  - Find file on file system
+    - Initial `/` in suffix denotes home directory for requested content
+    - Minimal suffix is `/`, which server expands to configured default filename (usually, `index.html`)
+
+### HTTP Requests
+
+- HTTP request is a _request line_, followed by zero or more _request headers_
+- Request line: `<method> <uri> <version>`
+  - `<method>` is one of `GET`, `POST`, `OPTIONS`, `HEAD`, `PUT`, `DELETE`, or `TRACE`
+  - `<uri>` is typically URL for proxies, URL suffix for servers
+    - A URL is a type of **URI (Uniform Resource Identifier)**
+    - <https://www.ietf.org/rfc/rfc2396.txt>
+  - `<version>` is HTTP version of request (`HTTP/1.0` or `HTTP/1.1`)
+- Request headers: `<header name>: <header data>`
+  - Provide additional information to the server
+
+### HTTP Responses
+
+- HTTP response is a _response line_ followed by zero or more _response headers_, possibly followed by _content_, with blank line (`\r\n`) separating headers from content
+- Response line: `<version> <status code> <status msg>`
+  - `<version>` is HTTP version of the response
+  - `<status code>` is numeric status
+  - `<status msg>` is corresponding English text
+    - `200 OK` -- Request was handled without error
+    - `301 Moved` -- Provide alternate URL
+    - `404 Not found` -- Server couldn't find the file
+  - Response headers: `<header name>: <header data>`
+    - Provide additional information about response
+    - `Content-Type`: MIME type of content in response body
+    - `Content-Length`: Length of content in response body
+
+### Data Transfer Mechanisms
+
+- Standard
+  - Specify total length with content-length
+  - Requires that program buffer entire message
+- Chunked
+  - Break into blocks
+  - Prefix each block with number of bytes (Hex coded)
+
+#### Chunked Encoding Example
+
+```plaintext showLineNumbers=false
+HTTP/1.1 200 OK\n
+Date: Sun, 31 Oct 2010 20:47:48 GMT\n
+Server: Apache/1.3.41 (Unix)\n
+Keep-Alive: timeout=15, max=100\n
+Connection: Keep-Alive\n
+Transfer-Encoding: chunked\n
+Content-Type: text/html\n
+\r\n
+d75\r\n
+<html>
+<head>
+.<link href="http://www.cs.cmu.edu/style/calendar.css" rel="stylesheet" type="text/css">
+</head>
+<body id="calendar_body">
+<div id='calendar'><table width='100%' border='0' cellpadding='0' cellspacing='1' id='cal'>
+...
+</body>
+</html>
+\r\n
+0\r\n
+\r\n
+```
+
+- `d75\r\n` -- First Chunk: 0xd75 = 3445 bytes
+- `0\r\n` -- Second Chunk: 0 bytes (indicates last chunk)
+
+#### Example HTTP Transaction
+
+```plaintext showLineNumbers=false
+whaleshark> telnet www.cmu.edu 80             Client: open connection to server
+Trying 128.2.42.52...                         Telnet prints 3 lines to terminal
+Connected to WWW-CMU-PROD-VIP.ANDREW.cmu.edu.
+Escape character is '^]'.
+GET / HTTP/1.1                                Client: request line
+Host: www.cmu.edu                             Client: required HTTP/1.1 header
+                                              Client: empty line terminates headers
+HTTP/1.1 301 Moved Permanently                Server: response line
+Date: Wed, 05 Nov 2014 17:05:11 GMT           Server: followed by 5 response headers
+Server: Apache/1.3.42 (Unix)                  Server: this is an Apache server
+Location: http://www.cmu.edu/index.shtml      Server: page has moved here
+Transfer-Encoding: chunked                    Server: response body will be chunked
+Content-Type: text/html; charset=...          Server: expect HTML in response body
+                                              Server: empty line terminates headers
+15c                                           Server: first line in response body
+<HTML><HEAD>                                  Server: start of HTML content
+...
+</BODY></HTML>                                Server: end of HTML content
+0                                             Server: last line in response body
+Connection closed by foreign host.            Server: closes connection
+```
+
+- HTTP standard requires that each text line end with `\r\n`
+- Blank line (`\r\n`) terminates request and response headers
+
+### Tiny Web Server
+
+- Tiny Web server described in text
+  - Tiny is a sequential Web server
+  - Serves static and dynamic content to real browsers
+  - 239 lines of commented C code
+  - Not as complete or robust as a real Web server
+    - You can break it with poorly-formed HTTP requests (e.g., terminate lines with `\n` instead of `\r\n`)
+
+#### Operation
+
+- Accept connection from client
+- Read request from client (via connected socket)
+- Split into `<method> <uri> <version>`
+  - If method not GET, then return error
+- If URI contains `cgi-bin` then serve dynamic content
+  - Would do wrong thing if had file `abcgi-bingo.html`
+  - Fork process to execute program
+- Otherwise serve static content
+  - Copy file to output
+
+#### Serving Static Content
+
+```c
+void serve_static(int fd, char *filename, int filesize) {
+  int srcfd;
+  char *srcp, filetype[MAXLINE], buf[MAXBUF];
+
+  /* Send response headers to client */
+  get_filetype(filename, filetype);
+  sprintf(buf, "HTTP/1.0 200 OK\r\n");
+  sprintf(buf, "%sServer: Tiny Web Server\r\n", buf);
+  sprintf(buf, "%sConnection: close\r\n", buf);
+  sprintf(buf, "%sContent-length: %d\r\n", buf, filesize);
+  sprintf(buf, "%sContent-type: %s\r\n\r\n", buf, filetype);
+  rio_writen(fd, buf, strlen(buf));
+
+  /* Send response body to client */
+  srcfd = open(filename, O_RDONLY, 0);
+  srcp = mmap(0, filesize, PROT_READ, MAP_PRIVATE, srcfd, 0);
+  close(srcfd);
+  rio_writen(fd, srcp, filesize);
+  munmap(srcp, filesize);
+}
+```
+
+#### Serving Dynamic Content
+
+- Client sends request to server
+- If request URI contains the string `/cgi-bin`, the Tiny server assumes that the request is for dynamic content
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.73u9i3gtdb.avif" alt="" />
+</center>
+
+- The server creates a child process and runs the program identified by the URI in that process
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1hsj48hkw0.avif" alt="" />
+</center>
+
+- The child runs and generates the dynamic content
+- The server captures the content of the child and forwards it without modification to the client
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7snj247ym0.avif" alt="" />
+</center>
+
+##### Issues in Serving Dynamic Content
+
+- How does the client pass program arguments to the server ?
+- How does the server pass these arguments to the child ?
+- How does the server pass other info relevant to the request to the child ?
+- How does the server capture the content produced by the child ?
+- These issues are addressed by the **Common Gateway Interface (CGI)** specification
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6pntr8h24a.avif" alt="" />
+</center>
+
+#### CGI
+
+- Because the children are written according to the CGI spec, they are often called _CGI programs_
+- However, CGI really defines a simple standard for transferring information between the client (browser), the server, and the child process
+- CGI is the original standard for generating dynamic content. Has been largely replaced by other, faster techniques:
+  - E.g., fastCGI, Apache modules, Java servlets, Rails controllers
+  - Avoid having to create process on the fly (expensive and slow)
+
+#### Serving Dynamic Content With GET
+
+- Client pass arguments to the server by appended the arguments to the URI
+- Can be encoded directly in a URL typed to a browser or a URL in an HTML link
+  - `http://add.com/cgi-bin/adder?15213&18213`
+  - `adder` is the CGI program on the server that will do the addition
+  - Argument list starts with `?`
+  - Arguments separated by `&`
+  - Spaces represented by `+` or `%20`
+- URL suffix: `cgi-bin/adder?15213&18213`
+- Result displayed on browser:
+
+```plaintext showLineNumbers=false
+Welcome to add.com: THE Internet addition portal.
+
+The answer is: 15213 + 18213 = 33426
+
+Thanks for visiting!
+```
+
+- The server pass these arguments to the child by environment variable in `QUERY_STRING`
+  - A single string containing everything after the `?`
+  - For add: `QUERY_STRING = 15213&18213`
+
+```c
+/* Extract the two arguments */
+if ((buf = getenv("QUERY_STRING")) != NULL) {
+  p = strchr(buf, '&');
+  *p = '\0';
+  strcpy(arg1, buf);
+  strcpy(arg2, p+1);
+  n1 = atoi(arg1);
+  n2 = atoi(arg2);
+}
+```
+
+- The child generates its output on **stdout**. Server uses **dup2** to redirect **stdout** to its connected socket. So the server capture the content produced by the child
+
+```c
+void serve_dynamic(int fd, char *filename, char *cgiargs) {
+  char buf[MAXLINE], *emptylist[] = { NULL };
+
+  /* Return first part of HTTP response */
+  sprintf(buf, "HTTP/1.0 200 OK\r\n");
+  rio_writen(fd, buf, strlen(buf));
+  sprintf(buf, "Server: Tiny Web Server\r\n");
+  rio_writen(fd, buf, strlen(buf));
+
+  if (fork() == 0) { /* Child */
+    /* Real server would set all CGI vars here */
+    setenv("QUERY_STRING", cgiargs, 1);
+    dup2(fd, STDOUT_FILENO);              /* Redirect stdout to client */
+    execve(filename, emptylist, environ); /* Run CGI program */
+  }
+  wait(NULL); /* Parent waits for and reaps child */
+}
+```
+
+- Notice that only the CGI child process knows the content type and length, so it must generate those headers
+
+```c
+/* Make the response body */
+sprintf(content, "Welcome to add.com: ");
+sprintf(content, "%sTHE Internet addition portal.\r\n<p>", content);
+sprintf(content, "%sThe answer is: %d + %d = %d\r\n<p>", content, n1, n2, n1 + n2);
+sprintf(content, "%sThanks for visiting!\r\n", content);
+
+/* Generate the HTTP response */
+printf("Content-length: %d\r\n", (int)strlen(content));
+printf("Content-type: text/html\r\n\r\n");
+printf("%s", content);
+fflush(stdout);
+exit(0);
+```
+
+## Proxies
+
+- A _proxy_ is an intermediary between a client and an origin server
+  - To the client, the proxy acts like a server
+  - To the server, the proxy acts like a client
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.73u9i5t2mo.avif" alt="" />
+</center>
+
+#### Why Proxies ?
+
+- Can perform useful functions as requests and responses pass by
+  - Examples: Caching, logging, anonymization, filtering, transcoding
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3k8bscs4il.avif" alt="" />
+</center>
 
 # References
 
