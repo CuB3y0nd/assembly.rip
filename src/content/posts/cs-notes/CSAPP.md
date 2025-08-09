@@ -1,7 +1,7 @@
 ---
 title: "The CSAPP Notebook"
 published: 2025-07-16
-updated: 2025-08-08
+updated: 2025-08-09
 description: "CMU 15213/15513 CSAPP learning notes."
 image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.23262tnnad.avif"
 tags: ["CSAPP", "Notes"]
@@ -6220,6 +6220,359 @@ exit(0);
 <center>
   <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3k8bscs4il.avif" alt="" />
 </center>
+
+# Concurrent Programming
+
+## Concurrent Programming is Hard
+
+- The human mind tends to be sequential
+- The notion of time is often misleading
+- Thinking about all possible sequences of events in a computer system is at least error prone and frequently impossible
+
+- Classical problem classes of concurrent programs:
+  - Races: outcome depends on arbitrary scheduling decisions elsewhere in the system
+    - Example: who gets the last seat on the airplane ?
+  - Deadlock: improper resource allocation prevents forward progress
+    - Example: traffic gridlock
+  - Livelock / Starvation / Fairness: external events and/or system scheduling decisions can prevent sub-task progress
+    - Example: people always jump in front of you in line
+
+## Iterative Servers
+
+- Iterative servers process one request at a time
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1e8x710wyz.avif" alt="" />
+</center>
+
+- Second client attempts to connect to iterative server
+- Call to **connect** returns
+  - Even though connection not yet accepted
+  - Server side TCP manager queues request
+  - Feature known as "TCP listen backlog"
+- Call to **rio_writen** returns
+  - Server side TCP manager buffers input data
+- Call to **rio_readlineb** blocks
+  - Server hasn't written anything for it to read yet
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3rbjo7ya1q.avif" alt="" />
+</center>
+
+- Solution: use _concurrent servers_ instead
+  - Concurrent servers use multiple concurrent flows to serve multiple clients at the same time
+
+## Approaches for Writing Concurrent Servers
+
+- Process-based
+  - Kernel automatically interleaves multiple logical flows
+  - Each flow has its own private address space
+- Event-based
+  - Programmer manually interleaves multiple logical flows
+  - All flows share the same address space
+  - Uses technique called I/O multiplexing
+- Thread-based
+  - Kernel automatically interleaves multiple logical flows
+  - Each flow shares the same address space
+  - Hybrid of of process-based and event-based
+
+### Process-based Servers
+
+- Spawn separate process for each client
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3gopv35xfr.avif" alt="" />
+</center>
+
+#### Process-Based Concurrent Echo Server
+
+```c
+void sigchld_handler(int sig) {
+  /* Reap all zombie children */
+  while (waitpid(-1, 0, WNOHANG) > 0)
+    ;
+  return;
+}
+
+int main(int argc, char **argv) {
+  int listenfd, connfd;
+  socklen_t clientlen;
+  struct sockaddr_storage clientaddr;
+
+  signal(SIGCHLD, sigchld_handler);
+  listenfd = open_listenfd(argv[1]);
+  while (1) {
+    clientlen = sizeof(struct sockaddr_storage);
+    connfd = accept(listenfd, (SA *)&clientaddr, &clientlen);
+
+    if (fork() == 0) {
+      close(listenfd); /* Child closes its listening socket */
+      echo(connfd);    /* Child services client */
+      close(connfd);   /* Child closes connection with client */
+      exit(0);         /* Child exits */
+    }
+    close(connfd); /* Parent closes connected socket (important!) */
+  }
+}
+```
+
+#### Process-based Server Execution Model
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1e8x71ngul.avif" alt="" />
+</center>
+
+- Each client handled by independent child process
+- No shared state between them
+- Both parent & child have copies of _listenfd_ and _connfd_
+  - Parent must close _connfd_
+  - Child should close _listenfd_
+
+#### Issues with Process-based Servers
+
+- Listening server process must reap zombie children to avoid fatal memory leak
+- Parent process must **close** its copy of _connfd_
+  - Kernel keeps reference count for each socket/open file
+  - After fork, `refcnt(connfd) = 2`
+  - Connection will not be closed until `refcnt(connfd) = 0`
+
+#### Pros and Cons of Process-based Servers
+
+- Handle multiple connections concurrently
+- Clean sharing model
+  - descriptors (no)
+  - file tables (yes)
+  - global variables (no)
+- Simple and straightforward
+- Additional overhead for process control
+- Nontrivial to share data between processes
+  - Requires **IPC (interprocess communication)** mechanisms
+    - FIFO's (named pipes), System V shared memory and semaphores
+
+### Event-based Servers
+
+- Server maintains set of active connections
+  - Array of _connfd_'s
+- Repeat:
+  - Determine which descriptors (_connfd_'s or _listenfd_) have pending inputs
+    - e.g., using `select` or `epoll` functions
+    - arrival of pending input is an _event_
+  - If _listenfd_ has input, then **accept** connection and add new _connfd_ to array
+  - Service all _connfd_'s with pending inputs
+
+#### I/O Multiplexed Event Processing
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.39lhzoqkql.avif" alt="" />
+</center>
+
+#### Pros and Cons of Event-based Servers
+
+- One logical control flow and address space
+- Can single-step with a debugger
+- No process or thread control overhead
+  - Design of choice for high-performance Web servers and search engines
+    - E.g., Node.js, Nginx, Tornado
+- Significantly more complex to code than process-based or thread-based designs
+- Hard to provide fine-grained concurrency
+  - E.g., How to deal with partial HTTP request headers
+- Cannot take advantage of multi-core
+  - Single thread of control
+
+### Thread-based Servers
+
+- Very similar to process-based approach
+  - ...but using threads instead of processes
+
+#### Traditional View of a Process
+
+- Process = Process Context + Code, Data, and Stack
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.99to4u73a0.avif" alt="" />
+</center>
+
+#### Alternate View of a Process
+
+Process = Thread + Code, Data, and Kernel Context
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2326ria3fm.avif" alt="" />
+</center>
+
+#### A Process With Multiple Threads
+
+- Multiple threads can be associated with a process
+  - Each thread has its own logical control flow
+  - Each thread shares the same code, data, and kernel context
+  - Each thread has its own stack for local variables
+    - but not protected from other threads
+  - Each thread has its own **Thread ID (TID)**
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8adkroasgr.avif" alt="" />
+</center>
+
+#### Logical View of Threads
+
+- Threads associated with process form a pool of peers
+  - Unlike processes which form a tree hierarchy
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8ok0ijlb4s.avif" alt="" />
+</center>
+
+#### Concurrent Threads
+
+- Two threads are concurrent if their flows overlap in time
+- Otherwise, they are sequential
+- Examples:
+  - Concurrent: A & B, A & C
+  - Sequential: B & C
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8vn8dza7zb.avif" alt="" />
+</center>
+
+#### Concurrent Thread Execution
+
+- Single Core Processor
+  - Simulate parallelism by time slicing
+- Multi Core Processor
+  - Can have true parallelism
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.175pc2d71f.avif" alt="" />
+</center>
+
+#### Threads vs. Processes
+
+- How threads and processes are similar ?
+  - Each has its own logical control flow
+  - Each can run concurrently with others (possibly on different cores)
+  - Each is context switched
+- How threads and processes are different ?
+  - Threads share all code and data (except local stacks)
+    - Processes (typically) do not
+  - Threads are somewhat less expensive than processes
+    - Process control (creating and reaping) twice as expensive as thread control
+    - Linux numbers:
+      - ~20K cycles to create and reap a process
+      - ~10K cycles (or less) to create and reap a thread
+
+## Posix Threads (Pthreads) Interface
+
+- Pthreads: Standard interface for ~60 functions that manipulate threads from C programs
+  - Creating and reaping threads
+    - `pthread_create()`
+    - `pthread_join()`
+  - Determining your thread ID
+    - `pthread_self()`
+  - Terminating threads
+    - `pthread_cancel()`
+    - `pthread_exit()`
+    - `exit()` terminates all threads , `ret` terminates current thread
+  - Synchronizing access to shared variables
+    - `pthread_mutex_init`
+    - `pthread_mutex_[un]lock`
+
+### The Pthreads "hello, world" Program
+
+```c
+void *thread(void *vargp);
+
+int main() {
+  pthread_t tid;
+
+  pthread_create(&tid, NULL, thread, NULL);
+  pthread_join(tid, NULL);
+  exit(0);
+}
+
+void *thread(void *vargp) {
+  printf("Hello, world!\n");
+  return NULL;
+}
+```
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5fkwlxka11.avif" alt="" />
+</center>
+
+### Thread-Based Concurrent Echo Server
+
+```c
+void *thread(void *vargp);
+
+int main(int argc, char **argv) {
+  int listenfd, *connfdp;
+  socklen_t clientlen;
+  struct sockaddr_storage clientaddr;
+  pthread_t tid;
+
+  listenfd = open_listenfd(argv[1]);
+  while (1) {
+    clientlen = sizeof(struct sockaddr_storage);
+    connfdp = malloc(sizeof(int));
+    *connfdp = accept(listenfd, (SA *)&clientaddr, &clientlen);
+    pthread_create(&tid, NULL, thread, connfdp);
+  }
+}
+
+void *thread(void *vargp) {
+  int connfd = *((int *)vargp);
+
+  pthread_detach(pthread_self());
+  free(vargp);
+  echo(connfd);
+  close(connfd);
+  return NULL;
+}
+```
+
+- `malloc` of connected descriptor necessary to avoid deadly race (but still have subtle problem)
+- Run thread in `detached` mode
+  - Runs independently of other threads
+  - Reaped automatically (by kernel) when it terminates
+- Free storage allocated to hold _connfd_
+- Close _connfd_ (important!)
+
+### Thread-based Server Execution Model
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1apb9tsbn9.avif" alt="" />
+</center>
+
+- Each client handled by individual peer thread
+- Threads share all process state except TID
+- Each thread has a separate stack for local variables
+
+### Issues With Thread-Based Servers
+
+- Must run "detached" to avoid memory leak
+  - At any point in time, a thread is either _joinable_ or _detached_
+  - Joinable thread can be reaped and killed by other threads
+    - must be reaped (with **pthread_join**) to free memory resources
+  - Detached thread cannot be reaped or killed by other threads
+    - resources are automatically reaped on termination
+  - Default state is joinable
+    - use `pthread_detach(pthread_self())` to make detached
+- Must be careful to avoid unintended sharing
+  - For example, passing pointer to main thread's stack
+    - `pthread_create(&tid, NULL, thread, (void *)&connfd);`
+  - All functions called by a thread must be _thread-safe_
+
+### Pros and Cons of Thread-Based Designs
+
+- Easy to share data structures between threads
+  - e.g., logging information, file cache
+- Threads are more efficient than processes
+- Unintentional sharing can introduce subtle and hard-to-reproduce errors !
+  - The ease with which data can be shared is both the greatest strength and the greatest weakness of threads
+  - Hard to know which data shared & which private
+  - Hard to detect by testing
+    - Probability of bad race outcome very low
+    - But nonzero !
 
 # References
 
