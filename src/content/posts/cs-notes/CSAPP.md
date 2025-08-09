@@ -2418,7 +2418,7 @@ Programs are translated and linked using a compiler driver: `gcc -Og -o prog mai
 - `.data` section
   - Initialized global variables
 - `.bss` section
-  - Uninitialized global variables
+  - Global variables that are uninitialized or initialized to zero
   - Block Started by Symbol
   - "Better Save Space"
   - Has section header but occupies no space
@@ -2454,17 +2454,21 @@ Programs are translated and linked using a compiler driver: `gcc -Og -o prog mai
 
 ```c
 int f() {
-  static int x = 0;
+  static int x = 0; /* .bss */
   return x;
 }
 
 int g() {
-  static int x = 1;
+  static int x = 1; /* .data */
   return x;
 }
 ```
 
 In the case above, compiler allocates space in `.data` for each definition of `x` and creates local symbols in the symbol table with unique names, e.g., `x.1` and `x.2`.
+
+:::important
+Local static variables are only initialized at first time encountered, calls after won't reinitialize.
+:::
 
 ## How Linker Resolves Duplicate Symbol Definitions
 
@@ -6573,6 +6577,256 @@ void *thread(void *vargp) {
   - Hard to detect by testing
     - Probability of bad race outcome very low
     - But nonzero !
+
+# Synchronization
+
+## Shared Variables in Threaded C Programs
+
+- Question: Which variables in a threaded C program are shared ?
+  - The answer is not as simple as "global variables are shared" and "stack variables are private"
+- Def: A variable **x** is shared if and only if multiple threads reference some instance of **x**
+- Requires answers to the following questions:
+  - What is the memory model for threads ?
+  - How are instances of variables mapped to memory ?
+  - How many threads might reference each of these instances ?
+
+## Threads Memory Model
+
+- Conceptual model:
+  - Multiple threads run within the context of a single process
+  - Each thread has its own separate thread context
+    - Thread ID, stack, stack pointer, PC, condition codes, and GP registers
+  - All threads share the remaining process context
+    - Code, data, heap, and shared library segments of the process virtual address space
+    - Open files and installed handlers
+- Operationally, this model is not strictly enforced:
+  - Register values are truly separate and protected, but...
+  - Any thread can read and write the stack of any other thread
+
+:::caution
+The mismatch between the conceptual and operation model is a source of confusion and errors.
+:::
+
+## Example Program to Illustrate Sharing
+
+```c
+void *thread(void *vargp);
+
+char **ptr; /* global var */
+
+int main() {
+  long i;
+  pthread_t tid;
+  char *msgs[2] = {
+    "Hello from foo",
+    "Hello from bar"
+  };
+
+  ptr = msgs;
+  for (i = 0; i < 2; i++)
+    pthread_create(&tid, NULL, thread, (void *)i);
+  pthread_exit(NULL);
+}
+
+void *thread(void *vargp) {
+  long myid = (long)vargp;
+  static int cnt = 0;
+
+  printf("[%ld]: %s (cnt=%d)\n", myid, ptr[myid], ++cnt);
+  return NULL;
+}
+```
+
+- Peer threads reference main thread's stack indirectly through global **ptr** variable
+- `ptr`, `cnt`, and `msgs` are shared, `i` and `myid` are not shared
+
+## Example for Improper Synchronizing Threads
+
+```c
+void *thread(void *vargp);
+
+/* Global shared variable */
+volatile long cnt = 0;
+
+int main(int argc, char **argv) {
+  long niters;
+  pthread_t tid1, tid2;
+
+  niters = atoi(argv[1]);
+  pthread_create(&tid1, NULL, thread, &niters);
+  pthread_create(&tid2, NULL, thread, &niters);
+  pthread_join(tid1, NULL);
+  pthread_join(tid2, NULL);
+
+  /* Check result */
+  if (cnt != (2 * niters))
+    printf("BOOM! cnt=%ld\n", cnt);
+  else
+    printf("OK cnt=%ld\n", cnt);
+  exit(0);
+}
+
+void *thread(void *vargp) {
+  long i, niters = *((long *)vargp);
+  for (i = 0; i < niters; i++)
+    cnt++;
+  return NULL;
+}
+```
+
+```bash
+linux> ./badcnt 10000
+OK cnt=20000
+linux> ./badcnt 10000
+BOOM! cnt=13051
+linux>
+```
+
+`cnt` should equal 20,000. What went wrong?
+
+### Assembly Code for Counter Loop
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4xuuy2hxud.avif" alt="" />
+</center>
+
+### Concurrent Execution
+
+- Key idea: In general, any sequentially consistent interleaving is possible, but some give an unexpected result !
+  - $I_{i}$ denotes that thread $i$ executes instruction $I$
+  - $\%rdx_{i}$ is the content of $\%rdx$ in thread $i$'s context
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7eh3czreim.avif" alt="" />
+</center>
+
+- Incorrect ordering: two threads increment the counter, but the result is 1 instead of 2
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4n814xg1sw.avif" alt="" />
+</center>
+
+- And the following ordering is still wrong
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.175pcu751p.avif" alt="" />
+</center>
+
+- We can analyze the behavior using a _progress graph_
+
+## Progress Graphs
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4cl7bsa74r.avif" alt="" />
+</center>
+
+- A _progress graph_ depicts the discrete _execution state space_ of concurrent threads
+- Each axis corresponds to the sequential order of instructions in a thread
+- Each point corresponds to a possible _execution state_ $( I_{1} ,I_{2})$
+  - E.g., $( L_{1} ,S_{2})$ denotes state where thread 1 has completed $L_{1}$ and thread 2 has completed $S_{2}$
+
+### Trajectories in Progress Graphs
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.54y2tjvj2j.avif" alt="" />
+</center>
+
+- A _trajectory_ is a sequence of legal state transitions that describes one possible concurrent execution of the threads
+
+### Critical Sections and Unsafe Regions
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1sfcz6wzxo.avif" alt="" />
+</center>
+
+- $L$, $U$, and $S$ form a _critical section_ with respect to the shared variable **cnt**
+- Instructions in critical sections (write some shared variable) should not be interleaved
+- Sets of states where such interleaving occurs form _unsafe regions_
+- Def: A trajectory is _safe_ if it does not enter any unsafe region
+- Claim: A trajectory is correct (write **cnt**) if it is safe
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3yerkyvgg9.avif" alt="" />
+</center>
+
+## Enforcing Mutual Exclusion
+
+- Question: How can we guarantee a safe trajectory ?
+- Answer: We must _synchronize_ the execution of the threads so that they can never have an unsafe trajectory
+  - i.e., need to guarantee _mutually exclusive access_ for each critical section
+- Classic solution:
+  - Semaphores (Edsger Dijkstra)
+- Other approaches:
+  - Mutex and condition variables (Pthreads)
+  - Monitors (Java)
+
+### Semaphores
+
+- Semaphore: non-negative global integer synchronization variable. Manipulated by `P` and `V` operations (**P** and **V** correspond to the dutch words _Proberen_ and _Verhogen_ respectively)
+- `P(s)`
+  - If _s_ is nonzero, then decrement _s_ by 1 and return immediately
+    - Test and decrement operations occur atomically (indivisibly)
+  - If _s_ is zero, then suspend thread until _s_ becomes nonzero and the thread is restarted by a _V_ operation
+  - After restarting, the _P_ operation decrements _s_ and returns control to the caller
+- `V(s)`
+  - Increment _s_ by 1
+    - Increment operation occurs atomically
+  - If there are any threads blocked in a _P_ operation waiting for _s_ to become non-zero, then restart exactly one of those threads, which then completes its _P_ operation by decrementing _s_
+- Semaphore invariant: $s\geqslant 0$
+
+#### Using Semaphores for Mutual Exclusion
+
+```c
+#include <semaphore.h>
+
+int sem_init(sem_t *s, 0, unsigned int val); /* s = val */
+int sem_wait(sem_t *s); /* P(s) */
+int sem_post(sem_t *s); /* V(s) */
+```
+
+- Basic idea:
+  - Associate a unique semaphore _mutex_, initially 1, with each shared variable (or related set of shared variables)
+  - Surround corresponding critical sections with `P(mutex)` and `V(mutex)` operations
+- Terminology:
+  - Binary semaphore: semaphore whose value is always 0 or 1
+  - Mutex: binary semaphore used for mutual exclusion
+    - P operation: "locking" the mutex
+    - V operation: "unlocking" or "releasing" the mutex
+    - "Holding" a mutex: locked and not yet unlocked
+  - Counting semaphore: used as a counter for set of available resources
+
+## Fix for Improper Synchronizing Threads
+
+- Define and initialize a mutex for the shared variable _cnt_:
+
+```c
+volatile long cnt = 0;  /* Counter */
+sem_t mutex;            /* Semaphore that protects cnt */
+sem_init(&mutex, 0, 1); /* mutex = 1 */
+```
+
+- Surround critical section with _P_ and _V_:
+
+```c
+for (i = 0; i < niters; i++) {
+  sem_wait(&mutex);
+  cnt++;
+  sem_post(&mutex);
+}
+```
+
+:::warning
+Its orders of magnitude slower than improper one.
+:::
+
+## Why Mutexes Work
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7lkb8jafx7.avif" alt="" />
+</center>
+
+- Provide mutually exclusive access to shared variable by surrounding critical section with _P_ and _V_ operations on semaphore _s_ (initially set to 1)
+- Semaphore invariant creates a _forbidden region_ that encloses unsafe region and that cannot be entered by any trajectory
 
 # References
 
