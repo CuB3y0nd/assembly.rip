@@ -6742,8 +6742,8 @@ linux>
 - $L$, $U$, and $S$ form a _critical section_ with respect to the shared variable **cnt**
 - Instructions in critical sections (write some shared variable) should not be interleaved
 - Sets of states where such interleaving occurs form _unsafe regions_
-- Def: A trajectory is _safe_ if it does not enter any unsafe region
-- Claim: A trajectory is correct (write **cnt**) if it is safe
+- Def: A trajectory is _safe_ iff it does not enter any unsafe region
+- Claim: A trajectory is correct (write **cnt**) iff it is safe
 
 <center>
   <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3yerkyvgg9.avif" alt="" />
