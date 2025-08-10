@@ -17,12 +17,12 @@ export const siteConfig: SiteConfig = {
 	},
 	banner: {
 		enable: true,
-		src: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5j4huxgtak.avif",
+		src: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6m47vyn1pe.avif",
 		position: "center",
 		credit: {
 			enable: true,
-			text: "空色天絵 / NEO TOKYO NOIR 01",
-			url: "https://www.pixiv.net/en/artworks/111024784",
+			text: "蓝色风暴——Blue",
+			url: "https://www.pixiv.net/en/artworks/119807651",
 		},
 	},
 	toc: {

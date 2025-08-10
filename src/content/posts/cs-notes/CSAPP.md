@@ -1,7 +1,7 @@
 ---
 title: "The CSAPP Notebook"
 published: 2025-07-16
-updated: 2025-08-09
+updated: 2025-08-10
 description: "CMU 15213/15513 CSAPP learning notes."
 image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.23262tnnad.avif"
 tags: ["CSAPP", "Notes"]
@@ -26,7 +26,7 @@ draft: false
 - Computers determine what to do (instructions)
 - ... and represent and manipulate numbers, sets, strings, etc...
 
-#### Why bits? Electronic Implementation
+#### Why bits ? Electronic Implementation
 
 - Easy to store with bitsable elements
 - Reliably transmitted on noisy and inaccurate wires
@@ -328,7 +328,7 @@ If you want convert a value $u$ to its negative form by hand or in mind, either 
 
 Just do: $\sim u+1$
 
-### When Should I Use Unsigned?
+### When Should I Use Unsigned ?
 
 :::caution
 **Don't use without understanding implications!**
@@ -421,7 +421,7 @@ In C, either little endian or big endian machine, strings in memory represented 
 ### Limitation 2
 
 - Just one setting of binary point within the $w$ bits
-  - Limited range of numbers (very small values? very large? we have to move the binary point to represent sort of wide as wide a range as possible with as much precision given the number of bits)
+  - Limited range of numbers (very small values ? very large ? we have to move the binary point to represent sort of wide as wide a range as possible with as much precision given the number of bits)
 
 ## Definition: IEEE Floating Point Standard
 
@@ -553,7 +553,7 @@ Here is a scaled close-up view:
   - Must first compare sign bits
   - Must consider $-0=0$
   - NaNs problematic
-    - What should comparison yield?
+    - What should comparison yield ?
   - Otherwise OK
     - Denormalized vs. Normalized
     - Normalized vs. Infinity
@@ -663,14 +663,14 @@ $( -1)^{s_{1}} \cdot M_{1} \cdot 2^{E_{1}} +( -1)^{s_{2}} \cdot M_{2} \cdot 2^{E
 ### Mathematical Properties of Floating Point Add
 
 - Compare to those of Abelian Group
-  - Closed under addition? (Yes)
+  - Closed under addition ? (Yes)
     - But may generate infinity or NaN
-  - Commutative? (Yes)
-  - Associative? (No)
+  - Commutative ? (Yes)
+  - Associative ? (No)
     - Overflow and inexactness of rounding
     - `(3.14+1e10)-1e10 = 0, 3.14+(1e10-1e10) = 3.14`
-  - $0$ is additive identity? (Yes)
-  - Every element has additive inverse? (Almost)
+  - $0$ is additive identity ? (Yes)
+  - Every element has additive inverse ? (Almost)
     - Except for infinities & NaNs
 - Monotonicity
   - $a\geqslant b\Rightarrow a+c\geqslant b+c$ ? (Almost)
@@ -679,14 +679,14 @@ $( -1)^{s_{1}} \cdot M_{1} \cdot 2^{E_{1}} +( -1)^{s_{2}} \cdot M_{2} \cdot 2^{E
 ### Mathematical Properties of Floating Point Mult
 
 - Compare to Commutative Ring
-  - Closed under multiplication? (Yes)
+  - Closed under multiplication ? (Yes)
     - But may generate infinity or NaN
-  - Multiplication Commutative? (Yes)
-  - Multiplication is Associative? (No)
+  - Multiplication Commutative ? (Yes)
+  - Multiplication is Associative ? (No)
     - Possibility of overflow, inexactness of rounding
     - `(1e20*1e20)*1e-20 = inf, 1e20*(1e20*1e-20) = 1e20`
-  - $1$ is multiplicative identity? (Yes)
-  - Multiplication distributes over addition? (No)
+  - $1$ is multiplicative identity ? (Yes)
+  - Multiplication distributes over addition ? (No)
     - Possibility of overflow, inexactness of rounding
     - `1e20*(1e20-1e20) = 0.0, 1e20*1e20-1e20*1e20 = NaN`
 - Monotonicity
@@ -725,7 +725,7 @@ Nobody (at least me), can keep these long history in mind! So I'll just skipping
 - Microarchitecture: Implementation of the architecture
   - Examples: cache sizes and core frequency
 
-### Assembly/Machine Code View
+### Assembly / Machine Code View
 
 ![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5c19zhouhx.avif)
 
@@ -2245,7 +2245,7 @@ void lower(char *s) {
   <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.67xriorxa3.avif" alt="" />
 </center>
 
-### Why couldn't compiler move strlen out of inner loop?
+### Why couldn't compiler move strlen out of inner loop ?
 
 - Procedure may have side effects
   - Alters global state each time called
@@ -2355,7 +2355,7 @@ Programs are translated and linked using a compiler driver: `gcc -Og -o prog mai
   <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7axguzk7iw.avif" alt="" />
 </center>
 
-### Why Linkers?
+### Why Linkers ?
 
 - Reason 1: Modularity
   - Program can be written as a collection of smaller source files, rather than one monolithic mass
@@ -2369,7 +2369,7 @@ Programs are translated and linked using a compiler driver: `gcc -Og -o prog mai
     - Common functions can be aggregated into a single file
     - Yet executable files and running memory images contain only code for the functions they actually use
 
-### What Do Linkers Do?
+### What Do Linkers Do ?
 
 - Step 1: Symbol resolution
   - Programs define and reference symbols (global variables and functions)
@@ -2559,7 +2559,7 @@ Using PC-relative addressing for `sum`: `0x1120 = 0x1151 + 0xffffffcf`
 
 ## Packaging Commonly Used Functions
 
-- How to package functions commonly used by programmers?
+- How to package functions commonly used by programmers ?
   - Math, I/O, memory management, string manipulation, etc
 - Awkward, given the linker framework so far:
   - Option 1: Put all functions into a single source file
@@ -3253,7 +3253,7 @@ void fork5() {
   - Performed by parent on terminated child (using `wait` or `waitpid`)
   - Parent is given exit status information
   - Kernel then deletes zombie child process
-- What if parent doesn't reap?
+- What if parent doesn't reap ?
   - If any parent terminates without reaping a child, then the orphaned child will be reaped by `init` process (`pid == 1`)
   - So, only need explicit reaping in long-running processes (e.g., shells and servers)
 
@@ -3506,7 +3506,7 @@ void eval(char *cmdline) {
 #### Problem with Simple Shell Example
 
 - Our example shell correctly waits for and reaps foreground jobs
-- But what about background jobs?
+- But what about background jobs ?
   - Will become zombies when they terminate
   - Will never be reaped because shell (typically) will not terminate
   - Will create a memory leak that could run the kernel out of memory
@@ -5323,12 +5323,12 @@ int main() {
 
 ## The Notion of an internet Protocol
 
-- How is it possible to send bits across incompatible LANs and WANs?
+- How is it possible to send bits across incompatible LANs and WANs ?
 - Solution: _protocol_ software running on each host and router
   - Protocol is a set of rules that governs how hosts and routers should cooperate when they transfer data from network to network
   - Smooths out the differences between the different networks
 
-### What Does an internet Protocol Do?
+### What Does an internet Protocol Do ?
 
 - Provides a _naming scheme_
   - An internet protocol defines a uniform format for _host addresses_
@@ -6682,7 +6682,7 @@ BOOM! cnt=13051
 linux>
 ```
 
-`cnt` should equal 20,000. What went wrong?
+`cnt` should equal 20,000. What went wrong ?
 
 ### Assembly Code for Counter Loop
 
@@ -6827,6 +6827,517 @@ Its orders of magnitude slower than improper one.
 
 - Provide mutually exclusive access to shared variable by surrounding critical section with _P_ and _V_ operations on semaphore _s_ (initially set to 1)
 - Semaphore invariant creates a _forbidden region_ that encloses unsafe region and that cannot be entered by any trajectory
+
+## Using Semaphores to Coordinate Access to Shared Resources
+
+- Basic idea: Thread uses a semaphore operation to notify another thread that some condition has become true
+  - Use counting semaphores to keep track of resource state and to notify other threads
+  - Use mutex to protect access to resource
+- Two classic examples:
+  - The Producer-Consumer Problem
+  - The Readers-Writers Problem
+
+### Producer-Consumer Problem
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4jof8anjlq.avif" alt="" />
+</center>
+
+- Common synchronization pattern:
+  - Producer waits for empty _slot_, inserts item in buffer, and notifies consumer
+  - Consumer waits for _item_, removes it from buffer, and notifies producer
+- Examples:
+  - Multimedia processing:
+    - Producer creates MPEG video frames, consumer renders them
+  - Event-driven graphical user interfaces
+    - Producer detects mouse clicks, mouse movements, and keyboard hits and inserts corresponding events in buffer
+    - Consumer retrieves events from buffer and paints the display
+
+#### Producer-Consumer on an n-element Buffer
+
+- Requires a mutex and two counting semaphores:
+  - `mutex`: enforces mutually exclusive access to the buffer
+  - `slots`: counts the available slots in the buffer
+  - `items`: counts the available items in the buffer
+- Implemented using a shared circular (ring) buffer package called _sbuf_
+
+##### sbuf Package
+
+```c title="sbuf.h"
+typedef struct {
+  int *buf;    /* Buffer array */
+  int n;       /* Maximum number of slots */
+  int front;   /* buf[(front+1)%n] is first item */
+  int rear;    /* buf[rear%n] is last item */
+  sem_t mutex; /* Protects accesses to buf */
+  sem_t slots; /* Counts available slots */
+  sem_t items; /* Counts available items */
+} sbuf_t;
+
+void sbuf_init(sbuf_t *sp, int n);
+void sbuf_deinit(sbuf_t *sp);
+void sbuf_insert(sbuf_t *sp, int item);
+int sbuf_remove(sbuf_t *sp);
+```
+
+```c title="sbuf.c"
+/* Create an empty, bounded, shared FIFO buffer with n slots */
+void sbuf_init(sbuf_t *sp, int n) {
+  sp->buf = calloc(n, sizeof(int));
+  sp->n = n;                  /* Buffer holds max of n items */
+  sp->front = sp->rear = 0;   /* Empty buffer iff front == rear */
+  sem_init(&sp->mutex, 0, 1); /* Binary semaphore for locking */
+  sem_init(&sp->slots, 0, n); /* Initially, buf has n empty slots */
+  sem_init(&sp->items, 0, 0); /* Initially, buf has 0 items */
+}
+
+/* Clean up buffer sp */
+void sbuf_deinit(sbuf_t *sp) {
+  free(sp->buf);
+}
+
+/* Insert item onto the rear of shared buffer sp */
+void sbuf_insert(sbuf_t *sp, int item) {
+  P(&sp->slots);                        /* Wait for available slot */
+  P(&sp->mutex);                        /* Lock the buffer */
+  sp->buf[(++sp->rear)%(sp->n)] = item; /* Insert the item */
+  V(&sp->mutex);                        /* Unlock the buffer */
+  V(&sp->items);                        /* Announce available item */
+}
+
+/* Remove and return the first item from buffer sp */
+int sbuf_remove(sbuf_t *sp) {
+  int item;
+  P(&sp->items);                         /* Wait for available item */
+  P(&sp->mutex);                         /* Lock the buffer */
+  item = sp->buf[(++sp->front)%(sp->n)]; /* Remove the item */
+  V(&sp->mutex);                         /* Unlock the buffer */
+  V(&sp->slots);                         /* Announce available slot */
+  return item;
+}
+```
+
+### Readers-Writers Problem
+
+- Generalization of the mutual exclusion problem
+- Problem statement:
+  - Reader threads only read the object
+  - Writer threads modify the object
+  - Writers must have exclusive access to the object
+  - Unlimited number of readers can access the object
+- Occurs frequently in real systems:
+  - Online airline reservation system
+  - Multithreaded caching Web proxy
+
+#### Variants of Readers-Writers
+
+- First readers-writers problem (favors readers)
+  - No reader should be kept waiting unless a writer has already been granted permission to use the object
+  - A reader that arrives after a waiting writer gets priority over the writer
+- Second readers-writers problem (favors writers)
+  - Once a writer is ready to write, it performs its write as soon as possible
+  - A reader that arrives after a writer must wait, even if the writer is also waiting
+- Starvation (where a thread waits indefinitely) is possible in both cases
+
+#### Solution to First Readers-Writers Problem
+
+```c
+int readcnt; /* Initially = 0 */
+sem_t mutex, w; /* Initially = 1 */
+
+void reader(void) {
+  while (1) {
+    P(&mutex);
+    readcnt++;
+    if (readcnt == 1) /* First in */
+      P(&w);
+    V(&mutex);
+
+    /* Critical section */
+    /* Reading happens */
+
+    P(&mutex);
+    readcnt--;
+    if (readcnt == 0) /* Last out */
+      V(&w);
+    V(&mutex);
+  }
+}
+
+void writer(void) {
+  while (1) {
+    P(&w);
+
+    /* Critical section */
+    /* Writing happens */
+
+    V(&w);
+  }
+}
+```
+
+## Putting It All Together: Prethreaded Concurrent Server
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.51egwy30p4.avif" alt="" />
+</center>
+
+### Prethreaded Concurrent Server
+
+```c title="echoservert_pre.c"
+void *thread(void *vargp);
+
+sbuf_t sbuf; /* Shared buffer of connected descriptors */
+
+int main(int argc, char **argv) {
+  int i, listenfd, connfd;
+  socklen_t clientlen;
+  struct sockaddr_storage clientaddr;
+  pthread_t tid;
+
+  listenfd = open_listenfd(argv[1]);
+  sbuf_init(&sbuf, SBUFSIZE);
+  for (i = 0; i < NTHREADS; i++) /* Create worker threads */
+    pthread_create(&tid, NULL, thread, NULL);
+  while (1) {
+    clientlen = sizeof(struct sockaddr_storage);
+    connfd = accept(listenfd, (SA *)&clientaddr, &clientlen);
+    sbuf_insert(&sbuf, connfd); /* Insert connfd in buffer */
+  }
+}
+
+void *thread(void *vargp) {
+  pthread_detach(pthread_self());
+  while (1) {
+    int connfd = sbuf_remove(&sbuf); /* Remove connfd from buf */
+    echo_cnt(connfd);                /* Service client */
+    close(connfd);
+  }
+}
+```
+
+```c title="echo_cnt.c"
+/* echo_cnt initialization routine */
+static int byte_cnt; /* Byte counter */
+static sem_t mutex;  /* and the mutex that protects it */
+
+static void init_echo_cnt(void) {
+  sem_init(&mutex, 0, 1);
+  byte_cnt = 0;
+}
+
+/* Worker thread service routine */
+void echo_cnt(int connfd) {
+  int n;
+  char buf[MAXLINE];
+  rio_t rio;
+  static pthread_once_t once = PTHREAD_ONCE_INIT;
+
+  pthread_once(&once, init_echo_cnt);
+  rio_readinitb(&rio, connfd);
+  while((n = rio_readlineb(&rio, buf, MAXLINE)) != 0) {
+    P(&mutex);
+    byte_cnt += n;
+    printf("thread %d received %d (%d total) bytes on fd %d\n", (int)pthread_self(), n, byte_cnt, connfd);
+    V(&mutex);
+    rio_writen(connfd, buf, n);
+  }
+}
+```
+
+## Crucial concept: Thread Safety
+
+- Functions called from a thread must be _thread‐safe_
+- Def: A function is thread-safe iff it will always produce correct results when called repeatedly from multiple concurrent threads
+- Classes of thread-unsafe functions:
+  - Class 1: Functions that do not protect shared variables
+  - Class 2: Functions that keep state across multiple invocations
+  - Class 3: Functions that return a pointer to a static variable
+  - Class 4: Functions that call thread-unsafe functions
+
+### Thread-Unsafe Functions (Class 1)
+
+- Failing to protect shared variables
+  - Fix: Use **P** and **V** semaphore operations
+  - Issue: Synchronization operations will slow down code
+
+### Thread-Unsafe Functions (Class 2)
+
+- Relying on persistent state across multiple function invocations
+  - Example: Random number generator that relies on static state
+
+```c
+static unsigned int next = 1;
+
+/* rand: return pseudo-random integer on 0..32767 */
+int rand(void) {
+  next = next*1103515245 + 12345;
+  return (unsigned int)(next/65536) % 32768;
+}
+
+/* srand: set seed for rand() */
+void srand(unsigned int seed) {
+  next = seed;
+}
+```
+
+#### Thread-Safe Random Number Generator
+
+- Pass state as part of argument
+  - and, thereby, eliminate global state
+
+```c
+/* rand_r - return pseudo-random integer on 0..32767 */
+
+int rand_r(int *nextp) {
+  *nextp = *nextp * 1103515245 + 12345;
+  return (unsigned int)(*nextp/65536) % 32768;
+}
+```
+
+- Consequence: programmer using **rand_r** must maintain seed
+
+### Thread-Unsafe Functions (Class 3)
+
+- Returning a pointer to a static variable
+- Fix 1. Rewrite function so caller passes address of variable to store result
+  - Requires changes in caller and callee
+- Fix 2. Lock-and‐copy
+  - Requires simple changes in caller (and none in callee)
+  - However, caller must free memory
+
+```c
+/* lock-and-copy version */
+char *ctime_ts(const time_t *timep, char *privatep) {
+  char *sharedp;
+
+  P(&mutex);
+  sharedp = ctime(timep);
+  strcpy(privatep, sharedp);
+  V(&mutex);
+  return privatep;
+}
+```
+
+### Thread-Unsafe Functions (Class 4)
+
+- Calling thread-unsafe functions
+  - Calling one thread-unsafe function makes the entire function that calls it thread-unsafe
+  - Fix: Modify the function so it calls only thread-safe functions
+
+## Reentrant Functions
+
+- Def: A function is _reentrant_ iff it accesses no shared variables when called by multiple threads
+  - Important subset of thread-safe functions
+    - Require no synchronization operations
+    - Only way to make a Class 2 function thread-safe is to make it reetnrant (e.g., **rand_r**)
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3gopxkdcbi.avif" alt="" />
+</center>
+
+## Thread-Safe Library Functions
+
+- All functions in the Standard C Library (at the back of your K&R text) are thread-safe
+  - Examples: **malloc**, **free**, **printf**, **scanf**
+- Most Unix system calls are thread-safe, with a few exceptions:
+
+| Thread-unsafe function | Class | Reentrant version |
+| ---------------------- | ----- | ----------------- |
+| `asctime`              | 3     | `asctime_r`       |
+| `ctime`                | 3     | `ctime_r`         |
+| `gethostbyaddr`        | 3     | `gethostbyaddr_r` |
+| `gethostbyname`        | 3     | `gethostbyname_r` |
+| `inet_ntoa`            | 3     | (none)            |
+| `localtime`            | 3     | `localtime_r`     |
+| `rand`                 | 2     | `rand_r`          |
+
+## Races
+
+- A _race_ occurs when correctness of the program depends on one thread reaching point _x_ before another thread reaches point _y_
+
+```c
+void *thread(void *vargp);
+
+/* A threaded program with a race */
+int main() {
+  pthread_t tid[N];
+  int i;
+
+  for (i = 0; i < N; i++)
+    pthread_create(&tid[i], NULL, thread, &i);
+  for (i = 0; i < N; i++)
+    pthread_join(tid[i], NULL);
+  exit(0);
+}
+
+/* Thread routine */
+void *thread(void *vargp) {
+  int myid = *((int *)vargp);
+  printf("Hello from thread %d\n", myid);
+  return NULL;
+}
+```
+
+### Race Illustration
+
+```c
+for (i = 0; i < N; i++)
+  pthread_create(&tid[i], NULL, thread, &i);
+```
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.96a295pdt6.avif" alt="" />
+</center>
+
+- Race between increment of _i_ in main thread and deref of _vargp_ in peer thread:
+  - If deref happens while `i = 0`, then OK
+  - Otherwise, peer thread gets wrong id value
+
+### Could this race really occur ?
+
+Main thread:
+
+```c
+int i;
+for (i = 0; i < 100; i++) {
+  pthread_create(&tid, NULL, thread, &i);
+}
+```
+
+Peer thread:
+
+```c
+void *thread(void *vargp) {
+  pthread_detach(pthread_self());
+  int i = *((int *)vargp);
+  save_value(i);
+  return NULL;
+}
+```
+
+- Race Test
+  - If no race, then each thread would get different value of _i_
+  - Set of saved values would consist of one copy each of 0 through 99
+
+#### Experimental Results
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.102hintuxg.avif" alt="" />
+</center>
+
+### Race Elimination
+
+```c
+/* Threaded program without the race */
+int main() {
+  pthread_t tid[N];
+  int i, *ptr;
+
+  for (i = 0; i < N; i++) {
+    ptr = malloc(sizeof(int));
+    *ptr = i;
+    pthread_create(&tid[i], NULL, thread, ptr);
+  }
+  for (i = 0; i < N; i++)
+    pthread_join(tid[i], NULL);
+  exit(0);
+}
+
+/* Thread routine */
+void *thread(void *vargp) {
+  int myid = *((int *)vargp);
+  free(vargp);
+  printf("Hello from thread %d\n", myid);
+  return NULL;
+}
+```
+
+## Deadlock
+
+- Def: A process is deadlocked iff it is waiting for a condition that will never be true
+- Typical Scenario:
+  - Processes 1 and 2 needs two resources (A and B) to proceed
+  - Process 1 acquires A, waits for B
+  - Process 2 acquires B, waits for A
+  - Both will wait forever !
+
+### Deadlocking With Semaphores
+
+```c
+void *count(void *vargp);
+
+int main() {
+  pthread_t tid[2];
+  sem_init(&mutex[0], 0, 1); /* mutex[0] = 1 */
+  sem_init(&mutex[1], 0, 1); /* mutex[1] = 1 */
+  pthread_create(&tid[0], NULL, count, (void*)0);
+  pthread_create(&tid[1], NULL, count, (void*)1);
+  pthread_join(tid[0], NULL);
+  pthread_join(tid[1], NULL);
+  printf("cnt=%d\n", cnt);
+  exit(0);
+}
+
+void *count(void *vargp) {
+  int i;
+  int id = (int)vargp;
+  for (i = 0; i < NITERS; i++) {
+    P(&mutex[id]); P(&mutex[1-id]);
+    cnt++;
+    V(&mutex[id]); V(&mutex[1-id]);
+  }
+  return NULL;
+}
+```
+
+#### Deadlock Visualized in Progress Graph
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.b97yq3ac7.avif" alt="" />
+</center>
+
+- Locking introduces the potential for _deadlock_
+- Any trajectory that enters the _deadlock region_ will eventually reach the _deadlock state_, waiting for either $S_{0}$ or $S_{1}$ to become nonzero
+- Other trajectories luck out and skirt the deadlock region
+- Unfortunate fact: deadlock is often nondeterministic (race)
+
+### Avoiding Deadlock: Acquire shared resources in same order
+
+```c
+int main() {
+  pthread_t tid[2];
+  sem_init(&mutex[0], 0, 1); /* mutex[0] = 1 */
+  sem_init(&mutex[1], 0, 1); /* mutex[1] = 1 */
+  pthread_create(&tid[0], NULL, count, (void*) 0);
+  pthread_create(&tid[1], NULL, count, (void*) 1);
+  pthread_join(tid[0], NULL);
+  pthread_join(tid[1], NULL);
+  printf("cnt=%d\n", cnt);
+  exit(0);
+}
+
+void *count(void *vargp) {
+  int i;
+  int id = (int) vargp;
+  for (i = 0; i < NITERS; i++) {
+    P(&mutex[0]); P(&mutex[1]);
+    cnt++;
+    V(&mutex[id]); V(&mutex[1-id]);
+  }
+  return NULL;
+}
+```
+
+#### Avoided Deadlock in Progress Graph
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9kgi04fb70.avif" alt="" />
+</center>
+
+- No way for trajectory to get stuck
+- Processes acquire locks in same order
+- Order in which locks released immaterial
 
 # References
 
