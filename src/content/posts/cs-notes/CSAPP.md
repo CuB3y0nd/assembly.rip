@@ -1,7 +1,7 @@
 ---
 title: "The CSAPP Notebook"
 published: 2025-07-16
-updated: 2025-08-10
+updated: 2025-08-11
 description: "CMU 15213/15513 CSAPP learning notes."
 image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.23262tnnad.avif"
 tags: ["CSAPP", "Notes"]
@@ -7338,6 +7338,465 @@ void *count(void *vargp) {
 - No way for trajectory to get stuck
 - Processes acquire locks in same order
 - Order in which locks released immaterial
+
+# Thread-Level Parallelism
+
+- Parallel Computing Hardware
+  - Multicore
+    - Multiple separate processors on single chip
+  - Hyperthreading
+    - Efficient execution of multiple threads on single core
+
+## Typical Multicore Processor
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8vn8gw7tpk.avif" alt="" />
+</center>
+
+- Multiple processors operating with coherent view of memory
+
+## Out-of-Order Processor Structure
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6f101z48kj.avif" alt="" />
+</center>
+
+- Instruction control dynamically converts program into stream of operations
+- Operations mapped onto functional units to execute in parallel
+
+## Hyperthreading Implementation
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2obugqgy9n.avif" alt="" />
+</center>
+
+- Replicate enough instruction control to process K instruction streams
+- K copies of all registers
+- Share functional units
+
+## Example: Parallel Summation
+
+- Sum numbers $0,...,n-1$
+  - Should add up to $\displaystyle \frac{n( n-1)}{2}$
+- Partition values $0,...,n-1$ into _t_ ranges
+  - $\lfloor n/t\rfloor $ values in each range
+  - Each of _t_ threads processes 1 range
+  - For simplicity, assume _n_ is a multiple of _t_
+
+### First attempt: psum-mutex
+
+- Simplest approach: Threads sum into a global variable protected by a semaphore mutex
+
+```c
+void *sum_mutex(void *vargp);
+
+long gsum = 0;          /* Global sum */
+long nelems_per_thread; /* Number of elements to sum */
+sem_t mutex;            /* Mutex to protect global sum */
+
+int main(int argc, char **argv) {
+  long i, nelems, log_nelems, nthreads, myid[MAXTHREADS];
+  pthread_t tid[MAXTHREADS];
+  /* Get input arguments */
+  nthreads = atoi(argv[1]);
+  log_nelems = atoi(argv[2]);
+  nelems = (1L << log_nelems);
+  nelems_per_thread = nelems / nthreads;
+  sem_init(&mutex, 0, 1);
+
+  /* Create peer threads and wait for them to finish */
+  for (i = 0; i < nthreads; i++) {
+    myid[i] = i;
+    pthread_create(&tid[i], NULL, sum_mutex, &myid[i]);
+  }
+
+  for (i = 0; i < nthreads; i++)
+    pthread_join(tid[i], NULL);
+
+  /* Check final answer */
+  if (gsum != (nelems * (nelems-1))/2)
+    printf("Error: result=%ld\n", gsum);
+  exit(0);
+}
+
+void *sum_mutex(void *vargp) {
+  long myid = *((long *)vargp);          /* Extract thread ID */
+  long start = myid * nelems_per_thread; /* Start element index */
+  long end = start + nelems_per_thread;  /* End element index */
+  long i;
+
+  for (i = start; i < end; i++) {
+    P(&mutex);
+    gsum += i;
+    V(&mutex);
+  }
+  return NULL;
+}
+```
+
+#### psum-mutex Performance
+
+- Shark machine with 8 cores, $n=2^{31}$
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1hsj867jxo.avif" alt="" />
+</center>
+
+- Nasty surprise:
+  - Single thread is very slow
+  - Gets slower as we use more cores
+
+### Next Attempt: psum-array
+
+- Peer thread _i_ sums into global array element _psum[i]_
+- Main waits for threads to finish, then sums elements of _psum_
+- Eliminates need for mutex synchronization
+
+```c
+void *sum_array(void *vargp) {
+  long myid = *((long *)vargp);          /* Extract thread ID */
+  long start = myid * nelems_per_thread; /* Start element index */
+  long end = start + nelems_per_thread;  /* End element index */
+  long i;
+
+  for (i = start; i < end; i++) {
+    psum[myid] += i;
+  }
+  return NULL;
+}
+```
+
+#### psum-array Performance
+
+- Orders of magnitude faster than **psum-mutex**
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8s3mj82urh.avif" alt="" />
+</center>
+
+### Next Attempt: psum-local
+
+- Reduce memory references by having peer thread _i_ sum into a local variable (register)
+
+```c
+void *sum_local(void *vargp) {
+  long myid = *((long *)vargp);          /* Extract thread ID */
+  long start = myid * nelems_per_thread; /* Start element index */
+  long end = start + nelems_per_thread;  /* End element index */
+  long i, sum = 0;
+
+  for (i = start; i < end; i++) {
+    sum += i;
+  }
+  psum[myid] = sum;
+  return NULL;
+}
+```
+
+#### psum-local Performance
+
+- Significantly faster than **psum-array**
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7snj6299lj.avif" alt="" />
+</center>
+
+## Characterizing Parallel Program Performance
+
+- $p$ processor cores, $T_{k}$ is the running time using $k$ cores
+- Def. Speedup: $\displaystyle S_{p} =\frac{T_{1}}{T_{p}}$
+  - $S_{p}$ is relative speedup if $T_{1}$ is running time of parallel version of the code running on 1 core
+  - $S_{p}$ is absolute speedup if $T_{1}$ is running time of sequential version of code running on 1 core
+  - Absolute speedup is a much truer measure of the benefits of parallelism
+- Def. Efficiency: $\displaystyle E_{p} =\frac{S_{p}}{p} =\frac{T_{1}}{pT_{p}}$
+  - Reported as a percentage in the range $( 0,100]$
+  - Measures the overhead due to parallelization
+
+### Performance of psum-local
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.83acz862f4.avif" alt="" />
+</center>
+
+- Efficiencies OK, not great
+- Our example is easily parallelizable
+- Real codes are often much harder to parallelize
+
+## Amdahl's Law
+
+- Gene Amdahl (Nov. 16, 1922 – Nov. 10, 2015)
+- Captures the difficulty of using parallelism to speed things up
+- Overall problem
+  - $T$ - Total sequential time required
+  - $p$ - Fraction of total that can be sped up ($0\leqslant p\leqslant 1$)
+  - $k$ - Speedup factor
+- Resulting Performance
+  - $\displaystyle T_{k} =\frac{pT}{k} +( 1-p) \cdot T$
+    - Portion which can be sped up runs $k$ times faster
+    - Portion which cannot be sped up stays the same
+  - Least possible running time:
+    - $k=\infty $
+    - $T_{\infty } =( 1-p) \cdot T$
+
+### Amdahl's Law Example
+
+- Overall problem
+  - $T=10$
+  - $p=0.9$
+  - $k=9$
+- Resulting Performance
+  - $\displaystyle T_{9} =0.9\cdot \frac{10}{9} +0.1\cdot 10=1.0+1.0=2.0$
+  - Least possible running time:
+    - $T_{\infty } =0.1\cdot 10.0=1.0$
+
+## A More Substantial Example: Sort
+
+- Sort set of $N$ random numbers
+- Multiple possible algorithms
+  - Use parallel version of quicksort
+- Sequential quicksort of set of values $X$
+  - Choose "pivot" $p$ from $X$
+  - Rearrange $X$ into
+    - $L$: Values $\leqslant p$
+    - $R$: Values $\geqslant p$
+  - Recursively sort $L$ to get $\displaystyle L^{\prime }$
+  - Recursively sort $R$ to get $\displaystyle R^{\prime }$
+  - Return $\displaystyle L^{\prime } :p:R^{\prime }$
+
+### Sequential Quicksort Visualized
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.99to7v3zp2.avif" alt="" />
+  <br />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5fkwowmozi.avif" alt="" />
+</center>
+
+### Sequential Quicksort Code
+
+```c
+void qsort_serial(data_t *base, size_t nele) {
+  if (nele <= 1)
+    return;
+  if (nele == 2) {
+    if (base[0] > base[1])
+      swap(base, base+1);
+    return;
+  }
+
+  /* Partition returns index of pivot */
+  size_t m = partition(base, nele);
+  if (m > 1)
+    qsort_serial(base, m);
+  if (nele-1 > m+1)
+    qsort_serial(base+m+1, nele-m-1);
+}
+```
+
+- Sort _nele_ elements starting at _base_
+  - Recursively sort $L$ or $R$ if has more than one element
+
+### Parallel Quicksort
+
+- Parallel quicksort of set of values $X$
+  - If $N\leqslant Nthresh$, do sequential quicksort
+  - Else
+    - Choose "pivot" $p$ from $X$
+    - Rearrange $X$ into
+      - $L$: Values $\leqslant p$
+      - $R$: Values $\geqslant p$
+    - Recursively spawn separate threads
+      - Sort $L$ to get $\displaystyle L^{\prime }$
+      - Sort $R$ to get $\displaystyle R^{\prime }$
+  - Return $\displaystyle L^{\prime } :p:R^{\prime }$
+
+#### Parallel Quicksort Visualized
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3d540v0iic.avif" alt="" />
+</center>
+
+#### Thread Structure: Sorting Tasks
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2a5epz84ec.avif" alt="" />
+</center>
+
+- Task: Sort subrange of data
+  - Specify as:
+    - _base_: Starting address
+    - _nele_: Number of elements in subrange
+- Run as separate thread
+
+#### Small Sort Task Operation
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5fkwox4jmq.avif" alt="" />
+</center>
+
+- Sort subrange using serial quicksort
+
+#### Large Sort Task Operation
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.96a2a5u9cs.avif" alt="" />
+</center>
+
+#### Top-Level Function (Simplified)
+
+```c
+void tqsort(data_t *base, size_t nele) {
+  init_task(nele);
+  global_base = base;
+  global_end = global_base + nele - 1;
+  task_queue_ptr tq = new_task_queue();
+  tqsort_helper(base, nele, tq);
+  join_tasks(tq);
+  free_task_queue(tq);
+}
+```
+
+- Sets up data structures
+- Calls recursive sort routine
+- Keeps joining threads until none left
+- Frees data structures
+
+#### Recursive sort routine (Simplified)
+
+```c
+/* Multi-threaded quicksort */
+static void tqsort_helper(data_t *base, size_t nele, task_queue_ptr tq) {
+  if (nele <= nele_max_sort_serial) {
+    /* Use sequential sort */
+    qsort_serial(base, nele);
+    return;
+  }
+  sort_task_t *t = new_task(base, nele, tq);
+  spawn_task(tq, sort_thread, (void *) t);
+}
+```
+
+- Small partition: Sort serially
+- Large partition: Spawn new sort task
+
+#### Sort task thread (Simplified)
+
+```c
+/* Thread routine for many-threaded quicksort */
+static void *sort_thread(void *vargp) {
+  sort_task_t *t = (sort_task_t *) vargp;
+  data_t *base = t->base;
+  size_t nele = t->nele;
+  task_queue_ptr tq = t->tq;
+  free(vargp);
+  size_t m = partition(base, nele);
+  if (m > 1)
+    tqsort_helper(base, m, tq);
+  if (nele-1 > m+1)
+    tqsort_helper(base+m+1, nele-m-1, tq);
+  return NULL;
+}
+```
+
+- Get task parameters
+- Perform partitioning step
+- Call recursive sort routine on each partition
+
+#### Parallel Quicksort Performance
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.70anoekfdi.avif" alt="" />
+</center>
+
+- Serial fraction: Fraction of input at which do serial sort
+- Sort $2^{27}$ (134,217,728) random values
+- Best speedup = 6.84X
+- Good performance over wide range of fraction values
+  - F too small: Not enough parallelism
+  - F too large: Thread overhead + run out of thread memory
+
+#### Amdahl's Law & Parallel Quicksort
+
+- Sequential bottleneck
+  - Top-level partition: No speedup
+  - Second level: $\leqslant 2X$ speedup
+  - $k^{th}$ level: $\leqslant 2^{k-1} X$ speedup
+- Implications
+  - Good performance for small-scale parallelism
+  - Would need to parallelize partitioning step to get large-scale parallelism
+    - Parallel Sorting by Regular Sampling (H. Shi & J. Schaeffer, J. Parallel & Distributed Computing, 1992)
+
+#### Parallelizing Partitioning Step
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.83aczat3uo.avif" alt="" />
+</center>
+
+#### Experience with Parallel Partitioning
+
+- Could not obtain speedup
+- Speculate: Too much data copying
+  - Could not do everything within source array
+  - Set up temporary space for reassembling partition
+
+#### Lessons Learned
+
+- Must have parallelization strategy
+  - Partition into $K$ independent parts
+  - Divide-and-conquer
+- Inner loops must be synchronization free
+  - Synchronization operations very expensive
+- Beware of Amdahl's Law
+  - Serial code can become bottleneck
+
+## Memory Consistency
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8adkuqke98.avif" alt="" />
+</center>
+
+- What are the possible values printed ?
+  - Depends on memory consistency model
+  - Abstract model of how hardware handles concurrent accesses
+- Sequential consistency
+  - Overall effect consistent with each individual thread
+  - Otherwise, arbitrary interleaving
+
+### Sequential Consistency Example
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.45hzimw23z.avif" alt="" />
+</center>
+
+- Impossible outputs
+  - 100, 1 and 1, 100
+  - Would require reaching both **Ra** and **Rb** before **Wa** and **Wb**
+
+### Non-Coherent Cache Scenario
+
+- Write-back caches, without coordination between them
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7lkbaqah0b.avif" alt="" />
+</center>
+
+### Snoopy Caches
+
+- Tag each cache block with state
+  - `Invalid` - Cannot use value
+  - `Shared` - Readable copy
+  - `Exclusive` - Writeable copy
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1e8xakhfbo.avif" alt="" />
+</center>
+
+- When cache sees request for one of its E-tagged blocks
+  - Supply value from cache
+  - Set tag to S
+
+<center>
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.26lssazxce.avif" alt="" />
+</center>
 
 # References
 
