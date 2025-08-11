@@ -7741,7 +7741,7 @@ static void *sort_thread(void *vargp) {
 #### Lessons Learned
 
 - Must have parallelization strategy
-  - Partition into $K$ independent parts
+  - Partition into _k_ independent parts
   - Divide-and-conquer
 - Inner loops must be synchronization free
   - Synchronization operations very expensive

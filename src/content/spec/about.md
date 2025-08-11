@@ -24,3 +24,12 @@
 ::github{repo="CuB3y0nd/Exordium"}
 
 ::github{repo="CuB3y0nd/load-symbols"}
+
+### Carpe diem
+
+> "Gather ye rosebuds while ye may,<br />
+> Old Time is still a-flying;<br />
+> And this same flower that smiles today<br />
+> Tomorrow will be dying."<br />
+>
+> — Robert Herrick, _To the Virgins, to Make Much of Time_

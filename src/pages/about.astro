@@ -5,20 +5,167 @@ import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
 
-const aboutPost = await getEntry("spec", "about");
+const now = new Date();
+const currentYear = now.getFullYear();
 
-if (!aboutPost) {
-	throw new Error("About page content not found");
-}
+const startOfYear = new Date(currentYear, 0, 1);
+const endOfYear = new Date(currentYear + 1, 0, 1);
+const yearProgress = ((now.getTime() - startOfYear.getTime()) / (endOfYear.getTime() - startOfYear.getTime())) * 100;
+
+const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+const dayProgress = ((now.getTime() - startOfDay.getTime()) / (endOfDay.getTime() - startOfDay.getTime())) * 100;
+
+const dayOfYear = Math.floor((Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - Date.UTC(currentYear, 0, 1)) / 86400000) + 1;
+
+const yearProgressFormatted = Number.isFinite(yearProgress) ? yearProgress.toFixed(5) + "%" : "0.00000%";
+const dayProgressFormatted = Number.isFinite(dayProgress) ? dayProgress.toFixed(5) + "%" : "0.00000%";
+
+const aboutPost = await getEntry("spec", "about");
 
 const { Content } = await render(aboutPost);
 ---
 <MainGridLayout title={i18n(I18nKey.about)} description={i18n(I18nKey.about)}>
-    <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
-        <div class="card-base z-10 px-9 py-6 relative w-full ">
-            <Markdown class="mt-2">
-                <Content />
-            </Markdown>
-        </div>
+  <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
+    <div class="card-base z-10 px-9 py-6 relative w-full ">
+      <Markdown class="mt-2">
+        <Content />
+        <ul>
+          <li>Today is the <span class="time-number day-of-year">{dayOfYear}</span> day of <span class="time-number current-year">{currentYear}</span></span>
+          <li>Year progress: <span class="time-number year-progress">{yearProgressFormatted}</span></li>
+          <li>Day progress: <span class="time-number day-progress">{dayProgressFormatted}</span></li>
+        </ul>
+      </Markdown>
     </div>
+  </div>
 </MainGridLayout>
+
+<style>
+.time-number {
+  display: inline-block;
+  font-feature-settings: "tnum";
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--primary);
+  min-width: 2.5em;
+  text-align: center;
+}
+</style>
+
+<script define:vars={{ yearProgressFormatted, dayProgressFormatted }}>
+(() => {
+  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+  const format = (v) => (Number.isFinite(v) ? v.toFixed(5) + "%" : "0.00000%");
+
+  function calculateProgressLocal(now = new Date()) {
+    const curYear = now.getFullYear();
+
+    const startY = new Date(curYear, 0, 1).getTime();
+    const endY = new Date(curYear + 1, 0, 1).getTime();
+    const yProg = ((now.getTime() - startY) / (endY - startY)) * 100;
+
+    const startD = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const endD = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
+    const dProg = ((now.getTime() - startD) / (endD - startD)) * 100;
+
+    const dayOfYear = Math.floor((Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - Date.UTC(curYear, 0, 1)) / MS_PER_DAY) + 1;
+
+    return { yProg, dProg, dayOfYear, curYear };
+  }
+
+  function animateValue(element, start, end, duration = 1000) {
+    let startTs = null;
+    let cancelled = false;
+    const step = (ts) => {
+      if (cancelled) return;
+      if (!startTs) startTs = ts;
+      const progress = Math.min((ts - startTs) / duration, 1);
+      const value = start + (end - start) * progress;
+      element.textContent = format(value);
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      }
+    };
+    requestAnimationFrame(step);
+    return () => { cancelled = true; };
+  }
+
+  let rafId = null;
+  function startLiveUpdate() {
+    if (rafId) cancelAnimationFrame(rafId);
+    const loop = () => {
+      const { yProg, dProg, dayOfYear, curYear } = calculateProgressLocal();
+      const yEl = document.querySelector(".year-progress");
+      const dEl = document.querySelector(".day-progress");
+      const dayNumEl = document.querySelector(".time-number.day-of-year");
+      const yearNumEl = document.querySelector(".time-number.current-year");
+
+      if (yEl) yEl.textContent = format(yProg);
+      if (dEl) dEl.textContent = format(dProg);
+      if (dayNumEl) dayNumEl.textContent = String(dayOfYear);
+      if (yearNumEl) yearNumEl.textContent = String(curYear);
+
+      rafId = requestAnimationFrame(loop);
+    };
+    rafId = requestAnimationFrame(loop);
+  }
+
+  let initialized = false;
+  let cancelers = [];
+
+  function initializeAnimation() {
+    if (initialized) return;
+    const yEl = document.querySelector(".year-progress");
+    const dEl = document.querySelector(".day-progress");
+    if (!yEl || !dEl) {
+      setTimeout(initializeAnimation, 80);
+      return;
+    }
+    initialized = true;
+
+    const ssrYear = parseFloat(yearProgressFormatted) || 0;
+    const ssrDay = parseFloat(dayProgressFormatted) || 0;
+
+    cancelers.push(animateValue(yEl, 0, ssrYear, 700));
+    cancelers.push(animateValue(dEl, 0, ssrDay, 700));
+
+    setTimeout(() => {
+      const { yProg, dProg, dayOfYear, curYear } = calculateProgressLocal();
+      const dayNumEl = document.querySelector(".time-number.day-of-year");
+      const yearNumEl = document.querySelector(".time-number.current-year");
+      if (dayNumEl) dayNumEl.textContent = String(dayOfYear);
+      if (yearNumEl) yearNumEl.textContent = String(curYear);
+
+      cancelers.forEach((c) => c && c());
+      cancelers = [];
+      cancelers.push(animateValue(yEl, ssrYear, yProg, 700));
+      cancelers.push(animateValue(dEl, ssrDay, dProg, 700));
+
+      setTimeout(() => {
+        cancelers.forEach((c) => c && c());
+        cancelers = [];
+        startLiveUpdate();
+      }, 750);
+    }, 750);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeAnimation, { once: true });
+  } else {
+    initializeAnimation();
+  }
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      if (rafId) {
+        cancelAnimationFrame(rafId);
+        rafId = null;
+      }
+      cancelers.forEach((c) => c && c());
+      cancelers = [];
+    } else {
+      setTimeout(initializeAnimation, 120);
+    }
+  });
+})();
+</script>
