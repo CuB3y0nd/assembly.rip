@@ -9,7 +9,7 @@ import { LinkPreset } from "./types/config";
 
 export const siteConfig: SiteConfig = {
 	title: "熵餘記事",
-	subtitle: "Per aspera ad astra",
+	subtitle: "塵海起伏，心燈長明",
 	lang: "en",
 	themeColor: {
 		hue: 250,
@@ -17,12 +17,12 @@ export const siteConfig: SiteConfig = {
 	},
 	banner: {
 		enable: true,
-		src: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6m47vyn1pe.avif",
+		src: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1lc58276dr.avif",
 		position: "center",
 		credit: {
 			enable: true,
-			text: "蓝色风暴——Blue",
-			url: "https://www.pixiv.net/en/artworks/119807651",
+			text: "云",
+			url: "https://www.pixiv.net/en/artworks/110056120",
 		},
 	},
 	toc: {
@@ -58,12 +58,9 @@ export const profileConfig: ProfileConfig = {
 	bio: "心之所向，一苇以航。",
 	links: [
 		{
-			name: "GitHub",
-			// Visit https://icones.js.org/ for icon codes
-			// You will need to install the corresponding icon set if it's not already included
-			// `pnpm add @iconify-json/<icon-set-name>`
-			icon: "tabler:brand-github",
-			url: "https://github.com/CuB3y0nd",
+			name: "Home",
+			icon: "material-symbols:verified-outline-rounded",
+			url: "https://www.cubeyond.net",
 		},
 		{
 			name: "Memos",
@@ -71,9 +68,12 @@ export const profileConfig: ProfileConfig = {
 			url: "https://memos.cubeyond.net",
 		},
 		{
-			name: "RSS",
-			icon: "material-symbols:rss-feed-rounded",
-			url: "/rss.xml",
+			name: "GitHub",
+			// Visit https://icones.js.org/ for icon codes
+			// You will need to install the corresponding icon set if it's not already included
+			// `pnpm add @iconify-json/<icon-set-name>`
+			icon: "tabler:brand-github",
+			url: "https://github.com/CuB3y0nd",
 		},
 	],
 };
