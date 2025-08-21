@@ -17,7 +17,7 @@ export const siteConfig: SiteConfig = {
 	},
 	banner: {
 		enable: true,
-		src: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1lc58276dr.avif",
+		src: "https://fastly.jsdelivr.net/gh/CuB3y0nd/picx-images-hosting@master/.1lc58276dr.avif",
 		position: "center",
 		credit: {
 			enable: true,

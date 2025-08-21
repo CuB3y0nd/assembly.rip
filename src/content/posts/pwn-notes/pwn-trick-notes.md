@@ -3,7 +3,7 @@ title: "Special Topic: Tricky tricks summary for Pwn"
 published: 2025-02-01
 updated: 2025-02-04
 description: "This special topic is about some tricky tricks i've learned so far in Pwn field. Keep updating as the mood strikes."
-image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5trbo219x2.avif"
+image: "https://fastly.jsdelivr.net/gh/CuB3y0nd/picx-images-hosting@master/.5trbo219x2.avif"
 tags: ["Pwn", "Tricks", "Notes"]
 category: "Notes"
 draft: false
