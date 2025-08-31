@@ -13,7 +13,7 @@ importers:
         version: 0.9.4(typescript@5.9.2)
       '@astrojs/mdx':
         specifier: ^4.3.3
-        version: 4.3.3(astro@5.13.2(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1))
+        version: 4.3.3(astro@5.13.3(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1))
       '@astrojs/react':
         specifier: ^4.3.0
         version: 4.3.0(@types/node@24.0.3)(@types/react-dom@19.1.7(@types/react@19.1.10))(@types/react@19.1.10)(jiti@1.21.6)(lightningcss@1.29.3)(react-dom@19.1.1(react@19.1.1))(react@19.1.1)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(yaml@2.6.1)
@@ -21,14 +21,14 @@ importers:
         specifier: ^4.0.12
         version: 4.0.12
       '@astrojs/sitemap':
-        specifier: ^3.5.0
+        specifier: ^3.5.1
         version: 3.5.1
       '@astrojs/svelte':
         specifier: 7.1.0
-        version: 7.1.0(@types/node@24.0.3)(astro@5.13.2(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1))(jiti@1.21.6)(lightningcss@1.29.3)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(svelte@5.38.6)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1)
+        version: 7.1.0(@types/node@24.0.3)(astro@5.13.3(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1))(jiti@1.21.6)(lightningcss@1.29.3)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(svelte@5.38.6)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1)
       '@astrojs/tailwind':
         specifier: ^6.0.2
-        version: 6.0.2(astro@5.13.2(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1))(tailwindcss@3.4.17)
+        version: 6.0.2(astro@5.13.3(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1))(tailwindcss@3.4.17)
       '@expressive-code/core':
         specifier: ^0.41.3
         version: 0.41.3
@@ -72,11 +72,11 @@ importers:
         specifier: ^1.5.0
         version: 1.5.0(react@19.1.1)(svelte@5.38.6)
       astro:
-        specifier: 5.13.2
-        version: 5.13.2(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1)
+        specifier: 5.13.3
+        version: 5.13.3(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1)
       astro-expressive-code:
         specifier: ^0.41.3
-        version: 0.41.3(astro@5.13.2(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1))
+        version: 0.41.3(astro@5.13.3(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1))
       astro-icon:
         specifier: ^1.1.5
         version: 1.1.5
@@ -93,8 +93,8 @@ importers:
         specifier: ^4.0.0
         version: 4.0.0
       overlayscrollbars:
-        specifier: ^2.11.4
-        version: 2.11.4
+        specifier: ^2.11.5
+        version: 2.12.0
       pagefind:
         specifier: ^1.3.0
         version: 1.3.0
@@ -169,8 +169,8 @@ importers:
         specifier: 2.2.0
         version: 2.2.0
       '@iconify-json/material-symbols':
-        specifier: ^1.2.31
-        version: 1.2.31
+        specifier: ^1.2.33
+        version: 1.2.33
       '@rollup/plugin-yaml':
         specifier: ^4.1.2
         version: 4.1.2(rollup@2.79.2)
@@ -1209,8 +1209,8 @@ packages:
   '@iconify-json/fa6-solid@1.2.4':
     resolution: {integrity: sha512-LmDNNdJVyvF5mPm1yxWvL8KjCc/E8LzoqnF1LNTVpyY2ZJRUlGOWuPIThdbuFBF2IovgttkIyumhyqfmlHdwKg==}
 
-  '@iconify-json/material-symbols@1.2.31':
-    resolution: {integrity: sha512-O3xGdrPXiFNX1qJHssAbvW42OS6wcdrFqJMGfwz+CBZzSjpMGBQG8k0Urxb5FNt6nIz7asX5xqkg68IRA4ackA==}
+  '@iconify-json/material-symbols@1.2.33':
+    resolution: {integrity: sha512-Bs0X1+/vpJydW63olrGh60zkR8/Y70sI14AIWaP7Z6YQXukzWANH4q3I0sIPklbIn1oL6uwLvh0zQyd6Vh79LQ==}
 
   '@iconify-json/mingcute@1.2.3':
     resolution: {integrity: sha512-yiEQfLBF5iwyOdxuY0kEU06+8Mp6Mrp14KVXTb+5jjSVuD71C9EQrzM/mm1Efd8Nu2amJalTPisl3loC8pHBqQ==}
@@ -2241,9 +2241,9 @@ packages:
   astro-icon@1.1.5:
     resolution: {integrity: sha512-CJYS5nWOw9jz4RpGWmzNQY7D0y2ZZacH7atL2K9DeJXJVaz7/5WrxeyIxO8KASk1jCM96Q4LjRx/F3R+InjJrw==}
 
-  astro@5.13.2:
-    resolution: {integrity: sha512-yjcXY0Ua3EwjpVd3GoUXa65HQ6qgmURBptA+M9GzE0oYvgfuyM7bIbH8IR/TWIbdefVUJR5b7nZ0oVnMytmyfQ==}
-    version: 5.13.2
+  astro@5.13.3:
+    resolution: {integrity: sha512-V0mUOUK70UZ7xqXp5Noqse/SREU0P756KgFufBEluq5LkmBejzC2GENMUA2Na+PFwUjemElJtRlpKyrnKpFhSQ==}
+    version: 5.13.3
     engines: {node: 18.20.8 || ^20.3.0 || >=22.0.0, npm: '>=9.6.5', pnpm: '>=7.1.0'}
     hasBin: true
 
@@ -4020,8 +4020,8 @@ packages:
     resolution: {integrity: sha512-8AV/sCtuzUeTo8gQK5qDZzARrulB3egtLzFgteqB2tcT4Mw7B8Kt7JcDHmltjz6FOAHsvTevk70gZEbhM4ZS9Q==}
     hasBin: true
 
-  overlayscrollbars@2.11.4:
-    resolution: {integrity: sha512-GKYQo3OZ1QWnppNjQVv5hfpn+glYUxc6+ufW+ivdXUyLWFNc01XoH2Z36KGM4I8e5pXYeA3ElNItcXiLvmUhnQ==}
+  overlayscrollbars@2.12.0:
+    resolution: {integrity: sha512-mWJ5MOkcZ/ljHwfLw8+bN0V9ziGCoNoqULcp994j5DTGNQvnkWKWkA7rnO29Kyew5AoHxUnJ4Ndqfcl0HSQjXg==}
 
   p-finally@1.0.0:
     resolution: {integrity: sha512-LICb2p9CB7FS+0eR1oqWnHhp0FljGLZCWBE9aix0Uye9W8LTQPwMTYVGWQWIw9RdQiDg4+epXQODwIYJtSJaow==}
@@ -5712,12 +5712,12 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@astrojs/mdx@4.3.3(astro@5.13.2(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1))':
+  '@astrojs/mdx@4.3.3(astro@5.13.3(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1))':
     dependencies:
       '@astrojs/markdown-remark': 6.3.5
       '@mdx-js/mdx': 3.1.0(acorn@8.15.0)
       acorn: 8.15.0
-      astro: 5.13.2(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1)
+      astro: 5.13.3(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1)
       es-module-lexer: 1.7.0
       estree-util-visit: 2.0.0
       hast-util-to-html: 9.0.5
@@ -5769,10 +5769,10 @@ snapshots:
       stream-replace-string: 2.0.0
       zod: 3.25.67
 
-  '@astrojs/svelte@7.1.0(@types/node@24.0.3)(astro@5.13.2(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1))(jiti@1.21.6)(lightningcss@1.29.3)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(svelte@5.38.6)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1)':
+  '@astrojs/svelte@7.1.0(@types/node@24.0.3)(astro@5.13.3(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1))(jiti@1.21.6)(lightningcss@1.29.3)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(svelte@5.38.6)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1)':
     dependencies:
       '@sveltejs/vite-plugin-svelte': 5.0.3(svelte@5.38.6)(vite@6.3.5(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(yaml@2.6.1))
-      astro: 5.13.2(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1)
+      astro: 5.13.3(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1)
       svelte: 5.38.6
       svelte2tsx: 0.7.39(svelte@5.38.6)(typescript@5.9.2)
       typescript: 5.9.2
@@ -5791,9 +5791,9 @@ snapshots:
       - tsx
       - yaml
 
-  '@astrojs/tailwind@6.0.2(astro@5.13.2(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1))(tailwindcss@3.4.17)':
+  '@astrojs/tailwind@6.0.2(astro@5.13.3(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1))(tailwindcss@3.4.17)':
     dependencies:
-      astro: 5.13.2(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1)
+      astro: 5.13.3(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1)
       autoprefixer: 10.4.21(postcss@8.5.3)
       postcss: 8.5.3
       postcss-load-config: 4.0.2(postcss@8.5.3)
@@ -6870,7 +6870,7 @@ snapshots:
     dependencies:
       '@iconify/types': 2.0.0
 
-  '@iconify-json/material-symbols@1.2.31':
+  '@iconify-json/material-symbols@1.2.33':
     dependencies:
       '@iconify/types': 2.0.0
 
@@ -7860,9 +7860,9 @@ snapshots:
 
   astring@1.9.0: {}
 
-  astro-expressive-code@0.41.3(astro@5.13.2(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1)):
+  astro-expressive-code@0.41.3(astro@5.13.3(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1)):
     dependencies:
-      astro: 5.13.2(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1)
+      astro: 5.13.3(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1)
       rehype-expressive-code: 0.41.3
 
   astro-icon@1.1.5:
@@ -7874,7 +7874,7 @@ snapshots:
       - debug
       - supports-color
 
-  astro@5.13.2(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1):
+  astro@5.13.3(@types/node@24.0.3)(jiti@1.21.6)(lightningcss@1.29.3)(rollup@2.79.2)(sass@1.80.4)(stylus@https://codeload.github.com/stylus/stylus/tar.gz/1086c6c1fbd7a7fd0ce9ad94f6cf4a62fc79a6e9)(terser@5.39.0)(typescript@5.9.2)(yaml@2.6.1):
     dependencies:
       '@astrojs/compiler': 2.12.2
       '@astrojs/internal-helpers': 0.7.2
@@ -10307,7 +10307,7 @@ snapshots:
 
   opencollective-postinstall@2.0.3: {}
 
-  overlayscrollbars@2.11.4: {}
+  overlayscrollbars@2.12.0: {}
 
   p-finally@1.0.0: {}
 
