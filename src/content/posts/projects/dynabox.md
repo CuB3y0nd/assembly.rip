@@ -11,7 +11,7 @@ draft: false
 
 # 前言
 
-万事开头难……准备开始学习堆利用了，不过发现想要在 Arch Linux 上获得预期的源码级调试体验有点有点费劲，没有像 ubuntu 那样的 `libc6-dbg` 软件包，试过配置 `debuginfod` 服务，也没有解决问题（很爆炸，等我把这个项目撸完后才发现，原来用 ubuntu 的 debuginfod 地址就行了，不能用 arch 的……）。glibc-all-in-one 下载下来的 glibc 动态链接库默认也是 stripped 的，虽然它提供了 build 脚本，但那是针对 ubuntu 开发的，Arch 上使用会出现很多问题（比如我编译 glibc 2.23 就没成功）。
+万事开头难……准备开始学习堆利用了，不过发现想要在 Arch Linux 上获得预期的源码级调试体验有点有点费劲，没有像 ubuntu 那样的 `libc6-dbg` 软件包，试过配置 `debuginfod` 服务，也没有解决问题（很爆炸，等我把这个项目撸完后才发现，原来用 ubuntu 的 [debuginfod](https://documentation.ubuntu.com/server/explanation/debugging/about-debuginfod/index.html) 地址就行了，不能用 arch 的……）。glibc-all-in-one 下载下来的 glibc 动态链接库默认也是 stripped 的，虽然它提供了 build 脚本，但那是针对 ubuntu 开发的，Arch 上使用会出现很多问题（比如我编译 glibc 2.23 就没成功）。
 
 ## 有关在宿主机上编译低版本 glibc 的问题
 
