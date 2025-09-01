@@ -40,11 +40,10 @@ export const siteConfig: SiteConfig = {
 
 export const navBarConfig: NavBarConfig = {
 	links: [
-		LinkPreset.Home,
 		LinkPreset.Archive,
 		LinkPreset.Friends,
-		LinkPreset.Anime,
 		LinkPreset.About,
+		LinkPreset.Anime,
 		{
 			name: "Memos",
 			url: "https://memos.cubeyond.net/",
