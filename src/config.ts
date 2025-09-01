@@ -42,11 +42,12 @@ export const navBarConfig: NavBarConfig = {
 	links: [
 		LinkPreset.Home,
 		LinkPreset.Archive,
-		LinkPreset.About,
 		LinkPreset.Friends,
+		LinkPreset.Anime,
+		LinkPreset.About,
 		{
-			name: "GitHub",
-			url: "https://github.com/CuB3y0nd",
+			name: "Memos",
+			url: "https://memos.cubeyond.net/",
 			external: true,
 		},
 	],

@@ -3,6 +3,7 @@ enum I18nKey {
 	archive = "archive",
 	about = "about",
 	friends = "friends",
+	anime = "anime",
 	search = "search",
 
 	tags = "tags",
