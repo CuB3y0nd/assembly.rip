@@ -4,7 +4,7 @@ published: 2025-08-31
 updated: 2025-09-01
 description: "The Swiss Army knife for tackle glibc related problems."
 image: "https://fastly.jsdelivr.net/gh/CuB3y0nd/picx-images-hosting@master/.39li58ci9o.avif"
-tags: ["Dynabox", "Tools"]
+tags: ["Tools", "Notes"]
 category: "Tools"
 draft: false
 ---
