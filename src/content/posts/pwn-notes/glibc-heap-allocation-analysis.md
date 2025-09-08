@@ -6,7 +6,7 @@ description: "About how does the malloc / free works, mechanisms inside, and sec
 image: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6m47vyn1pe.avif"
 tags: ["Pwn", "Heap", "GLIBC", "Notes"]
 category: "Notes"
-draft: false
+draft: true
 ---
 
 # 前言
@@ -24,7 +24,9 @@ draft: false
 
 那就让我们从 2.29 开始入手好了，因为相比于 2.28 也就新加入了一个 key field protection, 所以变化应该不是很大。
 
-_PS: 哎呀，感觉写的太杂乱无章了……不过也没办法，不能用写书的标准要求自己，因为这个东西要写得循序渐进属实有点难度，以后有机会再说吧。反正估计也没什么人看，我自己看着舒服就行了哈哈哈。_
+_PS: 哎呀，感觉写的太杂乱无章了……不过也没办法，不能太高的标准要求自己，因为这个东西要写得循序渐进属实有点难度，以后有机会再说吧。反正估计也没什么人看，我自己看着舒服就行了哈哈哈。_
+
+炸了，我觉得还是先以做题为切入点吧，之后慢慢写这篇博客……
 
 ## Heap
 
@@ -47,7 +49,7 @@ Linux 中早期的堆分配与回收由 Doug Lea 实现，但它在并行处理�
 在内存分配与使用的过程中，Linux 有这样的一个基本内存管理思想：只有当真正访问一个地址的时候，系统才会建立虚拟页面与物理页面的映射关系。所以虽然操作系统已经给程序分配了很大的一块内存，但是这块内存其实只是虚拟内存，只有当用户使用到相应的内存时，系统才会真正分配物理页给用户使用。
 :::
 
-### Basic Operations
+### 基本操作
 
 #### malloc
 
@@ -84,11 +86,11 @@ Linux 中早期的堆分配与回收由 Doug Lea 实现，但它在并行处理�
 */
 ```
 
-#### 内存分配背后的系统调用
+### 内存分配背后的系统调用
 
 malloc 和 free 并不是真正与系统交互的函数，这些函数背后的系统调用主要是 `(s)brk` 函数以及 `mmap`, `munmap` 函数。
 
-##### (s)brk
+#### (s)brk
 
 对于堆的操作，操作系统提供了 `brk` 函数，glibc 库提供了 `sbrk` 函数，我们可以通过增加 brk 的大小来向操作系统申请内存。
 
@@ -133,7 +135,7 @@ int main() {
 }
 ```
 
-##### mmap
+#### mmap
 
 malloc 会使用 mmap 来创建独立的匿名映射段。匿名映射的目的主要是可以申请以 0 填充的内存，并且这块内存仅被调用进程所使用。
 
@@ -174,7 +176,7 @@ int main() {
 }
 ```
 
-#### 多线程支持
+### 多线程支持
 
 在原来的 dlmalloc 实现中，当两个线程同时要申请内存时，只有一个线程可以进入临界区申请内存，而另外一个线程则必须等待直到临界区中不再有线程。这是因为所有的线程共享一个堆。在 glibc 的 ptmalloc 实现中，比较好的一点就是支持了多线程的快速访问。在新的实现中，所有的线程共享多个堆。
 
@@ -507,10 +509,6 @@ typedef struct malloc_chunk* mchunkptr;
 })
 ```
 
-:::important
-malloc 分配出来的 chunk 之间是物理紧邻的; free 释放后 chunk 会被归类到不同的 bins 中（可能会和物理相邻的前后 free chunk 合并成更大的 free chunk），bins 中保存的是 free chunks 的地址，它们之间只是逻辑相邻，而非物理相邻。
-:::
-
 #### Allocated Chunk
 
 ```plaintext showLineNumbers=false
@@ -530,7 +528,11 @@ nextchunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
             +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 ```
 
-每个 chunk 开始于 `chunk` 标记的位置，称之为 metadata (overhead). 它包含了上一个 chunk 的大小 `mchunk_prev_size` 和这个 chunk 自己的大小 `mchunk_size` (metadata size + user data size)。malloc 返回给用户的地址是跳过 metadata 之后的 `mem` 指向的地址。
+每个 chunk 开始于 `chunk` 标记的位置，称之为 metadata (overhead)。 它包含了上一个 chunk 的大小 `mchunk_prev_size` 和这个 chunk 自己的大小 `mchunk_size` (metadata size + user data size)。mchunk_size 必须是 `MALLOC_ALIGNMENT` 的整数倍。如果申请的内存大小不是 MALLOC_ALIGNMENT 的整数倍，会被转换满足大小的最小的 MALLOC_ALIGNMENT 的倍数。此外，malloc 返回给用户的地址是跳过 metadata 之后的 `mem` 指向的地址。
+
+:::important
+malloc 分配出来的 chunk 之间是物理紧邻的; free 释放后 chunk 会被归类到不同的 bins 中（可能会和物理相邻的前后 free chunk 合并成更大的 free chunk），bins 中保存的是 free chunks 的地址，它们之间只是逻辑相邻，而非物理相邻。
+:::
 
 #### Free Chunk
 
@@ -557,6 +559,9 @@ nextchunk-> +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
 - **P (PREV_INUSE)** 标记前一个 **内存中物理相邻** 的 chunk 是否正在使用，free 为 0, allocated 为 1. 注意最开始分配的第一个 chunk 始终会将此位设置为 1，防止向前访问非法内存。`mchunk_prev_size` 只有当上一个 chunk 是 free 状态时才会保存上一个 chunk 的大小，否则它将用作上一个 chunk 的 data 部分
 - **M (IS_MMAPPED)** 标记是否是通过 `mmap` 分配的。如果设置了该位，则另外两个位就被忽略了，因为 mmap 得到的内存既不在 arena 中，也不与 free chunk 物理相邻
 - **A (NON_MAIN_ARENA)** 标记 chunk 是否不属于 main arena, 1 表示不属于，0 表示是从 main arena 中分配出来的
+- free chunk 独有
+  - **fd** 指向当前 bin 中下一个（非物理相邻）free chunk
+  - **bk** 指向当前 bin 中上一个（非物理相邻）free chunk
 
 #### Physical chunk operations
 
