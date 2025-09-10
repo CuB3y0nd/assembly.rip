@@ -1,31 +1,41 @@
 ---
-title: "Special Topic: Tricky tricks summary for Pwn"
+title: "Beyond Basics: The Dark Arts of Binary Exploitation"
 published: 2025-02-01
-updated: 2025-02-04
-description: "This special topic is about some tricky tricks i've learned so far in Pwn field. Keep updating as the mood strikes."
+updated: 2025-09-10
+description: "An in-depth collection of techniques and mind-bending tricks that every aspiring pwner needs to know."
 image: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5trbo219x2.avif"
-tags: ["Pwn", "Tricks", "Notes"]
+tags: ["Pwn", "Notes"]
 category: "Notes"
 draft: false
 ---
 
 # 前言
 
-> 写这篇博客的起因应该是为了一个即将到来的比赛，而我还有好多 high level tricks 没学过，万一在比赛上碰到了再临场学肯定是很浪费时间的，而且为不同 tricks 都单独写一篇博客显然不是很好，我一般喜欢围绕一个大的系列来写博客，~_这样才能显得不那么水，是吧？_~
+> 自 23 年刚推开 Pwn 之门的一条窄缝以来，一直有着这样一个想法：「写一份有关 Pwn 的详细教程，又或许是经验梳理与总结，让有志之士从入门到入坟，少走弯路，不那么痛苦。」~_伟大吗？_~
 >
-> 好吧，上面说的只是一个最次要的原因罢了。这就不得不提到我 23 年刚推开 Pwn 之门的一条缝后的一个小梦想了……众所不周知 Pwn 方面优秀的系统教程应该可以说是少得可怜，相当于没有。所以我当时的这个小梦想就是写一份有关 Pwn 的详细教程，让有志之士从入门到入坟，少走弯路，不那么痛苦。~_伟大吗？_~
+> 本来想用 GitBook 或者建一个类似 wiki 的平台来写这个的，不过最终还是决定放在这里，为啥？我不知道……
 >
-> 唉，你还能在[我的原博客](https://tailwind-nextjs-starter-blog-ruby.vercel.app/)看到我以前写的系列文章。现在看看写的什么 trash，叫人从哪开始看都不知道，而且当时只是边学边翻译了 [ir0nstone 的笔记](https://ir0nstone.gitbook.io/)，说白了就是搬运，没多少自己的成分在里面……所以这第二次做同样的事嘛，我一定会比第一次做的好 $\infty$ 倍。~_有关这方面，我的字典里面没有，也不允许出现「不行」这个词。_~
->
-> 其实我本来想用 GitBook 或者建一个类似 wiki 的平台来写这个的，不过最终还是决定放在这里，为啥？我不道啊……
->
-> 正如我在 Description 中写的：_Keep updating as the mood strikes._ 不论你现在看到的这篇文章有多简陋……给我点时间，未来它一定会成为一本不错的手册！
+> 不过我可能不会经常更新这篇 blog，而是 _Keep updating as the mood strikes._ 但是请放心，不论你现在看到的这篇文章有多简陋……给我点时间，未来它一定会成为一本不错的参考手册！
 >
 > 莫欺少年穷，咱顶峰相见。
 >
 > <p style="text-align: right;">——以上，书于 02/01/2025</p>
+> <p style="text-align: right;">更新于 09/10/2025</p>
 
-# ROP 那些事
+# Flush or Be Flushed: C I/O 缓冲区的秘密生活
+
+`stdout` 有三种缓冲模式：
+
+- **行缓冲 (line-buffered)** 只有在输出 `\n` 时才 flush（前提是目标是终端 tty）
+- **全缓冲 (fully-buffered)** 只有缓冲区填满或程序结束才 flush
+- **无缓冲 (unbuffered)** 每次写都会 flush
+
+默认规则是：
+
+- 如果 **stdout** 指向**终端 (tty)**，则为行缓冲
+- 如果 **stdout** 被重定向到 **pipe / socket / file** 则为全缓冲
+
+# 一环套一环：ROP 链与栈上的奇技淫巧
 
 ## ret2csu
 
@@ -638,3 +648,101 @@ pwndbg> i auxv
 - [getauxval(3) — Linux manual page](https://man7.org/linux/man-pages/man3/getauxval.3.html)
 - [kernel/git/torvalds/linux.git - path: root/include/uapi/linux/auxvec.h](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/uapi/linux/auxvec.h?h=v6.14-rc1)
 - [kernel/git/torvalds/linux.git - path: root/arch/x86/include/uapi/asm/auxvec.h](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/include/uapi/asm/auxvec.h?h=v6.14-rc1)
+
+# 薛定谔的 free chunks: Double Free, Double Fun ?
+
+:::tip
+基于 [glibc-2.31](https://elixir.bootlin.com/glibc/glibc-2.31/source) 的源码。
+:::
+
+宏观上来看，程序调用 `free` 函数首先会进入 `__libc_free`，在这里主要是做了一些初始化工作，诸如看看有没有 `__free_hook`、是不是 `mmap` 出来的、初始化 `tcache_perthread_struct` 等。然后调用 `_int_free` 函数，这个函数才是真正负责分门别类，确定最终我们 free 的 chunk 应该被放到哪里的地方。
+
+## Related Structures / Macros Definitions
+
+```c
+/* We overlay this structure on the user-data portion of a chunk when
+   the chunk is stored in the per-thread cache.  */
+typedef struct tcache_entry {
+  struct tcache_entry *next;
+  /* This field exists to detect double frees.  */
+  struct tcache_perthread_struct *key;
+} tcache_entry;
+
+/* There is one of these for each thread, which contains the
+   per-thread cache (hence "tcache_perthread_struct").  Keeping
+   overall size low is mildly important.  Note that COUNTS and ENTRIES
+   are redundant (we could have just counted the linked list each
+   time), this is for performance reasons.  */
+typedef struct tcache_perthread_struct {
+  uint16_t counts[TCACHE_MAX_BINS];
+  tcache_entry *entries[TCACHE_MAX_BINS];
+} tcache_perthread_struct;
+
+static __thread tcache_perthread_struct *tcache = NULL;
+```
+
+## Related Functions
+
+先看看被 free 的 chunk 是怎么被放入 tcachebin 的：
+
+```c
+/* Caller must ensure that we know tc_idx is valid and there's room
+   for more chunks.  */
+static __always_inline void tcache_put(mchunkptr chunk, size_t tc_idx) {
+  tcache_entry *e = (tcache_entry *)chunk2mem(chunk);
+
+  /* Mark this chunk as "in the tcache" so the test in _int_free will
+     detect a double free.  */
+  e->key = tcache;
+
+  e->next = tcache->entries[tc_idx];
+  tcache->entries[tc_idx] = e;
+  ++(tcache->counts[tc_idx]);
+}
+```
+
+- 当 chunk 被放入 tcache 时，glibc 会把 data 部分视作 `tcache_entry`
+- 之后将当前线程的 `tcache_perthread_struct` 结构体地址写入到 `key` 字段（与 `bk` 重叠）
+- 接着设置 `next` 字段指向当前 tcachebin 中的下一个 free chunk（与 `fd` 重叠）
+- 然后将当前 tcachebin 的 header 设为这个新放入的 chunk
+- 增加此 bin 的 counts
+
+然后再看 double free 检查：
+
+```c
+#if USE_TCACHE
+{
+  size_t tc_idx = csize2tidx(size);
+  if (tcache != NULL && tc_idx < mp_.tcache_bins) {
+    /* Check to see if it's already in the tcache.  */
+    tcache_entry *e = (tcache_entry *)chunk2mem(p);
+
+    /* This test succeeds on double free.  However, we don't 100%
+       trust it (it also matches random payload data at a 1 in
+       2^<size_t> chance), so verify it's not an unlikely
+       coincidence before aborting.  */
+    if (__glibc_unlikely(e->key == tcache)) {
+      tcache_entry *tmp;
+      LIBC_PROBE(memory_tcache_double_free, 2, e, tc_idx);
+      for (tmp = tcache->entries[tc_idx]; tmp; tmp = tmp->next)
+        if (tmp == e)
+          malloc_printerr("free(): double free detected in tcache 2");
+      /* If we get here, it was a coincidence.  We've wasted a
+         few cycles, but don't abort.  */
+    }
+
+    if (tcache->counts[tc_idx] < mp_.tcache_count) {
+      tcache_put(p, tc_idx);
+      return;
+    }
+  }
+}
+#endif
+```
+
+这里就只讲关键部分了。首先它将我们要 free 的 chunk 的 data 部分转换为了 `tcache_entry` 结构体，使用 `e` 指代。如果 `e->key == tcache` 的话，就怀疑是不是有 double free 的风险，因为我们知道，当第一次 free 时，glibc 会写 `e->key = tcache`。但并不能因此而直接下定论说这就是一个 double free，因为用户写入的数据有概率正巧等于 `tcache`，虽说只有 `1/2^<size_t>` 的极小概率，但也不能忽略。所以还需要做进一步检查，确定我们要 free 的 chunk 是否已经存在于 tcachebin 中了，于是就进入 for 循环，对这个 tcachebin 中的每一个 free chunk 做判断，如果它与 `e` 相同，则说明确实触发了 double free 。
+
+那么为了绕过 double free，可行的方案可能有：
+
+1. 把 key 改成非 tcache 值，让第一步检查失效
+2. 篡改 next 指针，让遍历不到目标 chunk，从而绕过第二步的 in list 检查
