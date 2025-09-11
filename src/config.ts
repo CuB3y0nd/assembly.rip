@@ -43,7 +43,7 @@ export const navBarConfig: NavBarConfig = {
 		LinkPreset.Archive,
 		LinkPreset.Friends,
 		LinkPreset.About,
-		LinkPreset.Anime,
+		LinkPreset.Collections,
 		{
 			name: "Memos",
 			url: "https://memos.cubeyond.net/",

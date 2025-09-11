@@ -1,0 +1,147 @@
+---
+const uid = process.env.BGMTV_UID ?? "";
+const token = process.env.BGMTV_TOKEN ?? "";
+const base = "https://api.bgm.tv/v0";
+
+type Cat = "watching" | "wish" | "collect";
+type CatNum = 3 | 1 | 2;
+enum SubjectType {
+	Anime = 2,
+	Real = 6,
+}
+
+interface Image {
+	large?: string;
+	common?: string;
+	medium?: string;
+	small?: string;
+	grid?: string;
+}
+
+interface Subject {
+	id: number;
+	type: number;
+	name: string;
+	name_cn: string;
+	eps?: number;
+	images?: Image;
+}
+
+interface CollectionItem {
+	subject_id: number;
+	subject: Subject;
+	ep_status: number;
+	type: CatNum;
+}
+
+interface CollectionResponse {
+	data: CollectionItem[];
+	limit: number;
+	offset: number;
+	total: number;
+}
+
+const cats: { key: Cat; name: string; type: CatNum }[] = [
+	{ key: "watching", name: "在看", type: 3 },
+	{ key: "wish", name: "想看", type: 1 },
+	{ key: "collect", name: "看完", type: 2 },
+];
+
+async function fetchOnce(
+	type: CatNum,
+	subjectType: SubjectType,
+): Promise<CollectionItem[]> {
+	try {
+		const res = await fetch(
+			`${base}/users/${uid}/collections?subject_type=${subjectType}&type=${type}&limit=50`,
+			{ headers: { Authorization: `Bearer ${token}` } },
+		);
+
+		if (!res.ok) {
+			console.error(
+				`Bangumi API Error (type=${type}, subjectType=${subjectType}): ${res.status} ${await res.text()}`,
+			);
+			return [];
+		}
+
+		const json: CollectionResponse = await res.json();
+
+		if (!Array.isArray(json.data)) {
+			console.error(
+				`Bangumi API (${type}, subjectType=${subjectType}): Unexpected response format`,
+				json,
+			);
+			return [];
+		}
+
+		return json.data;
+	} catch (err) {
+		console.error(
+			`Failed to fetch collections for type ${type}, subjectType=${subjectType}:`,
+			err,
+		);
+		return [];
+	}
+}
+
+let allDataFetched = true;
+const animeData: Record<Cat, CollectionItem[]> = {
+	watching: [],
+	wish: [],
+	collect: [],
+};
+const realData: Record<Cat, CollectionItem[]> = {
+	watching: [],
+	wish: [],
+	collect: [],
+};
+
+try {
+	const controller = new AbortController();
+	const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+	const fetchPromises = cats.flatMap(({ type }) => {
+		return [
+			Promise.race([
+				fetchOnce(type, SubjectType.Anime),
+				new Promise<CollectionItem[]>((_, reject) =>
+					setTimeout(
+						() =>
+							reject(new Error(`Timeout for type ${type}, subjectType Anime`)),
+						10000,
+					),
+				),
+			]),
+			Promise.race([
+				fetchOnce(type, SubjectType.Real),
+				new Promise<CollectionItem[]>((_, reject) =>
+					setTimeout(
+						() =>
+							reject(new Error(`Timeout for type ${type}, subjectType Drama`)),
+						10000,
+					),
+				),
+			]),
+		];
+	});
+
+	const results = await Promise.all(fetchPromises);
+	clearTimeout(timeoutId);
+
+	cats.forEach(({ key }, index) => {
+		animeData[key] = results[index * 2] as CollectionItem[];
+		realData[key] = results[index * 2 + 1] as CollectionItem[];
+	});
+} catch (err) {
+	console.error("Error fetching all collections:", err);
+	allDataFetched = false;
+}
+
+import MainGridLayout from "../layouts/MainGridLayout.astro";
+import Bangumi from "../components/misc/Bangumi.astro";
+---
+
+<MainGridLayout>
+  <Bangumi title="追番" prefix="anime" data={animeData} cats={cats} allDataFetched={allDataFetched} />
+  <Bangumi title="追剧" prefix="real" data={realData} cats={cats} allDataFetched={allDataFetched} withMarginTop />
+</MainGridLayout>
