@@ -1,7 +1,7 @@
 ---
 title: "Beyond Basics: The Dark Arts of Binary Exploitation"
 published: 2025-02-01
-updated: 2025-09-10
+updated: 2025-09-11
 description: "An in-depth collection of techniques and mind-bending tricks that every aspiring pwner needs to know."
 image: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5trbo219x2.avif"
 tags: ["Pwn", "Notes"]
@@ -34,6 +34,23 @@ draft: false
 
 - 如果 **stdout** 指向**终端 (tty)**，则为行缓冲
 - 如果 **stdout** 被重定向到 **pipe / socket / file** 则为全缓冲
+
+# 上帝掷骰子？不，其实是线性同余
+
+[rand](https://en.cppreference.com/w/c/numeric/random/rand) 生成的是伪随机数，范围是 $[ 0,RAND\_MAX]$，只要 seed 相同就可以「预测」：
+
+```python
+import ctypes
+
+libc = ctypes.CDLL("./libc.so.6")
+
+# libc.srand(1)
+predicted = libc.rand()
+```
+
+:::tip
+没有使用 `srand` 设置 seed 的，默认为 `srand(1)`。
+:::
 
 # 一环套一环：ROP 链与栈上的奇技淫巧
 

