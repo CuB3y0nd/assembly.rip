@@ -21,7 +21,7 @@ export const siteConfig: SiteConfig = {
 		position: "center",
 		credit: {
 			enable: true,
-			text: "云",
+			text: "落日歸山海，與你話清風。",
 			url: "https://www.pixiv.net/en/artworks/110056120",
 		},
 	},
