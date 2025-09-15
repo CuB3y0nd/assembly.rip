@@ -140,21 +140,13 @@
   height: var(--collapsedHeight);
 }
 
-[data-theme='catppuccin-latte'] .custom-md spoiler {
-  --spoiler-bg: #eff1f5;
-}
-
-[data-theme='catppuccin-macchiato'] .custom-md spoiler {
-  --spoiler-bg: #24273a;
-}
-
 .custom-md spoiler {
-  @apply bg-[var(--spoiler-bg)] hover:bg-transparent px-1 py-0.5 overflow-hidden rounded-md transition-all duration-150;
+  @apply bg-[var(--inline-code-bg)] hover:bg-transparent px-1 py-0.5 overflow-hidden rounded-md transition-all duration-150;
 
   &:not(:hover) {
-    color: var(--spoiler-bg);
+    color: var(--inline-code-bg);
     * {
-      color: var(--spoiler-bg);
+        color: var(--inline-code-bg);
     }
   }
 }
