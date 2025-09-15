@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: CSAW'25 CTF Qualification Round"
 published: 2025-09-13
-updated: 2025-09-15
+updated: 2025-09-16
 description: "Write-ups for CSAW'25 CTF Qualification Round."
 tags: ["Pwn", "Misc", "OSINT", "Crypto", "Write-ups"]
 category: "Write-ups"
