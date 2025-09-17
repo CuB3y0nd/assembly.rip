@@ -56,7 +56,7 @@ predicted = libc.rand()
 
 ## ret2csu
 
-我在 [ROP Emporium - Challenge 8](/posts/rop-emporium-series/#challenge-8) 写的已经很详细了，最近比赛赶时间，等我打完之后再来慢慢完善吧，只能暂且劳请各位老爷们先凑合着看了<s>_（如果有人看的话。/真叫人伤心）_</s>。
+我在 [ROP Emporium - Challenge 8](/posts/write-ups/rop-emporium-series/#challenge-8) 写的已经很详细了，最近比赛赶时间，等我打完之后再来慢慢完善吧，只能暂且劳请各位老爷们先凑合着看了<s>_（如果有人看的话。/真叫人伤心）_</s>。
 
 ## SROP
 
