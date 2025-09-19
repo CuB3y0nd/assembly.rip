@@ -123,6 +123,8 @@ LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
           0x404000           0x405000 rw-p     1000   5000 chall_patched
 ```
 
+解决方法是在覆盖 setbuf 之后那个 read 执行完栈迁移后再想办法给它迁移到更高的地址去，不过我实际测试的时候好像不行，不知道是不是 skill 问题，反正就是有问题……
+
 虽然我测试是失败了，无论是本地还是远程调试 docker 内的 chall，但比赛当天有人用同样的思路，打通了……很奇怪，感觉不可思议……
 
 ## Exploit 1
