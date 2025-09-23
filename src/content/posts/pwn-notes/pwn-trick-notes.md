@@ -666,6 +666,10 @@ pwndbg> i auxv
 - [kernel/git/torvalds/linux.git - path: root/include/uapi/linux/auxvec.h](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/uapi/linux/auxvec.h?h=v6.14-rc1)
 - [kernel/git/torvalds/linux.git - path: root/arch/x86/include/uapi/asm/auxvec.h](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/x86/include/uapi/asm/auxvec.h?h=v6.14-rc1)
 
+## Try-Catch，Catch Me If You Can
+
+这是关于 (CHOP) Catch Handler Oriented Programming 的，我单独写了一篇博客，请移步 [CHOP Suey: 端上异常处理的攻击盛宴](/posts/pwn-notes/catch-handler-oriented-programming-notes/)。
+
 # 薛定谔的 free chunks: Double Free, Double Fun ?
 
 :::tip
