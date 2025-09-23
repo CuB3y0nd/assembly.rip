@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const UPDATE_INTERVAL = 10;
@@ -33,7 +33,7 @@ function calculateProgress() {
 }
 
 function formatPercent(v) {
-	return Number.isFinite(v) ? v.toFixed(5) + "%" : "0.00000%";
+	return Number.isFinite(v) ? `${v.toFixed(5)}%` : "0.00000%";
 }
 
 export default function TimelineProgress() {
@@ -55,7 +55,7 @@ export default function TimelineProgress() {
 
 	const [, forceUpdate] = useState({});
 
-	function animateValue(ref, targetValue, duration, callback) {
+	const animateValue = useCallback((ref, targetValue, duration, callback) => {
 		const startValue = ref.current ?? 0;
 		const startTime = performance.now();
 
@@ -74,52 +74,34 @@ export default function TimelineProgress() {
 		}
 
 		requestAnimationFrame(step);
-	}
+	}, []);
 
 	useEffect(() => {
 		const { yProg, dProg, dayOfYear, curYear, centuryProg, now } =
 			calculateProgress();
 
-		animateValue(
-			animYProg,
-			yProg,
-			ANIMATION_DURATION,
-			() => (animYProg.current = null),
-		);
-		animateValue(
-			animDProg,
-			dProg,
-			ANIMATION_DURATION,
-			() => (animDProg.current = null),
-		);
-		animateValue(
-			animDayOfYear,
-			dayOfYear,
-			ANIMATION_DURATION,
-			() => (animDayOfYear.current = null),
-		);
-		animateValue(
-			animCurYear,
-			curYear,
-			ANIMATION_DURATION,
-			() => (animCurYear.current = null),
-		);
-		animateValue(
-			animCenturyProg,
-			centuryProg,
-			ANIMATION_DURATION,
-			() => (animCenturyProg.current = null),
-		);
+		animateValue(animYProg, yProg, ANIMATION_DURATION, () => {
+			animYProg.current = null;
+		});
+		animateValue(animDProg, dProg, ANIMATION_DURATION, () => {
+			animDProg.current = null;
+		});
+		animateValue(animDayOfYear, dayOfYear, ANIMATION_DURATION, () => {
+			animDayOfYear.current = null;
+		});
+		animateValue(animCurYear, curYear, ANIMATION_DURATION, () => {
+			animCurYear.current = null;
+		});
+		animateValue(animCenturyProg, centuryProg, ANIMATION_DURATION, () => {
+			animCenturyProg.current = null;
+		});
 
 		if (loveStartDate) {
 			const loveDaysVal =
 				(now.getTime() - loveStartDate.getTime()) / MS_PER_DAY;
-			animateValue(
-				animLoveDays,
-				loveDaysVal,
-				ANIMATION_DURATION,
-				() => (animLoveDays.current = null),
-			);
+			animateValue(animLoveDays, loveDaysVal, ANIMATION_DURATION, () => {
+				animLoveDays.current = null;
+			});
 			setTimeout(() => setLoveDays(loveDaysVal), ANIMATION_DURATION);
 		}
 
@@ -151,7 +133,7 @@ export default function TimelineProgress() {
 		}, UPDATE_INTERVAL);
 
 		return () => clearInterval(interval);
-	}, []);
+	}, [animateValue]);
 
 	const displayYProg = animYProg.current !== null ? animYProg.current : yProg;
 	const displayDProg = animDProg.current !== null ? animDProg.current : dProg;
@@ -195,11 +177,9 @@ export default function TimelineProgress() {
 							days painted softly on the canvas of 「时光」🎨
 						</>
 					) : (
-						<>
-							<span className="time-number">
-								一场未曾落幕的梦，静待与君相逢 💫
-							</span>
-						</>
+						<span className="time-number">
+							一场未曾落幕的梦，静待与君相逢 💫
+						</span>
 					)}
 				</center>
 			</ul>
