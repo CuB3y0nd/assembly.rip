@@ -1,37 +1,16 @@
 ---
+import type { CollectionItem } from "../types/config";
+
 const uid = process.env.BGMTV_UID ?? "";
 const token = process.env.BGMTV_TOKEN ?? "";
 const base = "https://api.bgm.tv/v0";
 
 type Cat = "watching" | "wish" | "collect";
 type CatNum = 3 | 1 | 2;
+
 enum SubjectType {
 	Anime = 2,
 	Real = 6,
-}
-
-interface Image {
-	large?: string;
-	common?: string;
-	medium?: string;
-	small?: string;
-	grid?: string;
-}
-
-interface Subject {
-	id: number;
-	type: number;
-	name: string;
-	name_cn: string;
-	eps?: number;
-	images?: Image;
-}
-
-interface CollectionItem {
-	subject_id: number;
-	subject: Subject;
-	ep_status: number;
-	type: CatNum;
 }
 
 interface CollectionResponse {
