@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: CSAW'25 CTF Qualification Round"
 published: 2025-09-13
-updated: 2025-09-16
+updated: 2025-09-25
 description: "Write-ups for CSAW'25 CTF Qualification Round."
 tags: ["Pwn", "Misc", "OSINT", "Crypto", "Write-ups"]
 category: "Write-ups"
@@ -143,6 +143,151 @@ if __name__ == "__main__":
 ## Flag
 
 :spoiler[`csawctf{U_w3r3_n3v3r_m3@nt_2_s33_th3_st@ck~but_I_l3t_U_1n_b3c@us3_1_l0v3_U~d8K#xY_q1W9eVz2NpL7}`]
+
+# Power Up
+
+## Information
+
+- Category: Pwn
+- Points: 500
+
+## Description
+
+> Your starship have been wandering for weeks in this derelict orbit, whose core is out of energy.
+> You are the last engineer who must ignite the core with energy using proper modules.
+> Power up the starship. Or stay stranded forever.
+
+## Write-up
+
+复现一下，比赛的时候成功解决了里面的伪随机数问题，但是由于没怎么学过堆方面的知识，导致我认为这是 unsorted bin attack，然后现场学习了一番，发现始终会遇到问题，最后也没能做出来就放弃了……
+
+但是很意外，赛后看见有人通过逆向分析就给出了非预期的最简单解法……草，最近很多题目都向我指出：我要是不急着想怎么利用，而是多思考思考伪代码和汇编的话，说不定会有奇迹……
+
+Anyway，这道题官方解法是 largebin attack，草，我当时完全跑偏了。问题不大，先复现一下逆向分析的解法，然后等以后学完 largebin 了再回头用预期解做这道题吧……
+
+逐个功能进去查看，发现 `launch_starship` 会直接打开并输出 flag 的内容：
+
+```c
+unsigned __int64 launch_starship()
+{
+  size_t n; // rax
+  int fd; // [rsp+Ch] [rbp-94h]
+  char s[136]; // [rsp+10h] [rbp-90h] BYREF
+  unsigned __int64 v4; // [rsp+98h] [rbp-8h]
+
+  v4 = __readfsqword(0x28u);
+  memset(s, 0, 0x80u);
+  fd = open("flag.txt", 0);
+  if ( fd == -1 )
+  {
+    fwrite("Error: open failed\n", 1u, 0x13u, stderr);
+    exit(1);
+  }
+  read(fd, s, 0x80u);
+  close(fd);
+  *(_WORD *)&s[strlen(s)] = 10;
+  n = strlen(s);
+  write(1, s, n);
+  return v4 - __readfsqword(0x28u);
+}
+```
+
+下面是 main 函数：
+
+```c ins={37-38, 51-56}
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  unsigned int seed; // eax
+  int v4; // eax
+  int n5; // [rsp+Ch] [rbp-14h] BYREF
+  unsigned int v7; // [rsp+10h] [rbp-10h]
+  int char; // [rsp+14h] [rbp-Ch]
+  unsigned __int64 v9; // [rsp+18h] [rbp-8h]
+
+  v9 = __readfsqword(0x28u);
+  setvbuf(stdin, 0, 2, 0);
+  setvbuf(stdout, 0, 2, 0);
+  setvbuf(stderr, 0, 2, 0);
+  puts("Your starship have been wandering for weeks in this derelict orbit, whose core is out of energy.");
+  puts("You are the last engineer who must ignite the core with energy using proper modules.");
+  puts("Power up the starship. Or stay stranded forever.");
+  seed = time(0);
+  srand(seed);
+  while ( 1 )
+  {
+    while ( 1 )
+    {
+      putchar(10);
+      puts("[1] Create a module");
+      puts("[2] Delete a module");
+      puts("[3] Edit a module");
+      puts("[4] Power up");
+      puts("[5] Stay stranded");
+      printf(">> ");
+      if ( (unsigned int)__isoc99_scanf("%d", &n5) == 1 && n5 > 0 && n5 <= 5 )
+        break;
+      puts("Invalid choice!");
+      do
+        char = getchar();
+      while ( char != 10 && char != -1 );
+    }
+    v4 = rand();
+    v7 = (unsigned __int8)(((unsigned int)(v4 >> 31) >> 24) + v4) - ((unsigned int)(v4 >> 31) >> 24);
+    switch ( n5 )
+    {
+      case 1:
+        create_module();
+        break;
+      case 2:
+        delete_module();
+        break;
+      case 3:
+        edit_module();
+        break;
+      case 4:
+        if ( (unsigned __int8)(16 * BYTE1(energy)) | (unsigned __int64)(((energy >> 4) & 0xF) == v7) )
+        {
+          puts("The core is full of energy to power up the starship!");
+          launch_starship();
+          exit(0);
+        }
+        puts("The core is still dead as a rock without energy!");
+        break;
+      case 5:
+        puts("You and your starship will stay stranded in deep space forever!");
+        exit(1);
+      default:
+        continue;
+    }
+  }
+}
+```
+
+这里直接手撕……注意到 `v4` 是通过 `rand` 生成的伪随机数，这个函数返回值范围是 $[ 0,RAND\_MAX]$ 。
+
+而 `v7` 这个表达式，`(unsigned __int8)(((unsigned int)(v4 >> 31) >> 24) + v4) - ((unsigned int)(v4 >> 31) >> 24)`，我们也无需深究它到底是什么意思，因为并不复杂，直接消项嘛～发现有两部分相同的是 `(unsigned int)(v4 >> 31) >> 24)`，而减号左边比右边只是多加了一个 `v4` 罢了。那如果我们得到的 `v4` 正好为 0 的话，整个 `v7` 表达式的结果也会是 0，都用不着算的，真瞪眼法秒了……
+
+现在再看 4 号功能的检测要求：`(unsigned __int8)(16 * BYTE1(energy)) | (unsigned __int64)(((energy >> 4) & 0xF) == v7)`，因为我们要是能 bypass 的话就能直接拿到 flag，那就想想有没有可能直接 bypass，这样我们就不用思考如何利用复杂的堆攻击了。
+
+因为 `energy` 是在 bss 上的未初始化全局变量，默认为 0，所以 `(unsigned __int8)(16 * BYTE1(energy))` 的值可以直接确定为 0。由于这里使用的是 `|` 逻辑与运算，相当于一个并集操作，所以如果我们想 bypass 这个检测，那唯一的机会就在 rhs 能不能是非 0 值了。
+
+思考 rhs，`(unsigned __int64)(((energy >> 4) & 0xF) == v7`，它将 energy 值右移 4 bits，然后保留最低 4 bits，判断它与 `v7` 是否相等。相等就返回 1，否则返回 0 。
+
+由于 energy 不论如何操作都是 0，这是肯定的，那只要 `v7` 也为 0，`0 == 0`，rhs 就返回 1，`0 | 1` 就等于 1，成功 bypass 。
+
+而这，也只需要我们不断输入 4 选项罢了……至于能不能命中，只是个概率问题。
+
+这里解法是 `yes 4 | ./vuln`，说实话当时看到这个答案还是有点惊讶的，后来想想，确实，自己的进步空间还是太大了……
+
+## Exploit
+
+```bash
+yes 4 | ./vuln
+```
+
+## Flag
+
+:spoiler[`csawctf{tyjroj_71m3_7o_g0_h0m3_zoqSy9_5w337_h0m3_nywcyp}`]
 
 # Obligatory RSA
 
