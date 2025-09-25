@@ -1,7 +1,7 @@
 ---
 title: "Beyond Basics: The Dark Arts of Binary Exploitation"
 published: 2025-02-01
-updated: 2025-09-11
+updated: 2025-09-26
 description: "An in-depth collection of techniques and mind-bending tricks that every aspiring pwner needs to know."
 image: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5trbo219x2.avif"
 tags: ["Pwn", "Notes"]
@@ -669,6 +669,329 @@ pwndbg> i auxv
 ## Try-Catch, Catch Me If You Can
 
 这是关于 (CHOP) Catch Handler Oriented Programming 的，我单独写了一篇博客，请移步 [CHOP Suey: 端上异常处理的攻击盛宴](/posts/pwn-notes/catch-handler-oriented-programming-notes/)。
+
+# 当 gadgets 缺席：Who needs "pop rdi" when you have gets() ?
+
+`ret2gets` 是用于在没有常用 gadgets，比如没有 `pop rdi` 的情况下，通过调用 `gets`，配合 `printf / puts` 实现 libc 地址泄漏的 trick 。
+
+:::tip
+次 trick 适用于 `GLIBC >= 2.34，<= 2.41` 的 ROP Chain 构造。
+:::
+
+直接上 demo，这里使用的 GLIBC 版本是 `2.41-6ubuntu1_amd64`：
+
+```c
+// gcc -Wall vuln.c -o vuln -no-pie -fno-stack-protector -std=c99
+
+#include <stdio.h>
+
+int main() {
+  char buf[0x20];
+  puts("ROP me if you can!");
+  gets(buf);
+
+  return 0;
+}
+```
+
+:::important
+`gets` 函数在 C11 中被移除，所以我们编译的时候需要手动指定一个低于 C11 的标准，比如这里指定了 C99。
+:::
+
+如果我们使用 ropper 或者其它同类工具，列出这个程序中包含的 gadgets，我们会发现它并没有 `pop rdi` 的 gadget，我们什么参数也控制不了。
+
+这是因为原先的这些控制寄存器的 gadgets 都是来自于 `__libc_csu_init`，而现在这个函数因为包含了易于构造 ROP Chain 的 gadgets，在 GLIBC 2.34 中已经被移除了，导致我们现在很难再找到有用的 gadgets 。
+
+这里我们在调用 `gets` 的地方下断点，执行 `gets` 之前 `rdi` 指向的是 buf 的栈地址，`ni`，随便输入什么后，发现 `rdi` 寄存器变成了 `*RDI  0x7ffff7e137c0 (_IO_stdfile_0_lock) ◂— 0`：
+
+<center>
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1lc6yoffsz.avif" alt="" />
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.13m5a38r8s.avif" alt="" />
+</center>
+
+定位一下，发现该结构体位于 libc 的 rw 段中：
+
+```asm showLineNumbers=false
+pwndbg> vmmap $rdi
+LEGEND: STACK | HEAP | CODE | DATA | WX | RODATA
+             Start                End Perm     Size Offset File (set vmmap-prefer-relpaths on)
+    0x7ffff7e11000     0x7ffff7e13000 rw-p     2000 210000 libc.so.6
+►   0x7ffff7e13000     0x7ffff7e20000 rw-p     d000      0 [anon_7ffff7e13] +0x7c0
+    0x7ffff7fb4000     0x7ffff7fb9000 rw-p     5000      0 [anon_7ffff7fb4]
+pwndbg> x/10gx $rdi
+0x7ffff7e137c0 <_IO_stdfile_0_lock>: 0x0000000000000000 0x0000000000000000
+0x7ffff7e137d0 <__pthread_force_elision>: 0x0000000000000000 0x0000000000000000
+0x7ffff7e137e0 <__attr_list_lock>: 0x0000000000000000 0x0000000000000000
+0x7ffff7e137f0 <init_sigcancel>: 0x0000000000000000 0x0000000000000000
+0x7ffff7e13800 <__nptl_threads_events>: 0x0000000000000000 0x0000000000000000
+```
+
+那么如果我们再次调用 gets，我们就可以覆盖 libc 中的数据，这可能会导致一些漏洞。
+
+这里我们先研究我们已经获得的 `_IO_stdfile_0_lock`：
+
+## \_IO_stdfile_0_lock
+
+首先简单介绍一下 `_IO_stdfile_0_lock` 是什么，从名字上看，我们就能猜到它是一把「锁」，肯定是用于多线程安全的，实际上也确实如此，它主要用于锁住 `FILE`。
+
+由于 glibc 支持多线程，许多函数实现需要线程安全。如果存在多个线程可以同时使用同一个 FILE 结构，那么当有两个线程尝试同时使用一个 FILE 结构时，就会产生条件竞争，可能会破坏 FILE 结构。解决方案就是加锁。
+
+:::tip
+基于 [glibc-2.41](https://elixir.bootlin.com/glibc/glibc-2.41/source/libio/iogets.c) 的源码。
+:::
+
+```c
+char *
+_IO_gets (char *buf)
+{
+  size_t count;
+  int ch;
+  char *retval;
+
+  _IO_acquire_lock (stdin);
+  ch = _IO_getc_unlocked (stdin);
+  if (ch == EOF)
+    {
+      retval = NULL;
+      goto unlock_return;
+    }
+  if (ch == '\n')
+    count = 0;
+  else
+    {
+      /* This is very tricky since a file descriptor may be in the
+  non-blocking mode. The error flag doesn't mean much in this
+  case. We return an error only when there is a new error. */
+      int old_error = stdin->_flags & _IO_ERR_SEEN;
+      stdin->_flags &= ~_IO_ERR_SEEN;
+      buf[0] = (char) ch;
+      count = _IO_getline (stdin, buf + 1, INT_MAX, '\n', 0) + 1;
+      if (stdin->_flags & _IO_ERR_SEEN)
+ {
+   retval = NULL;
+   goto unlock_return;
+ }
+      else
+ stdin->_flags |= old_error;
+    }
+  buf[count] = 0;
+  retval = buf;
+unlock_return:
+  _IO_release_lock (stdin);
+  return retval;
+}
+
+weak_alias (_IO_gets, gets)
+
+link_warning (gets, "the `gets' function is dangerous and should not be used.")
+```
+
+函数开始时使用 `_IO_acquire_lock` 获取锁，结束时使用 `_IO_release_lock` 释放锁。获取锁会告知其它线程 `stdin` 当前正在被使用中，所以其余任何尝试访问 stdin 的线程都将被强制等待，直到该线程释放锁后，其它线程才可以获取锁。
+
+因此，`FILE` 有一个 [\_lock](https://elixir.bootlin.com/glibc/glibc-2.41/source/libio/bits/types/struct_FILE.h#L84) 字段，它是一个指向 [\_IO_lock_t](https://elixir.bootlin.com/glibc/glibc-2.41/source/sysdeps/nptl/stdio-lock.h#L26) 的指针：
+
+```c {49} collapse={1-46}
+struct _IO_FILE;
+struct _IO_marker;
+struct _IO_codecvt;
+struct _IO_wide_data;
+
+/* During the build of glibc itself, _IO_lock_t will already have been
+   defined by internal headers.  */
+#ifndef _IO_lock_t_defined
+typedef void _IO_lock_t;
+#endif
+
+/* The tag name of this struct is _IO_FILE to preserve historic
+   C++ mangled names for functions taking FILE* arguments.
+   That name should not be used in new code.  */
+struct _IO_FILE
+{
+  int _flags;  /* High-order word is _IO_MAGIC; rest is flags. */
+
+  /* The following pointers correspond to the C++ streambuf protocol. */
+  char *_IO_read_ptr; /* Current read pointer */
+  char *_IO_read_end; /* End of get area. */
+  char *_IO_read_base; /* Start of putback+get area. */
+  char *_IO_write_base; /* Start of put area. */
+  char *_IO_write_ptr; /* Current put pointer. */
+  char *_IO_write_end; /* End of put area. */
+  char *_IO_buf_base; /* Start of reserve area. */
+  char *_IO_buf_end; /* End of reserve area. */
+
+  /* The following fields are used to support backing up and undo. */
+  char *_IO_save_base; /* Pointer to start of non-current get area. */
+  char *_IO_backup_base;  /* Pointer to first valid character of backup area */
+  char *_IO_save_end; /* Pointer to end of non-current get area. */
+
+  struct _IO_marker *_markers;
+
+  struct _IO_FILE *_chain;
+
+  int _fileno;
+  int _flags2:24;
+  /* Fallback buffer to use when malloc fails to allocate one.  */
+  char _short_backupbuf[1];
+  __off_t _old_offset; /* This used to be _offset but it's too small.  */
+
+  /* 1+column number of pbase(); 0 is unknown. */
+  unsigned short _cur_column;
+  signed char _vtable_offset;
+  char _shortbuf[1];
+
+  _IO_lock_t *_lock;
+#ifdef _IO_USE_OLD_IO_FILE
+};
+```
+
+```c
+typedef struct {
+  int lock;
+  int cnt;
+  void *owner;
+} _IO_lock_t;
+```
+
+:::important
+这个 `_lock` 指针指向的就是我们 `rdi` 中的 `_IO_stdfile_0_lock`，先记住这点，下面有用。
+:::
+
+### \_IO_acquire_lock / \_IO_release_lock
+
+```c
+#define _IO_USER_LOCK 0x8000
+
+# ifdef __EXCEPTIONS
+#  define _IO_acquire_lock(_fp) \
+  do {                                                                    \
+    FILE *_IO_acquire_lock_file                                           \
+ __attribute__((cleanup (_IO_acquire_lock_fct)))                          \
+ = (_fp);                                                                 \
+    _IO_flockfile (_IO_acquire_lock_file);
+# else
+#  define _IO_acquire_lock(_fp) _IO_acquire_lock_needs_exceptions_enabled
+# endif
+# define _IO_release_lock(_fp) ; } while (0)
+```
+
+`__attribute__((cleanup (_IO_acquire_lock_fct))) = (_fp);` 主要就是将 cleanup 函数 `_IO_acquire_lock_fct` 和 `_fp` 进行一个绑定。使得在 `do { ... } while (0)` 作用域结束后自动对 `_fp` 调用 `_IO_acquire_lock_fct` 进行 cleanup 。
+
+```c
+static inline void
+__attribute__ ((__always_inline__))
+_IO_acquire_lock_fct (FILE **p)
+{
+  FILE *fp = *p;
+  if ((fp->_flags & _IO_USER_LOCK) == 0)
+    _IO_funlockfile (fp);
+}
+```
+
+`_IO_USER_LOCK` 标志是用来记录当前 I/O 流是否处于由用户显式请求的锁定状态。
+
+`_IO_acquire_lock_fct` 这个 cleanup 函数主要是，若 `FILE` 没有设置 `_IO_USER_LOCK` 标志，就对该文件解锁。
+
+我们发现这加锁解锁层层封装了好几个宏：
+
+```c
+# define _IO_flockfile(_fp) \
+  if (((_fp)->_flags & _IO_USER_LOCK) == 0) _IO_lock_lock (*(_fp)->_lock)
+# define _IO_funlockfile(_fp) \
+  if (((_fp)->_flags & _IO_USER_LOCK) == 0) _IO_lock_unlock (*(_fp)->_lock)
+```
+
+如果用户没有显示请求上锁/解锁，就调用后面的函数，否则说明用户之前已经调用过 `flockfile` 或者 `funlockfile`，这个 if 将确保它不会重复上锁/解锁。
+
+这还没完，真正执行最后上锁解锁操作的是下面的 `_IO_lock_lock` 和 `_IO_lock_unlock`。
+
+### \_IO_lock_lock / \_IO_lock_unlock
+
+```c
+#define _IO_lock_lock(_name) \
+  do {                                               \
+    void *__self = THREAD_SELF;                      \
+    if (SINGLE_THREAD_P && (_name).owner == NULL)    \
+      {                                              \
+ (_name).lock = LLL_LOCK_INITIALIZER_LOCKED;         \
+ (_name).owner = __self;                             \
+      }                                              \
+    else if ((_name).owner != __self)                \
+      {                                              \
+ lll_lock ((_name).lock, LLL_PRIVATE);               \
+ (_name).owner = __self;                             \
+      }                                              \
+    else                                             \
+      ++(_name).cnt;                                 \
+  } while (0)
+
+#define _IO_lock_unlock(_name) \
+  do {                                               \
+    if (SINGLE_THREAD_P && (_name).cnt == 0)         \
+      {                                              \
+ (_name).owner = NULL;                               \
+ (_name).lock = 0;                                   \
+      }                                              \
+    else if ((_name).cnt == 0)                       \
+      {                                              \
+ (_name).owner = NULL;                               \
+ lll_unlock ((_name).lock, LLL_PRIVATE);             \
+      }                                              \
+    else                                             \
+      --(_name).cnt;                                 \
+  } while (0)
+```
+
+这里的 `_name` 即 `_IO_stdfile_0_lock`。`owner` 字段存储当前持有锁的线程的 TLS 结构体地址。
+
+加锁时，先获取当前线程 ID，即 `THREAD_SELF`，然后分三种情况：
+
+1. 单线程优化：如果是单线程环境并且锁没被占用，直接把锁设为 `LOCKED`，并设置 `owner`
+2. 多线程竞争：如果 `(_name).owner != __self`，即锁不属于当前线程，是其他线程持有，则调用 `lll_lock()`，阻塞直到锁可用后再尝试获取锁
+3. 递归加锁：如果锁属于当前线程，说明同一线程再次加锁，则增加计数器 `cnt`
+
+:::tip
+有关 `lll_lock()` 的作用，简单来说就是：无论锁当前是否空闲，我调用它，都能保证最终自己持有这个锁（要么立刻成功，要么阻塞直到可用）。
+
+因为它的实现是对 `futex (fast userspace mutex)` 的封装，futex 的特性为：
+
+- 无竞争路径：如果锁的内部状态是「未锁」，原子操作直接把它设为「已锁」，立即返回，非常快
+- 有竞争路径：如果发现锁已被其它线程持有，就会进入 futex 系统调用，把自己挂到等待队列上，一旦对方解锁唤醒，就可以立即获取到锁
+
+  :::
+
+释放锁的过程也很好理解：
+
+1. 单线程优化：如果 `cnt` 为 0（没有递归加锁），直接清空 `owner`，把锁标记为解锁
+2. 多线程情况：如果 `cnt` 为 0，清空 `owner`，并调用 `lll_unlock()` 释放 futex 锁
+3. 递归解锁：如果 `cnt > 0`，说明是递归锁的一层，只会将 `cnt` 减一，不真正释放锁
+
+### \_IO_stdfile_0_lock in rdi ?
+
+感觉好像扯了一堆没用的，现在我们研究研究为啥 rdi 是 `_IO_stdfile_0_lock` 而不是别的。这里如果你使用源码级调试的话会看得更清楚一点。
+
+根据上面的分析，我们知道 `gets` 在最后返回的时候会调用 `_IO_release_lock (stdin)` 来释放锁。如果你还没忘记的话，我们定义 `_IO_acquire_lock(_fp)` 的时候设置了 cleanup 函数，将 `_fp` 和 `_IO_acquire_lock_fct` 绑定，一旦离开此作用域，就会自动调用 `_IO_acquire_lock_fct (_fp)`，而它内部又是通过 `_IO_funlockfile (fp)` 调用了 `_IO_lock_unlock (*(_fp)->_lock)`，完成这一整个释放锁的流程并返回。而最后调用的 `_IO_lock_unlock (*(_fp)->_lock)` 使用的参数正是 `_IO_stdfile_0_lock`。
+
+很关键的一点就是，`_IO_release_lock(_fp)` 也属于这个定义域，所以如果 `_IO_release_lock(_fp)` 返回了，也会自动调用上面设置的 cleanup 函数。
+
+<center>
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.96a43f63z9.avif" alt="" />
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7pnv6o8tk.avif" alt="" />
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.esvqmae96.avif" alt="" />
+</center>
+
+观察上面的调试输出，我们执行完 `_IO_lock_unlock (*(_fp)->_lock)` 后就直接返回到了 `main`，并且执行完这个函数后在 epilogue 阶段并没有恢复 rdi，也就是说 rdi 会沿用最后一个被调用的函数的 rdi，即 `_IO_stdfile_0_lock` 这个值。
+
+<em>
+呼呼～长舒一口气～写到这里已经凌晨三点了，因为白天上了一天课（简直是虚度光阴……），只能晚上科研力。好在明天课免修了，我可以一直睡到早上十点半再起来，七个小时，应该也够我睡的了 LOL
+
+要我说，这才是大学生活该有的样子啊，哈哈哈～
+</em>
+
+至此，我们已经搞清楚了整个流程，下面就研究如何利用吧～
+
+## Exploit
+
+TODO
 
 # 薛定谔的 free chunks: Double Free, Double Fun ?
 
