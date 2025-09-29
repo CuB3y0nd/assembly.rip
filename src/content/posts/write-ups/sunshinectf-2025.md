@@ -505,11 +505,11 @@ if __name__ == "__main__":
 
 `Space Is Less Than Ideal` 和 `Space Is My Banner` 感觉这两道更像 Misc，与 Pwn 一点关系都没有……
 
+`AstroJIT AI` 是代码审计吧，也和 Pwn 没关系啊……
+
 唯一一个 heap 我还因为没怎么学过堆，做不来……
 
-`Clone Army` 好像是格式化字符串，没整明白。
-
-`AstroJIT AI` 是代码审计吧，也和 Pwn 没关系啊……
+`Clone Army` 没细看，后面有空复现吧。
 
 ## AstroJIT AI
 
