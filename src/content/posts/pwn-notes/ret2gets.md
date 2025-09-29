@@ -1,7 +1,7 @@
 ---
 title: "无 gadgets 也能翻盘：ret2gets 能否成为核武器？"
 published: 2025-09-26
-updated: 2025-09-27
+updated: 2025-09-29
 description: 'Who needs "pop rdi" when you have gets() ?'
 image: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7lkcyy54li.avif"
 tags: ["Pwn", "Notes"]
