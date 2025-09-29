@@ -9,7 +9,7 @@ category: "Notes"
 draft: false
 ---
 
-`ret2gets` 是用于在没有常用 gadgets，控制不了任何参数的情况下，通过调用 `gets`，配合 `printf / puts` 等输出函数实现 ld 地址泄漏进而为深入构造 ROP Chain 做准备的 trick 。
+`ret2gets` 是用于在 `glibc >= 2.34` 没有常用 gadgets，控制不了任何参数的情况下，通过调用 `gets`，配合 `printf / puts` 等输出函数实现 ld 地址泄漏进而为深入构造 ROP Chain 做准备的 trick 。
 
 :::tip
 此 trick 适用于 `GLIBC >= 2.34，<= 2.41` 的 ROP Chain 构造。
@@ -157,7 +157,7 @@ Gadgets
 111 gadgets found
 ```
 
-这是因为原先的这些控制寄存器的 gadgets 都是来自于 `__libc_csu_init`，而现在这个函数因为包含了易于构造 ROP Chain 的 gadgets，在 GLIBC 2.34 中已经被移除了，导致我们现在很难再找到有用的 gadgets 。
+这是因为原先的这些控制寄存器的 gadgets 都是来自于 `__libc_csu_init`，而现在这个函数因为包含了易于构造 ROP Chain 的 gadgets，在 GLIBC 2.34 中已经被 [patch](https://sourceware.org/pipermail/libc-alpha/2021-February/122794.html) 了，导致我们现在很难再找到有用的 gadgets 。
 
 这里我们在调用 `gets` 的地方下断点，执行 `gets` 之前 `rdi` 指向的是 buf 的栈地址，`ni`，随便输入什么后，发现 `rdi` 寄存器变成了 `*RDI  0x7ffff7e137c0 (_IO_stdfile_0_lock) ◂— 0`：
 
@@ -737,6 +737,395 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+## Digging Deeper
+
+### RDI != \_IO_stdfile_0_lock
+
+```c
+// gcc -Wall vuln.c -o vuln -no-pie -fno-stack-protector -std=c99
+
+#include <stdio.h>
+
+int main() {
+  char buf[0x20];
+  puts("ROP me if you can!");
+  gets(buf);
+  puts("No lock for you ;)");
+
+  return 0;
+}
+```
+
+#### Case 1: RDI is Writable
+
+上面这个程序执行 `puts` 后 rdi 就不会是 `_IO_stdfile_0_lock` 了，取而代之的是 `_IO_stdfile_1_lock`，但是很好解决啊，我们输入大小又没限制，直接先返回到一次 `gets` 重新令 rdi 等于 `_IO_stdfile_0_lock` 就好了。
+
+:::warning
+唯一需要注意的是，返回到 `gets` 的话，rdi 必须是可写内存地址，否则会出错。
+:::
+
+#### Case 2: RDI is Readonly
+
+如果 rdi 是只读地址，我们就不能直接使用 `gets` 了。但是我们可以先使用 `puts`，这将返回给 rdi `_IO_stdfile_1_lock`，然后就可以使用和上面类似的方法继续构造 ROP Chain 。
+
+#### Case 3: RDI == NULL
+
+此时大多数 IO 函数都不可用了，不过还是存在例外。
+
+##### printf / scanf
+
+[printf](https://elixir.bootlin.com/glibc/glibc-2.41/source/stdio-common/printf.c) 的定义如下：
+
+```c
+int
+__printf (const char *format, ...)
+{
+  va_list arg;
+  int done;
+
+  va_start (arg, format);
+  done = __vfprintf_internal (stdout, format, arg, 0);
+  va_end (arg);
+
+  return done;
+}
+
+#undef _IO_printf
+ldbl_strong_alias (__printf, printf);
+ldbl_strong_alias (__printf, _IO_printf);
+```
+
+`va_list` 用于声明一个保存当前可变参数列表的指针；`va_start (arg, format)` 用于告诉编译器可变参数从 `format` 之后开始，它的第二个参数必须是函数参数表里，最后一个已知的固定参数，比如 `printf` 中就是 `format`；`va_end` 会做一些清理工作，结束访问。
+
+注意到传入 `__vfprintf_internal (stdout, format, arg, 0)` 的 rdi 为 `stdout`。
+
+```c collapse={12-49}
+/* The FILE-based function.  */
+int
+vfprintf (FILE *s, const CHAR_T *format, va_list ap, unsigned int mode_flags)
+{
+  /* Orient the stream.  */
+#ifdef ORIENT
+  ORIENT;
+#endif
+
+  /* Sanity check of arguments.  */
+  ARGCHECK (s, format);
+
+#ifdef ORIENT
+  /* Check for correct orientation.  */
+  if (_IO_vtable_offset (s) == 0
+      && _IO_fwide (s, sizeof (CHAR_T) == 1 ? -1 : 1)
+      != (sizeof (CHAR_T) == 1 ? -1 : 1))
+    /* The stream is already oriented otherwise.  */
+    return EOF;
+#endif
+
+  if (!_IO_need_lock (s))
+    {
+      struct Xprintf (buffer_to_file) wrap;
+      Xprintf (buffer_to_file_init) (&wrap, s);
+      Xprintf_buffer (&wrap.base, format, ap, mode_flags);
+      return Xprintf (buffer_to_file_done) (&wrap);
+    }
+
+  int done;
+
+  /* Lock stream.  */
+  _IO_cleanup_region_start ((void (*) (void *)) &_IO_funlockfile, s);
+  _IO_flockfile (s);
+
+  /* Set up the wrapping buffer.  */
+  struct Xprintf (buffer_to_file) wrap;
+  Xprintf (buffer_to_file_init) (&wrap, s);
+
+  /* Perform the printing operation on the buffer.  */
+  Xprintf_buffer (&wrap.base, format, ap, mode_flags);
+  done = Xprintf (buffer_to_file_done) (&wrap);
+
+  /* Unlock the stream.  */
+  _IO_funlockfile (s);
+  _IO_cleanup_region_end (0);
+
+  return done;
+}
+```
+
+我们跟进到 `ARGCHECK` 后发现，如果 `Format == NULL` 它就会让 `printf` 提前返回，那我们调用 `__vfprintf_internal` 时传入的 rdi 会不会继续残留在原地呢？
+
+```c {12-16}
+#define ARGCHECK(S, Format) \
+  do                                                     \
+    {                                                    \
+      /* Check file argument for consistence.  */        \
+      CHECK_FILE (S, -1);                                \
+      if (S->_flags & _IO_NO_WRITES)                     \
+       {                                                 \
+  S->_flags |= _IO_ERR_SEEN;                             \
+  __set_errno (EBADF);                                   \
+  return -1;                                             \
+       }                                                 \
+      if (Format == NULL)                                \
+       {                                                 \
+  __set_errno (EINVAL);                                  \
+  return -1;                                             \
+       }                                                 \
+    } while (0)
+```
+
+```c
+// gcc -Wall vuln.c -o vuln -no-pie -fno-stack-protector -std=c99
+
+#include <stdio.h>
+
+int main() {
+  printf(NULL);
+
+  return 0;
+}
+```
+
+没毛病，rdi 的值还残留着 `_IO_2_1_stdout_`，成功令它变成可写地址，那现在就可以像上面一样使用 `gets` 了。
+
+<center>
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3nrzsf095k.avif" alt="" />
+</center>
+
+据说这里能用 FSOP 进行 leak，不过我还没学过，暂时先把参考链接放上来，以后有时间了再研究研究：
+
+- <https://0xdf.gitlab.io/2021/01/16/htb-ropetwo.html#leak-libc>
+- <https://www.willsroot.io/2021/01/rope2-hackthebox-writeup-chromium-v8.html>
+- <https://vigneshsrao.github.io/posts/babytcache/>
+
+另外，由于 `scanf` 和 `printf` 类似，就不贴代码了，可以试试 `scanf(NULL)`，rdi 应该会保留 `_IO_2_1_stdin_`。
+
+##### fflush
+
+还有一个比较常见的接收 `FILE` 作为第一个参数的函数就是 [fflush](https://elixir.bootlin.com/glibc/glibc-2.41/source/libio/iofflush.c#L31) ，当 rdi 是 NULL 时，它会调用 `_IO_flush_all` 刷新所有 IO：
+
+```c {2-3}
+int _IO_fflush(FILE *fp) {
+  if (fp == NULL)
+    return _IO_flush_all();
+  else {
+    int result;
+    CHECK_FILE(fp, EOF);
+    _IO_acquire_lock(fp);
+    result = _IO_SYNC(fp) ? EOF : 0;
+    _IO_release_lock(fp);
+    return result;
+  }
+}
+libc_hidden_def(_IO_fflush)
+
+weak_alias (_IO_fflush, fflush)
+libc_hidden_weak (fflush)
+
+#ifndef _IO_MTSAFE_IO
+strong_alias (_IO_fflush, __fflush_unlocked)
+libc_hidden_def (__fflush_unlocked)
+weak_alias (_IO_fflush, fflush_unlocked)
+libc_hidden_weak (fflush_unlocked)
+#endif
+```
+
+```c {20, 24-27}
+int _IO_flush_all(void) {
+  int result = 0;
+  FILE *fp;
+
+#ifdef _IO_MTSAFE_IO
+  _IO_cleanup_region_start_noarg(flush_cleanup);
+  _IO_lock_lock(list_all_lock);
+#endif
+
+  for (fp = (FILE *)_IO_list_all; fp != NULL; fp = fp->_chain) {
+    run_fp = fp;
+    _IO_flockfile(fp);
+
+    if (((fp->_mode <= 0 && fp->_IO_write_ptr > fp->_IO_write_base) ||
+         (_IO_vtable_offset(fp) == 0 && fp->_mode > 0 &&
+          (fp->_wide_data->_IO_write_ptr > fp->_wide_data->_IO_write_base))) &&
+        _IO_OVERFLOW(fp, EOF) == EOF)
+      result = EOF;
+
+    _IO_funlockfile(fp);
+    run_fp = NULL;
+  }
+
+#ifdef _IO_MTSAFE_IO
+  _IO_lock_unlock(list_all_lock);
+  _IO_cleanup_region_end(0);
+#endif
+
+  return result;
+}
+libc_hidden_def(_IO_flush_all)
+```
+
+`_IO_MTSAFE_IO` 中的 `MTSAFE` 是 `Multi Thread Safe` 的意思，即多线程时 `_IO_flush_all` 最后执行的将是 `_IO_cleanup_region_end (0)`。
+
+单线程时最后执行的是 `_IO_funlockfile (fp)`，这和我们之前看到的一样，rdi 肯定会残留锁。
+
+我们主要关注 `_IO_cleanup_region_end (0)` 执行完 rdi 残留的是什么内容：
+
+```c
+#define _IO_cleanup_region_end(_doit) \
+  __libc_cleanup_region_end (_doit)
+
+/* End critical region with cleanup.  */
+#define __libc_cleanup_region_end(DOIT)  \
+  if (_cleanup_start_doit)                    \
+    __libc_cleanup_pop_restore (&_buffer);    \
+  if (DOIT)                                   \
+    _cleanup_routine (_buffer.__arg);         \
+  } /* matches __libc_cleanup_region_start */
+```
+
+[\_\_libc_cleanup_pop_restore](https://elixir.bootlin.com/glibc/glibc-2.41/source/nptl/libc-cleanup.c#L53) 接受 `_buffer` 地址作为参数，这是一个位于可写区域的地址，因此我们又成功得到了可写的 rdi，可以继续通过上面的 gets 完成接下来的 ROP 了。`_cleanup_routine` 也是同理。
+
+#### Case 4: RDI is Junk
+
+##### rand
+
+`rand` 虽然不是 IO 函数，但它会在 rdi 内残留一个指向 `unsafe_state` 结构体的指针，适用于各种版本的 libc 。
+
+```c
+long int __random(void) {
+  int32_t retval;
+  __libc_lock_lock(lock);
+  (void)__random_r(&unsafe_state, &retval);
+  __libc_lock_unlock(lock);
+
+  return retval;
+}
+
+weak_alias(__random, random)
+```
+
+##### getchar
+
+理论上，`getchar` 是完美的。因为参数无关紧要，而且由于 IO 函数通常在最后才会解锁，所以它们会在 rdi 中残留一个锁（`getchar` 会返回 `_IO_stdfile_0_lock_`）。可惜的是，这里存在一个优化：`_IO_need_lock` 。
+
+```c
+int getchar(void) {
+  int result;
+  if (!_IO_need_lock(stdin))
+    return _IO_getc_unlocked(stdin);
+  _IO_acquire_lock(stdin);
+  result = _IO_getc_unlocked(stdin);
+  _IO_release_lock(stdin);
+  return result;
+}
+
+#ifndef _IO_MTSAFE_IO
+#undef getchar_unlocked
+weak_alias(getchar, getchar_unlocked)
+#endif
+```
+
+如果 `((_fp)->_flags2 & _IO_FLAGS2_NEED_LOCK) != 0`，则说明需要加锁。
+
+```c
+#define _IO_need_lock(_fp) \
+  (((_fp)->_flags2 & _IO_FLAGS2_NEED_LOCK) != 0)
+```
+
+否则会进入 if，执行 `_IO_getc_unlocked`，发现执行的过程中还会调用别的函数，最后执行完并没有在 rdi 中残留什么有用的东西。
+
+此外，根据引用我们推测，下面这些函数可能也存在同样的问题，不过还是需要自己去看代码才能确定。
+
+<center>
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5treegc8sj.avif" alt="" />
+</center>
+
+下面是多线程版本，`getchar` 最终结束后 rdi 中会残留 `_IO_stdfile_0_lock`。
+
+```c
+// gcc -Wall vuln.c -o vuln -no-pie -fno-stack-protector
+
+#include <stdio.h>
+#include <pthread.h>
+#include <stdlib.h>
+
+void *thread_function(void *arg);
+
+int main() {
+  pthread_t tids[2];
+  int ret;
+
+  ret = pthread_create(&tids[0], NULL, thread_function, (void *)1);
+  if (ret != 0) {
+    perror("pthread_create 1 failed");
+    exit(EXIT_FAILURE);
+  }
+
+  ret = pthread_create(&tids[1], NULL, thread_function, (void *)2);
+  if (ret != 0) {
+    perror("pthread_create 2 failed");
+    exit(EXIT_FAILURE);
+  }
+
+  pthread_join(tids[0], NULL);
+  pthread_join(tids[1], NULL);
+
+  return 0;
+}
+
+void *thread_function(void *arg) {
+  getchar();
+
+  pthread_exit(NULL);
+}
+```
+
+当创建线程时，会调用 [\_IO_enable_locks](https://elixir.bootlin.com/glibc/glibc-2.41/source/libio/genops.c#L553)，以确保所有新旧 IO 都设置了 `_IO_FLAGS2_NEED_LOCK`：
+
+```c
+/* In a single-threaded process most stdio locks can be omitted.  After
+   _IO_enable_locks is called, locks are not optimized away any more.
+   It must be first called while the process is still single-threaded.
+
+   This lock optimization can be disabled on a per-file basis by setting
+   _IO_FLAGS2_NEED_LOCK, because a file can have user-defined callbacks
+   or can be locked with flockfile and then a thread may be created
+   between a lock and unlock, so omitting the lock is not valid.
+
+   Here we have to make sure that the flag is set on all existing files
+   and files created later.  */
+void _IO_enable_locks(void) {
+  _IO_ITER i;
+
+  if (stdio_needs_locking)
+    return;
+  stdio_needs_locking = 1;
+  for (i = _IO_iter_begin(); i != _IO_iter_end(); i = _IO_iter_next(i))
+    _IO_iter_file(i)->_flags2 |= _IO_FLAGS2_NEED_LOCK;
+}
+libc_hidden_def(_IO_enable_locks)
+```
+
+有个想法是手动篡改 `_IO_FLAGS2_NEED_LOCK` 的值，不知道行不行，反正我还没遇到过，后面自己研究研究吧。
+
+##### putchar
+
+```c
+int putchar(int c) {
+  int result;
+  _IO_acquire_lock(stdout);
+  result = _IO_putc_unlocked(c, stdout);
+  _IO_release_lock(stdout);
+  return result;
+}
+
+#if defined weak_alias && !defined _IO_MTSAFE_IO
+#undef putchar_unlocked
+weak_alias(putchar, putchar_unlocked)
+#endif
+```
+
+这个函数就不管是不是多线程都会有残留了，不过也有限制，它要求 rdi 中必须是一个 char，或者 int 。不过感觉大多数情况下应该都不会有问题？不管了，等哪天有幸遇到再说对不对。
 
 ## References
 
