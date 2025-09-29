@@ -85,6 +85,8 @@ int __fastcall main(int argc, const char **argv, const char **envp)
 下面这个 payload 需要注意的地方是，`data_addr` 的地址我们可以在将 dlresolve payload 读进去之后动调确定，然后第二次 read 读入的 RBP 一定要设置的大点，不然后面在执行 dlresolve 解析的时候那些函数的 prologues 会将 RSP 缩小到只读地址，就会导致非法访问从而 abort 。
 :::
 
+~_PS: 有关这道题其实还有一个小故事（为期差不多三周的小故事还能算小嘛？我不知道……），算了太晚了，不写了……总之，让我越发意识到自己眼睛问题的严重程度 :sob:_~
+
 ## Exploit
 
 ```python
