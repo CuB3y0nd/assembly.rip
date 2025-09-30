@@ -92,27 +92,3 @@ export type BlogPostData = {
 export type ExpressiveCodeConfig = {
 	themes: string[];
 };
-
-export interface Image {
-	large?: string;
-	common?: string;
-	medium?: string;
-	small?: string;
-	grid?: string;
-}
-
-export interface Subject {
-	id: number;
-	type: number;
-	name: string;
-	name_cn: string;
-	eps?: number;
-	images?: Image;
-}
-
-export interface CollectionItem {
-	subject_id: number;
-	subject: Subject;
-	ep_status: number;
-	type: number;
-}
