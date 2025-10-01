@@ -246,7 +246,7 @@ CPU 发展到 32-bit 后，地址总线和数据总线也发展到了 32-bit，�
 选择子的结构如下：
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/IMAGES@master/assets/Untitled-2024-03-31-132221.svg" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/IMAGES/master/assets/Untitled-2024-03-31-132221.svg" />
 </center>
 
 - `Index` 相当于段描述符的索引值，用此值在 GDT 中索引描述符。由于这部分一共有 13-bits，故可以索引 $$2^{13} =8192$$ 个段。

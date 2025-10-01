@@ -17,7 +17,7 @@ export const siteConfig: SiteConfig = {
 	},
 	banner: {
 		enable: true,
-		src: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1lc58276dr.avif",
+		src: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1lc58276dr.avif",
 		position: "center",
 		credit: {
 			enable: true,
