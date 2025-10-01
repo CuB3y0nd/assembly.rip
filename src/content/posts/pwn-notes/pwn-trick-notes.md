@@ -35,6 +35,10 @@ draft: false
 - 如果 **stdout** 指向**终端 (tty)**，则为行缓冲
 - 如果 **stdout** 被重定向到 **pipe / socket / file** 则为全缓冲
 
+# Path or Be Pathed: The angr Edition
+
+有关于我符号执行的学习记录，请移步 [分岔的森林：angr 符号执行札记](/posts/pwn-notes/angr/)。
+
 # 上帝掷骰子？不，其实是线性同余
 
 [rand](https://en.cppreference.com/w/c/numeric/random/rand) 生成的是伪随机数，范围是 $[ 0,RAND\_MAX]$，只要 seed 相同就可以「预测」：
