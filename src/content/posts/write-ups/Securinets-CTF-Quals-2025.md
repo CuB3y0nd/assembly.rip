@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Securinets CTF Quals 2025"
 published: 2025-10-04
-updated: 2025-10-04
+updated: 2025-10-06
 description: "Write-ups for Securinets CTF Quals 2025 pwn aspect."
 tags: ["Pwn", "Write-ups"]
 category: "Write-ups"
