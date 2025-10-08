@@ -1,7 +1,7 @@
 ---
 title: "Beyond Basics: The Dark Arts of Binary Exploitation"
 published: 2025-02-01
-updated: 2025-09-26
+updated: 2025-10-08
 description: "An in-depth collection of techniques and mind-bending tricks that every aspiring pwner needs to know."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5trbo219x2.avif"
 tags: ["Pwn", "Notes"]
@@ -775,3 +775,46 @@ static __always_inline void tcache_put(mchunkptr chunk, size_t tc_idx) {
 
 1. 把 key 改成非 tcache 值，让第一步检查失效
 2. 篡改 next 指针，让遍历不到目标 chunk，从而绕过第二步的 in list 检查
+
+# 解链之诗：堆上咒语的逆诵
+
+## Safe-linking
+
+从 glibc-2.32 开始，引入了 safe-linking 这一 mitigation，用于保护单向链表（tcache 和 fastbin），原理是 mangling fd 指针，使其更难因为被任意值覆盖而导致一系列的漏洞利用。
+
+直接看代码好了，因为这又是一个及其简单的 mitigation，但却和历史上许多简单的设计一样，起到了非凡的效果……每次碰到这种简单的东西都会让我由衷地感慨，这又怎么不算是人类的智慧之光呢？~OrZ~
+
+下面我引用的是当前最新的 [glibc-2.42](https://elixir.bootlin.com/glibc/glibc-2.42/source/malloc/malloc.c#L331) 的源码：
+
+```c
+/* Safe-Linking:
+   Use randomness from ASLR (mmap_base) to protect single-linked lists
+   of Fast-Bins and TCache.  That is, mask the "next" pointers of the
+   lists' chunks, and also perform allocation alignment checks on them.
+   This mechanism reduces the risk of pointer hijacking, as was done with
+   Safe-Unlinking in the double-linked lists of Small-Bins.
+   It assumes a minimum page size of 4096 bytes (12 bits).  Systems with
+   larger pages provide less entropy, although the pointer mangling
+   still works.  */
+#define PROTECT_PTR(pos, ptr) \
+  ((__typeof (ptr)) ((((size_t) pos) >> 12) ^ ((size_t) ptr)))
+#define REVEAL_PTR(ptr)  PROTECT_PTR (&ptr, ptr)
+```
+
+可以看到新加入了两个 macro，分别是用来 mangling 的 `PROTECT_PTR` 和用来 de-mangling 的 `REVEAL_PTR`。
+
+右移 12 bits 是为了只保留 ASLR 部分，丢弃了固定的偏移位。`PROTECT_PTR` 中，`pos` 代表当前 chunk 的 fd 的地址，`ptr` 代表 fd 指向的地址，也就是当前 bin 中的第一个元素，所以一开始 bin 中没有元素的时候它为 NULL。这个的话我觉得可以自己去读一遍源码，一目了然。
+
+## Alignment Check
+
+除了 safe-linking 外，对于我们能 malloc / free 的 chunk 还新增了一个对齐检查：
+
+```c
+/* Check if m has acceptable alignment */
+
+#define misaligned_mem(m)  ((uintptr_t)(m) & MALLOC_ALIGN_MASK)
+
+#define misaligned_chunk(p) (misaligned_mem( chunk2mem (p)))
+```
+
+其中，tcache 用的是 `misaligned_mem`，而 fastbin 用的则是 `misaligned_chunk`，这是因为 tcache bin 中存储的都是 user data，而 fastbin 中存储的都是从 chunk header 开始的地址。不过不管用哪个，最后检查的都是 user data 的地址是否是对齐的，要求是 `& MALLOC_ALIGN_MASK == 0`，通常就是 `& 0xf == 0`，也就是 16 字节对齐，即低 4 bits 为 0，这就导致攻击者无法将其篡改为任意地址，更多的时候可能需要用临近地址替代来达到目的。
