@@ -805,6 +805,12 @@ static __always_inline void tcache_put(mchunkptr chunk, size_t tc_idx) {
 
 右移 12 bits 是为了只保留 ASLR 部分，丢弃了固定的偏移位。`PROTECT_PTR` 中，`pos` 代表当前 chunk 的 fd 的地址，`ptr` 代表 fd 指向的地址，也就是当前 bin 中的第一个元素，所以一开始 bin 中没有元素的时候它为 NULL。这个的话我觉得可以自己去读一遍源码，一目了然。
 
+~_至于怎么 bypass，相信聪明的你一定会自己研究明白的，不对吗？_~
+
+:::tip
+XOR 是可逆运算。
+:::
+
 ## Alignment Check
 
 除了 safe-linking 外，对于我们能 malloc / free 的 chunk 还新增了一个对齐检查：

