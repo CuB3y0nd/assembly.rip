@@ -1,7 +1,7 @@
 ---
 title: "Beyond Basics: The Dark Arts of Binary Exploitation"
 published: 2025-02-01
-updated: 2025-10-08
+updated: 2025-10-13
 description: "An in-depth collection of techniques and mind-bending tricks that every aspiring pwner needs to know."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5trbo219x2.avif"
 tags: ["Pwn", "Notes"]
@@ -824,3 +824,32 @@ XOR 是可逆运算。
 ```
 
 其中，tcache 用的是 `misaligned_mem`，而 fastbin 用的则是 `misaligned_chunk`，这是因为 tcache bin 中存储的都是 user data，而 fastbin 中存储的都是从 chunk header 开始的地址。不过不管用哪个，最后检查的都是 user data 的地址是否是对齐的，要求是 `& MALLOC_ALIGN_MASK == 0`，通常就是 `& 0xf == 0`，也就是 16 字节对齐，即低 4 bits 为 0，这就导致攻击者无法将其篡改为任意地址，更多的时候可能需要用临近地址替代来达到目的。
+
+# Mirror, Mirror on the Heap
+
+这里主要是想写一下 overlapping 这个 trick，概念非常简单，直接看代码吧，这里参考的是当前最新的 glibc-2.42 的代码。
+
+```c
+/* Get size, ignoring use bits */
+#define chunksize(p) (chunksize_nomask (p) & ~(SIZE_BITS))
+
+/* Like chunksize, but do not mask SIZE_BITS.  */
+#define chunksize_nomask(p) ((p)->mchunk_size)
+
+/* Ptr to next physical malloc_chunk. */
+#define next_chunk(p) ((mchunkptr) (((char *) (p)) + chunksize (p)))
+
+/* Size of the chunk below P.  Only valid if !prev_inuse (P).  */
+#define prev_size(p) ((p)->mchunk_prev_size)
+
+/* Ptr to previous physical malloc_chunk.  Only valid if !prev_inuse (P).  */
+#define prev_chunk(p) ((mchunkptr) (((char *) (p)) - prev_size (p)))
+
+/* extract p's inuse bit */
+#define inuse(p)                                                              \
+  ((((mchunkptr) (((char *) (p)) + chunksize (p)))->mchunk_size) & PREV_INUSE)
+```
+
+由于过于简单，我就不细写解析了，简单来说就是要去理解一下它是怎么通过 chunk header 来定位前后 chunk 的，以及怎么判断当前 chunk 是否处于 free 状态。
+
+因此只要我们能篡改 chunk size 就可以让它 malloc / free 涵盖到更大的范围，称为 chunk extend，也叫做 chunk overlapping 。当然，也可以反过来，把这个大小改小可以实现一个 chunk shrink 的操作。

