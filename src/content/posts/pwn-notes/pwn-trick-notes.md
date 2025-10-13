@@ -1,7 +1,7 @@
 ---
 title: "Beyond Basics: The Dark Arts of Binary Exploitation"
 published: 2025-02-01
-updated: 2025-10-13
+updated: 2025-10-14
 description: "An in-depth collection of techniques and mind-bending tricks that every aspiring pwner needs to know."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5trbo219x2.avif"
 tags: ["Pwn", "Notes"]
@@ -298,7 +298,7 @@ if __name__ == "__main__":
 
 ### Summary
 
-总结：有的时候你的 ROP Chain 可能会缺少一些必要的 gadgets，导致无法设定某些后续攻击代码需要用到的参数，这时候就可以考虑使用 SROP 来控制寄存器。当然，使用 SROP 也是有条件的，比如你起码得有 `syscall` 这个 gadget，并且能控制 `rax` 的值为 `sigreturn` 的系统调用号。
+总结：有的时候你的 ROP Chain 可能会缺少一些必要的 gadgets，导致无法设定某些后续攻击代码需要用到的参数，这时候就可以考虑使用 SROP 来控制寄存器。当然，使用 SROP 也是有条件的，比如你起码得有 `syscall` 这个 gadget，并且能控制 `rax` 的值为 `sigreturn` 的系统调用号，还有一点也很重要，就是 `rsp` 必须指向伪造的 frame 。
 
 > [!TIP]
 > 要知道 `rax` 是一个特殊的寄存器，通常用于保存函数的返回值。所以当我说控制 `rax` 的值时，你不一定非得通过某些 gadgets 来实现这一点，有时候程序本身就可以为你设置好它，比如 `read` 函数会返回读到的字节数。
