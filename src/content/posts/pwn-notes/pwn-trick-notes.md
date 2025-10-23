@@ -1,7 +1,7 @@
 ---
 title: "Beyond Basics: The Dark Arts of Binary Exploitation"
 published: 2025-02-01
-updated: 2025-10-14
+updated: 2025-10-23
 description: "An in-depth collection of techniques and mind-bending tricks that every aspiring pwner needs to know."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5trbo219x2.avif"
 tags: ["Pwn", "Notes"]
@@ -853,3 +853,181 @@ XOR 是可逆运算。
 由于过于简单，我就不细写解析了，简单来说就是要去理解一下它是怎么通过 chunk header 来定位前后 chunk 的，以及怎么判断当前 chunk 是否处于 free 状态。
 
 因此只要我们能篡改 chunk size 就可以让它 malloc / free 涵盖到更大的范围，称为 chunk extend，也叫做 chunk overlapping 。当然，也可以反过来，把这个大小改小可以实现一个 chunk shrink 的操作。
+
+# Doubly Linked, Doubly Doomed
+
+这里只看高版本 unlink 利用，参考的是 `how2heap` 中的 [glibc_2.35/unsafe_unlink](https://github.com/shellphish/how2heap/blob/master/glibc_2.35/unsafe_unlink.c)，低版本同理，不过更简单。
+
+思路是先创建两个 chunk，在 chunk 0 中创建一个 fake chunk，并且改变 chunk 1 的 metadata，修改它的 `prev_size` 为 fake chunk 的 `chunk_size`，并修改它的 `chunk_size` 的 `prev_inuse` bit 为 0，这样一来我们 free chunk 1 的时候它就会认为上一个 chunk 是 free'd 状态，会进行 backward consolidation，将 chunk 1 与 fake chunk 进行合并，即对 fake chunk 进行 unlink 。
+
+free 判断是否需要合并的代码如下（这里只高亮了 example 中会进入的逻辑，具体情况还需要自己具体分析）：
+
+```c {36-44, 88-93}
+  /*
+    Consolidate other non-mmapped chunks as they arrive.
+  */
+
+  else if (!chunk_is_mmapped(p)) {
+
+    /* If we're single-threaded, don't lock the arena.  */
+    if (SINGLE_THREAD_P)
+      have_lock = true;
+
+    if (!have_lock)
+      __libc_lock_lock (av->mutex);
+
+    nextchunk = chunk_at_offset(p, size);
+
+    /* Lightweight tests: check whether the block is already the
+       top block.  */
+    if (__glibc_unlikely (p == av->top))
+      malloc_printerr ("double free or corruption (top)");
+    /* Or whether the next chunk is beyond the boundaries of the arena.  */
+    if (__builtin_expect (contiguous (av)
+     && (char *) nextchunk
+     >= ((char *) av->top + chunksize(av->top)), 0))
+ malloc_printerr ("double free or corruption (out)");
+    /* Or whether the block is actually not marked used.  */
+    if (__glibc_unlikely (!prev_inuse(nextchunk)))
+      malloc_printerr ("double free or corruption (!prev)");
+
+    nextsize = chunksize(nextchunk);
+    if (__builtin_expect (chunksize_nomask (nextchunk) <= CHUNK_HDR_SZ, 0)
+ || __builtin_expect (nextsize >= av->system_mem, 0))
+      malloc_printerr ("free(): invalid next size (normal)");
+
+    free_perturb (chunk2mem(p), size - CHUNK_HDR_SZ);
+
+    /* consolidate backward */
+    if (!prev_inuse(p)) {
+      prevsize = prev_size (p);
+      size += prevsize;
+      p = chunk_at_offset(p, -((long) prevsize));
+      if (__glibc_unlikely (chunksize(p) != prevsize))
+        malloc_printerr ("corrupted size vs. prev_size while consolidating");
+      unlink_chunk (av, p);
+    }
+
+    if (nextchunk != av->top) {
+      /* get and clear inuse bit */
+      nextinuse = inuse_bit_at_offset(nextchunk, nextsize);
+
+      /* consolidate forward */
+      if (!nextinuse) {
+ unlink_chunk (av, nextchunk);
+ size += nextsize;
+      } else
+ clear_inuse_bit_at_offset(nextchunk, 0);
+
+      /*
+ Place the chunk in unsorted chunk list. Chunks are
+ not placed into regular bins until after they have
+ been given one chance to be used in malloc.
+      */
+
+      bck = unsorted_chunks(av);
+      fwd = bck->fd;
+      if (__glibc_unlikely (fwd->bk != bck))
+ malloc_printerr ("free(): corrupted unsorted chunks");
+      p->fd = fwd;
+      p->bk = bck;
+      if (!in_smallbin_range(size))
+ {
+   p->fd_nextsize = NULL;
+   p->bk_nextsize = NULL;
+ }
+      bck->fd = p;
+      fwd->bk = p;
+
+      set_head(p, size | PREV_INUSE);
+      set_foot(p, size);
+
+      check_free_chunk(av, p);
+    }
+
+    /*
+      If the chunk borders the current high end of memory,
+      consolidate into top
+    */
+
+    else {
+      size += nextsize;
+      set_head(p, size | PREV_INUSE);
+      av->top = p;
+      check_chunk(av, p);
+    }
+```
+
+unlink 代码如下：
+
+```c
+/* Take a chunk off a bin list.  */
+static void
+unlink_chunk (mstate av, mchunkptr p)
+{
+  if (chunksize (p) != prev_size (next_chunk (p)))
+    malloc_printerr ("corrupted size vs. prev_size");
+
+  mchunkptr fd = p->fd;
+  mchunkptr bk = p->bk;
+
+  if (__builtin_expect (fd->bk != p || bk->fd != p, 0))
+    malloc_printerr ("corrupted double-linked list");
+
+  fd->bk = bk;
+  bk->fd = fd;
+  if (!in_smallbin_range (chunksize_nomask (p)) && p->fd_nextsize != NULL)
+    {
+      if (p->fd_nextsize->bk_nextsize != p
+   || p->bk_nextsize->fd_nextsize != p)
+ malloc_printerr ("corrupted double-linked list (not small)");
+
+      if (fd->fd_nextsize == NULL)
+ {
+   if (p->fd_nextsize == p)
+     fd->fd_nextsize = fd->bk_nextsize = fd;
+   else
+     {
+       fd->fd_nextsize = p->fd_nextsize;
+       fd->bk_nextsize = p->bk_nextsize;
+       p->fd_nextsize->bk_nextsize = fd;
+       p->bk_nextsize->fd_nextsize = fd;
+     }
+ }
+      else
+ {
+   p->fd_nextsize->bk_nextsize = p->bk_nextsize;
+   p->bk_nextsize->fd_nextsize = p->fd_nextsize;
+ }
+    }
+}
+```
+
+对于 unlink 的保护，首先得绕过这个 size 检测，即，下一个 chunk 的 `prev_size` 和当前 chunk 的 `chunk_size` 得是相等的：
+
+```c
+  if (chunksize (p) != prev_size (next_chunk (p)))
+    malloc_printerr ("corrupted size vs. prev_size");
+```
+
+然后还有两个要注意的地方，即 `P->fd->bk == P && P->bk->fd == P`：
+
+```c
+  mchunkptr fd = p->fd;
+  mchunkptr bk = p->bk;
+
+  if (__builtin_expect (fd->bk != p || bk->fd != p, 0))
+    malloc_printerr ("corrupted double-linked list");
+```
+
+实际的 unlinking 代码为：
+
+```c
+mchunkptr fd = p->fd;
+mchunkptr bk = p->bk;
+
+fd->bk = bk;
+bk->fd = fd;
+```
+
+经调试发现，它们改的都是同一个值，所以最后生效的其实只有 `bk->fd = fd`，即把 chunk 0 的地址改为了 fake chunk 的 fd 值。现在，我们向 chunk 0 写入数据就是写入到 fake chunk 的 fd 指向的值中去了。
