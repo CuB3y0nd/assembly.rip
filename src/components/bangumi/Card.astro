@@ -76,12 +76,12 @@ const getStatusText = (type: number) => {
       {item.subject.name || item.subject.name_cn}
     </h3>
 
-    {(item.subject.score || item.comment) && (
+    {(item.rate || item.comment) && (
       <div class="flex items-center justify-between mb-2">
-        {item.subject.score && (
+        {item.rate && (
           <div class="flex items-center gap-1">
             <div class="text-yellow-400">⭐</div>
-            <span class="text-sm">{item.subject.score}</span>
+            <span class="text-sm">{item.rate}</span>
           </div>
         )}
 
