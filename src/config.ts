@@ -53,7 +53,8 @@ export const navBarConfig: NavBarConfig = {
 };
 
 export const profileConfig: ProfileConfig = {
-	avatar: "assets/images/avatar.jpg",
+	avatar:
+		"https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6bhhs4m1zp.avif",
 	name: "CuB3y0nd",
 	bio: "心之所向，一苇以航。",
 	links: [
