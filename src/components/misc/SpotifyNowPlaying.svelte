@@ -6,27 +6,26 @@
     artist?: string;
   }
 
-  let playerPromise: Promise<Player> = (async () => {
+  let player: Player = { isPlaying: false };
+
+  async function load() {
     try {
-      const resp = await fetch(`/api/spotify.json`);
+      const resp = await fetch("/api/spotify.json", {
+        method: "GET",
+        cache: "no-store",
+      });
       if (!resp.ok) throw new Error("Fetch failed");
-      const spotifyResponse = await resp.json();
-      return {
-        isPlaying: spotifyResponse.isPlaying,
-        songUrl: spotifyResponse.songUrl,
-        title: spotifyResponse.title,
-        artist: spotifyResponse.artist,
-      };
+      player = await resp.json();
     } catch {
-      return { isPlaying: false };
+      player = { isPlaying: false };
     }
-  })();
+  }
+
+  load();
 </script>
 
-{#await playerPromise then player}
-  {#if player.isPlaying}
-    <a class="now-playing" href={player.songUrl}>
-      {player.title} - {player.artist}
-    </a>
-  {/if}
-{/await}
+{#if player.isPlaying}
+  <a class="now-playing" href={player.songUrl}>
+    {player.title} - {player.artist}
+  </a>
+{/if}
