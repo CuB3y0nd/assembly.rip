@@ -5,6 +5,7 @@ interface Player {
 	title?: string;
 	artist?: string;
 }
+
 let playerPromise: Promise<Player> = (async () => {
 	try {
 		const resp = await fetch("/api/spotify.json");
@@ -16,7 +17,7 @@ let playerPromise: Promise<Player> = (async () => {
 			title: spotifyResponse.title,
 			artist: spotifyResponse.artist,
 		};
-	} catch (error) {
+	} catch {
 		return { isPlaying: false };
 	}
 })();
@@ -27,5 +28,7 @@ let playerPromise: Promise<Player> = (async () => {
     <a class="now-playing" href={player.songUrl}>
       {player.title} - {player.artist}
     </a>
+  {:else}
+    <span class="now-playing">Not playing anything right now.</span>
   {/if}
 {/await}
