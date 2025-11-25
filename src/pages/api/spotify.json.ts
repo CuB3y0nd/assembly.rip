@@ -1,3 +1,5 @@
+export const prerender = false;
+
 import type { APIRoute } from "astro";
 import { getNowPlaying } from "../../utils/spotify";
 import type { SpotifyPlayerResponse } from "../../types/spotify";
