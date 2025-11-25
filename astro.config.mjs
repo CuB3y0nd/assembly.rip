@@ -26,11 +26,14 @@ import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
 import { remarkExcerpt } from "./src/plugins/remark-excerpt.js";
 import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
 
+import vercel from "@astrojs/vercel";
+
 // https://astro.build/config
 export default defineConfig({
   site: "https://cubeyond.net/",
   base: "/",
   trailingSlash: "always",
+
   integrations: [
     tailwind({
       nesting: true,
@@ -91,6 +94,7 @@ export default defineConfig({
     mdx(),
     sitemap(),
   ],
+
   markdown: {
     remarkPlugins: [
       remarkMath,
@@ -149,6 +153,7 @@ export default defineConfig({
       ],
     ],
   },
+
   vite: {
     build: {
       rollupOptions: {
@@ -165,10 +170,13 @@ export default defineConfig({
       },
     },
   },
+
   server: {
     watch: {
       usePolling: true,
       interval: 100,
     },
   },
+
+  adapter: vercel(),
 });

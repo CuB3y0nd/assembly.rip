@@ -1,27 +1,27 @@
 <script lang="ts">
-  interface Player {
-    isPlaying: boolean;
-    songUrl?: string;
-    title?: string;
-    artist?: string;
-  }
+interface Player {
+	isPlaying: boolean;
+	songUrl?: string;
+	title?: string;
+	artist?: string;
+}
 
-  let player: Player = { isPlaying: false };
+let player: Player = { isPlaying: false };
 
-  async function load() {
-    try {
-      const resp = await fetch("/api/spotify.json", {
-        method: "GET",
-        cache: "no-store",
-      });
-      if (!resp.ok) throw new Error("Fetch failed");
-      player = await resp.json();
-    } catch {
-      player = { isPlaying: false };
-    }
-  }
+async function load() {
+	try {
+		const resp = await fetch("/api/spotify.json", {
+			method: "GET",
+			cache: "no-store",
+		});
+		if (!resp.ok) throw new Error("Fetch failed");
+		player = await resp.json();
+	} catch {
+		player = { isPlaying: false };
+	}
+}
 
-  load();
+load();
 </script>
 
 {#if player.isPlaying}
