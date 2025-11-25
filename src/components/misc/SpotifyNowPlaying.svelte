@@ -5,6 +5,7 @@
     title?: string;
     artist?: string;
   }
+
   let playerPromise: Promise<Player> = (async () => {
     try {
       const resp = await fetch(`/api/spotify.json`);
@@ -16,7 +17,7 @@
         title: spotifyResponse.title,
         artist: spotifyResponse.artist,
       };
-    } catch (error) {
+    } catch {
       return { isPlaying: false };
     }
   })();
