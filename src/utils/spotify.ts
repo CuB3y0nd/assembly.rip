@@ -1,4 +1,4 @@
-import querystring from "querystring";
+import querystring from "node:querystring";
 
 const clientID = process.env.SPOTIFY_CLIENT_ID;
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;

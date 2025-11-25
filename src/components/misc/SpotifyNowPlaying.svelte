@@ -5,27 +5,27 @@ interface Player {
 	title?: string;
 	artist?: string;
 }
-
-let player: Player = { isPlaying: false };
-
-async function load() {
+let playerPromise: Promise<Player> = (async () => {
 	try {
-		const resp = await fetch("/api/spotify.json", {
-			method: "GET",
-			cache: "no-store",
-		});
+		const resp = await fetch("/api/spotify.json");
 		if (!resp.ok) throw new Error("Fetch failed");
-		player = await resp.json();
-	} catch {
-		player = { isPlaying: false };
+		const spotifyResponse = await resp.json();
+		return {
+			isPlaying: spotifyResponse.isPlaying,
+			songUrl: spotifyResponse.songUrl,
+			title: spotifyResponse.title,
+			artist: spotifyResponse.artist,
+		};
+	} catch (error) {
+		return { isPlaying: false };
 	}
-}
-
-load();
+})();
 </script>
 
-{#if player.isPlaying}
-  <a class="now-playing" href={player.songUrl}>
-    {player.title} - {player.artist}
-  </a>
-{/if}
+{#await playerPromise then player}
+  {#if player.isPlaying}
+    <a class="now-playing" href={player.songUrl}>
+      {player.title} - {player.artist}
+    </a>
+  {/if}
+{/await}
