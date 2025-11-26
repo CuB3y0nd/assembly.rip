@@ -51,6 +51,8 @@
       {player.title} - {player.artist}
     </a>
   {:else}
-    <span class="now-playing">Not playing anything right now.</span>
+    <span class="now-playing"
+      >No song at the moment — enjoying the silence.</span
+    >
   {/if}
 {/await}
