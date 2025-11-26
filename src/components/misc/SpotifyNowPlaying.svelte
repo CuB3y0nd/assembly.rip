@@ -1,26 +1,39 @@
 <script lang="ts">
-interface Player {
-	isPlaying: boolean;
-	songUrl?: string;
-	title?: string;
-	artist?: string;
-}
+  import { onMount } from "svelte";
 
-let playerPromise: Promise<Player> = (async () => {
-	try {
-		const resp = await fetch("/api/spotify.json");
-		if (!resp.ok) throw new Error("Fetch failed");
-		const spotifyResponse = await resp.json();
-		return {
-			isPlaying: spotifyResponse.isPlaying,
-			songUrl: spotifyResponse.songUrl,
-			title: spotifyResponse.title,
-			artist: spotifyResponse.artist,
-		};
-	} catch {
-		return { isPlaying: false };
-	}
-})();
+  interface Player {
+    isPlaying: boolean;
+    songUrl?: string;
+    title?: string;
+    artist?: string;
+  }
+
+  async function loadPlayer(): Promise<Player> {
+    try {
+      const resp = await fetch("/api/spotify.json");
+      if (!resp.ok) throw new Error("Fetch failed");
+      const spotifyResponse = await resp.json();
+      return {
+        isPlaying: spotifyResponse.isPlaying,
+        songUrl: spotifyResponse.songUrl,
+        title: spotifyResponse.title,
+        artist: spotifyResponse.artist,
+      };
+    } catch {
+      return { isPlaying: false };
+    }
+  }
+
+  let playerPromise: Promise<Player> = loadPlayer();
+
+  onMount(() => {
+    // refresh every 30s
+    const id = setInterval(() => {
+      playerPromise = loadPlayer();
+    }, 30000);
+
+    return () => clearInterval(id);
+  });
 </script>
 
 {#await playerPromise then player}
