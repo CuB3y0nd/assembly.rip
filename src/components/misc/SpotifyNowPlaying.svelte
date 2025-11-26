@@ -8,6 +8,9 @@
     artist?: string;
   }
 
+  let playerPromise: Promise<Player>;
+  let initial = true;
+
   async function loadPlayer(): Promise<Player> {
     try {
       const resp = await fetch("/api/spotify.json");
@@ -24,11 +27,11 @@
     }
   }
 
-  let playerPromise: Promise<Player> = loadPlayer();
+  playerPromise = loadPlayer();
 
   onMount(() => {
-    // refresh every 30s
     const id = setInterval(() => {
+      initial = false;
       playerPromise = loadPlayer();
     }, 30000);
 
@@ -36,7 +39,13 @@
   });
 </script>
 
-{#await playerPromise then player}
+{#await playerPromise}
+  {#if initial}
+    <span class="now-playing">Loading...</span>
+  {:else}
+    <span class="loading-indicator">Refreshing...</span>
+  {/if}
+{:then player}
   {#if player.isPlaying}
     <a class="now-playing" href={player.songUrl}>
       {player.title} - {player.artist}
