@@ -76,6 +76,11 @@ export const profileConfig: ProfileConfig = {
 			icon: "tabler:brand-github",
 			url: "https://github.com/CuB3y0nd",
 		},
+		{
+			name: "RedQueen",
+			icon: "mingcute:discord-line",
+			url: "https://discord.gg/nP2gFZKFgm",
+		},
 	],
 };
 
