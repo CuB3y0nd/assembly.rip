@@ -8,3 +8,4 @@
 | <a target='_blank' rel='noopener noreferrer' href='https://bamuwe.xyz/'>bamuwe</a>           | less is more.                      |
 | <a target='_blank' rel='noopener noreferrer' href='https://ch0ico.fun/'>Ch0ico</a>           | H4ck for fun                       |
 | <a target='_blank' rel='noopener noreferrer' href='https://w2solodance.com/'>soloDance</a>   | 探寻事物本质，倡导幸福的生活方式！ |
+| <a target='_blank' rel='noopener noreferrer' href='https://sysnow.xyz/'>sysNow's blog</a>    | to be a pwn master                 |
