@@ -117,3 +117,35 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 ```
+
+# Level 2.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Ease into kernel exploitation with another crackme level.
+
+## Write-up
+
+输密码，密码对了就成了。
+
+## Exploit
+
+```c
+#include <fcntl.h>
+#include <string.h>
+#include <unistd.h>
+
+char password[] = "zcexibhdcclcottw";
+
+int main(int argc, char *argv[]) {
+  int fd = open("/proc/pwncollege", O_WRONLY);
+
+  write(fd, password, strlen(password));
+
+  return 0;
+}
+```
