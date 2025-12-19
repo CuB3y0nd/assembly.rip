@@ -186,3 +186,68 @@ int main(int argc, char *argv[]) {
   return 0;
 }
 ```
+
+# Level 4.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Ease into kernel exploitation with another crackme level and learn how kernel devices communicate.
+
+## Write-up
+
+这次提供的是 `device_ioctl`，即我们需要通过 `ioctl` 函数来操作设备。
+
+```c
+__int64 __fastcall device_ioctl(file *file, unsigned int cmd, unsigned __int64 arg)
+{
+  __int64 result; // rax
+  int v5; // r8d
+  char password[16]; // [rsp+0h] [rbp-28h] BYREF
+  unsigned __int64 v7; // [rsp+10h] [rbp-18h]
+
+  v7 = __readgsqword(0x28u);
+  printk(&unk_328, file, cmd, arg);
+  result = -1;
+  if ( cmd == 1337 )
+  {
+    copy_from_user(password, arg, 16);
+    v5 = strncmp(password, "qyikgpxrxvcinxbe", 0x10u);
+    result = 0;
+    if ( !v5 )
+    {
+      win();
+      return 0;
+    }
+  }
+  return result;
+}
+```
+
+## Exploit
+
+```c
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+
+#define REQUEST 1337
+
+char password[] = "qyikgpxrxvcinxbe";
+
+int main(int argc, char *argv[]) {
+  int fd = open("/proc/pwncollege", O_WRONLY);
+
+  printf("Current UID: %d\n", getuid());
+  ioctl(fd, REQUEST, password);
+  printf("Current UID: %d\n", getuid());
+  system("cat /flag");
+
+  return 0;
+}
+```
