@@ -1,4 +1,5 @@
 import type {
+	CommentConfig,
 	ExpressiveCodeConfig,
 	LicenseConfig,
 	NavBarConfig,
@@ -93,4 +94,21 @@ export const licenseConfig: LicenseConfig = {
 export const expressiveCodeConfig: ExpressiveCodeConfig = {
 	// Note: Some styles (such as background color) are being overridden, see the astro.config.mjs file.
 	themes: ["catppuccin-latte", "catppuccin-macchiato"],
+};
+
+export const commentConfig: CommentConfig = {
+	giscus: {
+		repo: "CuB3y0nd/assembly.rip",
+		repoId: "R_kgDOOGUE-g",
+		category: "Announcements",
+		categoryId: "DIC_kwDOOGUE-s4C0V7E",
+		mapping: "title",
+		strict: "0",
+		reactionsEnabled: "1",
+		emitMetadata: "1",
+		inputPosition: "top",
+		theme: "reactive",
+		lang: "en",
+		loading: "lazy",
+	},
 };

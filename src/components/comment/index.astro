@@ -1,0 +1,17 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { commentConfig } from "@/config";
+import Giscus from "./Giscus.svelte";
+
+interface Props {
+	post: CollectionEntry<"posts">;
+}
+
+const showGiscus = !!commentConfig?.giscus;
+---
+
+{showGiscus && (
+    <div class="card-base p-6 mb-4">
+        <Giscus client:only="svelte" />
+    </div>
+)}
