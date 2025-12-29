@@ -1,9 +1,12 @@
 ---
 import { getEntry } from "astro:content";
+import Comment from "@components/comment/index.astro";
 import Markdown from "@components/misc/Markdown.astro";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import MainGridLayout from "../layouts/MainGridLayout.astro";
+
+const { entry } = Astro.props;
 
 const friendsPost = await getEntry("spec", "friends");
 
@@ -14,11 +17,16 @@ if (!friendsPost) {
 const { Content } = await friendsPost.render();
 ---
 <MainGridLayout title={i18n(I18nKey.friends)} description={i18n(I18nKey.friends)}>
-    <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
+  <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative mb-4">
+      <div id="post-container" class:list={["card-base z-10 px-6 md:px-9 pt-6 pb-4 relative w-full ",
+          {}
+      ]}>
         <div class="card-base z-10 px-9 py-6 relative w-full ">
-            <Markdown class="mt-2">
+            <Markdown class="mt-2 mb-6 markdown-content onload-animation">
                 <Content />
             </Markdown>
         </div>
-    </div>
+      </div>
+  </div>
+  <Comment post={entry}></Comment>
 </MainGridLayout>
