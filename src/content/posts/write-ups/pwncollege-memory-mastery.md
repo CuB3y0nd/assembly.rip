@@ -3,7 +3,7 @@ title: "Write-ups: Software Exploitation (Exploitation Primitives) series (Compl
 published: 2025-11-21
 updated: 2025-12-09
 description: "Write-ups for pwn.college binary exploitation series."
-image: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.wizenf9io.avif"
+image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.wizenf9io.avif"
 tags: ["Pwn", "Write-ups", "FSOP"]
 category: "Write-ups"
 draft: false
@@ -35,7 +35,7 @@ draft: false
 
 不记得的去看我的[笔记](https://www.cubeyond.net/posts/cs-notes/csapp/#network-programming)复习吧～~~其实我一开始也忘差不多了（bushi~~
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.96a6bgjii4.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.96a6bgjii4.avif)
 
 直接跟进到核心函数：
 
