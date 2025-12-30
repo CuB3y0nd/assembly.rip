@@ -3,7 +3,7 @@ title: "Beyond Basics: The Dark Arts of Binary Exploitation"
 published: 2025-02-01
 updated: 2025-10-23
 description: "An in-depth collection of techniques and mind-bending tricks that every aspiring pwner needs to know."
-image: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5trbo219x2.avif"
+image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5trbo219x2.avif"
 tags: ["Pwn", "Notes"]
 category: "Notes"
 draft: false

@@ -3,7 +3,7 @@ title: "Sapido RB-1732 路由器 RCE 漏洞"
 published: 2025-11-15
 updated: 2025-11-15
 description: "CVE-2021-4242: Sapido RB-1732 路由器 RCE 漏洞复现。"
-image: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7ppukt57t.avif"
+image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7ppukt57t.avif"
 tags: ["Pwn", "IoT"]
 category: "IoT"
 draft: false
@@ -33,7 +33,7 @@ draft: false
 
 这里我使用的是 [Firmware Analysis Toolkit](https://github.com/attify/firmware-analysis-toolkit)，直接梭掉了，没有遇到什么奇奇怪怪的问题。~~人品保障（~~
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.102lccjy0f.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.102lccjy0f.avif)
 
 为了方便测试，这里我写了一个无比简陋的端口转发脚本，这样就可以从宿主机访问仿真出来的路由器后端了：
 
@@ -73,19 +73,19 @@ echo
 echo "[OK] All forwarding rules loaded."
 ```
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5mo8d3awk8.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5mo8d3awk8.avif)
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7w78wkztpt.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7w78wkztpt.avif)
 
 # 漏洞分析
 
 闭眼 `binwalk`，~~幸运女神保佑我，别加密，别加密（~~
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7eh780c9a3.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7eh780c9a3.avif)
 
 正合我意，是没有加密的 SquashFS 文件系统。下面随机抓一个倒霉蛋问问架构：
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.4g4x4iaxdu.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4g4x4iaxdu.avif)
 
 Well，32-bit 大端 MIPS，现在基本的信息算是搜集的差不多了，接下来就应该去分析它是如何把 http 服务跑起来的了。
 
@@ -93,7 +93,7 @@ Well，32-bit 大端 MIPS，现在基本的信息算是搜集的差不多了，�
 
 快速过一遍这个脚本，大致可以看出来就是做了一些初始化工作，诸如网络设置，硬件检测啦之类的事情，最后，我们凭借敏锐的注意力发现它在一切准备就绪后执行了一个叫做 `webs` 的程序：
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3uv9i7vgzk.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3uv9i7vgzk.avif)
 
 盲猜这个路由器就是通过它来启服务的。找到入口后，发现是 ELF 文件，那就丢给 IDA 姐姐分析一下看看它偷偷摸摸地在幕后做了些什么坏坏的事情（
 
@@ -101,10 +101,10 @@ Well，32-bit 大端 MIPS，现在基本的信息算是搜集的差不多了，�
 
 粗略看了一下，就是很常规的启动 web 服务器，注册 `cgi-bin` 和 `goform` handlers 用于执行实际操作：
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.86u2q7x1v4.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.86u2q7x1v4.avif)
 其中有一个疑似后门的 form handler：
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.2vf65igjir.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2vf65igjir.avif)
 
 直接进入函数分析分析它到底干了点啥：
 
@@ -210,21 +210,21 @@ LABEL_14:
 
 下面是使用 `ripgrep` 搜索的结果：
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.icjoboa0g.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.icjoboa0g.avif)
 
 发现除了 `webs` 这个二进制文件外，还有 `web/syscmd.asp` 和 `web/obama.asp` 也包含了这个 form，直接跟进，对比发现这两个文件的区别就在于提供的功能数量，`obama.asp` 比 `syscmd.asp` 多提供了操作文件的功能，而我们最关心的 `sysCmd` 被定义为一个输入框，即我们可控它的内容：
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8vnca9oewj.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8vnca9oewj.avif)
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.b9bswhjgx.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.b9bswhjgx.avif)
 
 # 漏洞利用
 
 上面有关这个 CVE 的漏洞分析的就差不多了，我们可以试试能不能直接访问 `syscmd.asp` 和 `obama.asp` 这两个页面，不过测试发现没登陆的情况下访问会被重定向回到登陆页面，网上搜到了这个路由器的默认账号密码是 `admin/admin`，用它登陆后再访问就进去了，发现和我们分析的一模一样，可以执行任意指令，并且 `obama.asp` 的功能更多：
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.39llwf4kv9.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.39llwf4kv9.avif)
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7axlat99wc.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7axlat99wc.avif)
 
 btw 有些不同型号的是 `htm` 而不是 `asp`，这个可以自己测试一下。
 
@@ -234,9 +234,9 @@ btw 有些不同型号的是 `htm` 而不是 `asp`，这个可以自己测试一
 
 只是打本地多没意思，我们玩的可是实战。本来只是抱着试一试的心态尝试 `ZoomEye` 和 `FOFA` 看看能不能找到一别暴露在公网的服务，结果意外地搜出一堆……大家安全意识都那么薄弱的吗？而且测试发现大多数暴露在外的服务都没有修复这个漏洞，随便抓一个倒霉蛋发现甚至连默认账号密码都没改，有些甚至不用登陆就直接进管理面板了……
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.60uo4iuufg.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.60uo4iuufg.avif)
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3uv9ir36of.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3uv9ir36of.avif)
 
 ## Exploit
 
@@ -287,7 +287,7 @@ if __name__ == "__main__":
     main()
 ```
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.73udfh0vwj.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.73udfh0vwj.avif)
 
 # 修复建议
 

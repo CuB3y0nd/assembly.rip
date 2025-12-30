@@ -3,7 +3,7 @@ title: "Write-ups: BlackHat MEA CTF Final 2025"
 published: 2025-12-02
 updated: 2025-12-09
 description: "Write-ups for BlackHat MEA CTF Final 2025 pwn aspect."
-image: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.2yysscpa8n.avif"
+image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2yysscpa8n.avif"
 tags: ["Pwn", "Write-ups"]
 category: "Write-ups"
 draft: false
@@ -109,7 +109,7 @@ int main() {
 
 这题基本上只要搞明白怎么泄漏地址就赢了，涉及到一个 `*` 参数的概念，如果我们输入 `%*.*p%*.*p`，这四个 `*` 就会分别用 `args[0] ~ args[3]` 为参数，且 `p` 也各占一个参数位，此时我们只使用了两个 `%` 标识符，就已经消耗了六个参数，另外还剩两次机会。好巧不巧，栈上就有一个地址，正好是第七个参数，所以直接再加一个 `%p` 泄漏即可。
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8dxbarni09.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8dxbarni09.avif)
 
 泄漏了栈地址我们就知道返回地址，调试发现返回地址处保存的正好是 libc 地址，我们可以直接控制 `rsi` 为返回地址，`fmt` 为 `%s` 以此泄漏 libc，之后就随便打打了。
 

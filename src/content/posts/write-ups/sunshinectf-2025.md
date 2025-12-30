@@ -527,7 +527,7 @@ if __name__ == "__main__":
 测试格式化字符串，报错：
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1ovt15ht5d.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1ovt15ht5d.avif" alt="" />
 </center>
 
 问 AI，可以注入代码，直接用 `{ int.Parse(System.IO.File.ReadAllText("flag.txt")), 0, 0 }`，由于 flag 内容不是整数，报错信息直接把 flag 输出了。

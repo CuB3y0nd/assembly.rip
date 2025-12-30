@@ -3,7 +3,7 @@ title: "The CSAPP Notebook"
 published: 2025-07-16
 updated: 2025-08-11
 description: "CMU 15213/15513 CSAPP learning notes."
-image: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.23262tnnad.avif"
+image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.23262tnnad.avif"
 tags: ["CSAPP", "Notes"]
 category: "Notes"
 draft: false
@@ -32,7 +32,7 @@ draft: false
 - Reliably transmitted on noisy and inaccurate wires
 - Easy to indicate low level/high level
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1e8wit31ra.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1e8wit31ra.avif)
 
 ## Bit-level manipulations
 
@@ -127,7 +127,7 @@ Mappings between unsigned and two's complement numbers keep bit representations 
 
 For example, casting a signed value to its unsigned form, the most significant bit from large negative weight becomes to large positive weight and vice versa.
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.86ty59tug4.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.86ty59tug4.avif)
 
 #### Constants
 
@@ -163,7 +163,7 @@ For example, casting a signed value to its unsigned form, the most significant b
 - Make $k$ copies of sign bit
 - $\displaystyle X\prime =X_{w-1} ,...,X_{w-1} ,X_{w-1} ,X_{w-2} ,...,X_{0}$
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5trbo2gghg.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5trbo2gghg.avif)
 
 :::warning
 Converting from smaller to larger integer data type. C automatically performs sign extension.
@@ -192,7 +192,7 @@ Converting from smaller to larger integer data type. C automatically performs si
 - Implements Modular Arithmetic
   - $\displaystyle UAdd_{w}( u,v) =( u+v)\bmod 2^{w}$
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.lw112nu4l.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.lw112nu4l.avif)
 
 ##### Visualizing (Mathematical) Integer Addition
 
@@ -202,7 +202,7 @@ Converting from smaller to larger integer data type. C automatically performs si
   - Values increase linearly with $u$ and $v$
   - Forms planar surface
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.4qrmd6lcsq.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4qrmd6lcsq.avif)
 
 ##### Visualizing Unsigned Addition
 
@@ -210,13 +210,13 @@ Converting from smaller to larger integer data type. C automatically performs si
   - If true sum $\geqslant 2^{w}$
   - At most once
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.45hyqvrbgg.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.45hyqvrbgg.avif)
 
 #### Two's Complement Addition
 
 - $TAdd$ and $UAdd$ have Identical Bit-level Behaviour
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1e8wit5juy.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1e8wit5juy.avif)
 
 Signed vs. Unsigned Addition in C:
 
@@ -231,14 +231,14 @@ t = u + v;
 
 ##### TAdd Overflow
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7eh2njfkev.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7eh2njfkev.avif)
 
 - Functionality
   - True sum requires $w+1$ bits
   - Drop off MSB
   - Treat remaining bits as two's complement integer
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6wr0yyekf9.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6wr0yyekf9.avif)
 
 ##### Visualizing Two's Complement Addition
 
@@ -253,7 +253,7 @@ t = u + v;
     - Becomes positive
     - At most once
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.pfmysj7jj.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.pfmysj7jj.avif)
 
 #### Multiplication
 
@@ -278,7 +278,7 @@ t = u + v;
 - Implements Modular Arithmetic
   - $\displaystyle UMult_{w}( u,v) =( u\cdot v)\bmod 2^{w}$
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5mo3smxcua.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5mo3smxcua.avif)
 
 ##### Signed Multiplication in C
 
@@ -287,7 +287,7 @@ t = u + v;
   - Some of which are different for signed vs. unsigned multiplication
   - Lower bits are the same
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8vn7pal9ub.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8vn7pal9ub.avif)
 
 #### Power-of-2 Multiply with Shift
 
@@ -295,7 +295,7 @@ t = u + v;
   - `u << k` gives $u\cdot 2^{k}$ (basically increases each bits weight)
   - Both signed and unsigned
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5c19zhj0ap.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5c19zhj0ap.avif)
 
 #### Unsigned Power-of-2 Divide with Shift
 
@@ -303,7 +303,7 @@ t = u + v;
   - `u >> k` gives $\left\lfloor u/2^{k}\right\rfloor $
   - Uses logical shift
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.102gry07d5.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.102gry07d5.avif)
 
 #### Signed Power-of-2 Divide with Shift
 
@@ -316,11 +316,11 @@ t = u + v;
 
 ##### Case 1: No rounding
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5trbo2ldaa.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5trbo2ldaa.avif)
 
 ##### Case 2: Rounding
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8adk2zsm1r.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8adk2zsm1r.avif)
 
 ### Handy tricks
 
@@ -391,7 +391,7 @@ In C, either little endian or big endian machine, strings in memory represented 
 - Bits to right of "binary point" represent fractional powers of 2
 - Represents rational number: $\displaystyle \sum _{k=-j}^{i} b_{k} \cdot 2^{k}$
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.23262tx92l.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.23262tx92l.avif)
 
 | Value                        | Representation |
 | ---------------------------- | -------------- |
@@ -445,7 +445,7 @@ Numerical form: $( -1)^{s} \cdot M\cdot 2^{E}$
 - `exp` field encodes $E$ (but is not equal to $E$)
 - `frac` field encodes $M$ (but is not equal to $M$)
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.2yynia7gbn.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2yynia7gbn.avif)
 
 #### Normalized Values
 
@@ -475,7 +475,7 @@ Numerical form: $( -1)^{s} \cdot M\cdot 2^{E}$
 
 So the result would be:
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.4g4sk1cfjd.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4g4sk1cfjd.avif)
 
 ```python
 # manually calculate
@@ -521,7 +521,7 @@ print(f)
 
 ### Visualization: Floating Point Encodings
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.4xuu8me5ea.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4xuu8me5ea.avif)
 
 ### Example and properties
 
@@ -529,21 +529,21 @@ print(f)
 
 Think about this 8-bit Floating Point Representation below, it obeying the same general form as IEEE Format:
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.26ls0jseh0.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.26ls0jseh0.avif)
 
 #### Dynamic Range (Positive Only)
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6pnt3iy9a6.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6pnt3iy9a6.avif)
 
 #### Distribution of Values
 
 Still think about our tiny example, notice how the distribution gets denser toward zero.
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3gop6vb6vl.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3gop6vb6vl.avif)
 
 Here is a scaled close-up view:
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3gop6vbl8i.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3gop6vbl8i.avif)
 
 ### Special Properties of the IEEE Encoding
 
@@ -658,7 +658,7 @@ $( -1)^{s_{1}} \cdot M_{1} \cdot 2^{E_{1}} +( -1)^{s_{2}} \cdot M_{2} \cdot 2^{E
 - Overflow if $E$ out of range
 - Round $M$ to fit frac precision
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.9gwvbllly4.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9gwvbllly4.avif)
 
 ### Mathematical Properties of Floating Point Add
 
@@ -727,7 +727,7 @@ Nobody (at least me), can keep these long history in mind! So I'll just skipping
 
 ### Assembly / Machine Code View
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5c19zhouhx.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5c19zhouhx.avif)
 
 ### Turning C into Object Code
 
@@ -736,7 +736,7 @@ Nobody (at least me), can keep these long history in mind! So I'll just skipping
   - Use basic optimizations (`-Og`) [New to recent versions of GCC]
   - Put resulting binary in file `p`
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8z6tn0l05d.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8z6tn0l05d.avif)
 
 ### Assembly Characteristics: Data Types
 
@@ -776,7 +776,7 @@ Nobody (at least me), can keep these long history in mind! So I'll just skipping
 
 ### x86‐64 Integer Registers
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7axgptv3ep.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7axgptv3ep.avif)
 
 ### Moving Data
 
@@ -794,7 +794,7 @@ Nobody (at least me), can keep these long history in mind! So I'll just skipping
     - Simplest example: `(%rax)`
     - Various other "address modes"
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7lkaizapzl.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7lkaizapzl.avif)
 
 ### Complete Memory Addressing Modes
 
@@ -1125,7 +1125,7 @@ while (Test) {
 
 #### "For" Loop "Do-While" Conversion
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1e8witfdlk.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1e8witfdlk.avif)
 
 Initial test can be optimized away.
 
@@ -1179,7 +1179,7 @@ _Note that `w` not initialized here._
 
 ### Jump Table Structure
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.9rjp4r358w.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9rjp4r358w.avif)
 
 #### Jump Table
 
@@ -1208,15 +1208,15 @@ _Note that `w` not initialized here._
     - Fetch target from effective address `.L4 + %rdi * 8`
       - Only for `0 <= x <= 6`
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3d5395ln4u.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3d5395ln4u.avif)
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7p3wgp5cmz.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7p3wgp5cmz.avif)
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6f0zadnyrf.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6f0zadnyrf.avif)
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8adk300sp3.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8adk300sp3.avif)
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8ojztv9het.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8ojztv9het.avif)
 
 ## Procedures
 
@@ -1229,7 +1229,7 @@ _Note that `w` not initialized here._
 - Register `%rsp` contains lowest stack address
   - address of "top" element
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6ikl8nrzmw.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6ikl8nrzmw.avif)
 
 ##### Push
 
@@ -1277,7 +1277,7 @@ _Note that `w` not initialized here._
     - "Finish" code
     - Includes pop by `ret` instruction
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.39lhc0ris7.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.39lhc0ris7.avif)
 
 #### x86-64 / Linux Stack Frame
 
@@ -1292,7 +1292,7 @@ _Note that `w` not initialized here._
   - Return address
   - Arguments for this call
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5q7pqzavmk.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5q7pqzavmk.avif)
 
 :::note
 As we often see the program often allocates more space on the stack than it really needs to, its because some conventions about trying to keep addresses on aligned.
@@ -1320,7 +1320,7 @@ As we often see the program often allocates more space on the stack than it real
   - Caller-saved
   - Can be modified by procedure
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6ikl8s2wb5.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6ikl8s2wb5.avif)
 
 #### x86-64 Linux Register Usage 2
 
@@ -1336,7 +1336,7 @@ As we often see the program often allocates more space on the stack than it real
   - Special form of callee save
   - Restored to original value upon exit from procedure
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3nrx2zr8ta.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3nrx2zr8ta.avif)
 
 ### Recursion Example
 
@@ -1448,10 +1448,10 @@ void zincr(zip_dig z) {
   - Row-Major Ordering
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7plbjvas4.avif" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7plbjvas4.avif" />
 </center>
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.4cl6nntgbl.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4cl6nntgbl.avif)
 
 #### Nested Array Example
 
@@ -1471,7 +1471,7 @@ zip_dig pgh[PCOUNT] = {
 
 `zip_dig pgh[4]` is equivalent to `int pgh[4][5]`.
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.175ooqal1z.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.175ooqal1z.avif)
 
 #### Nested Array Row Access
 
@@ -1480,7 +1480,7 @@ zip_dig pgh[PCOUNT] = {
   - Each element of type `T` requires `K` bytes
   - Starting address `A + i*(C*K)`
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6wr10b882r.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6wr10b882r.avif)
 
 ##### Nested Array Row Access Example
 
@@ -1502,7 +1502,7 @@ leaq pgh(, %rax, 4), %rax  # pgh + (20*index)
   - Computes and returns address
   - Compute as `pgh + 4*(index + 4*index)`
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.9o038eo5qn.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9o038eo5qn.avif)
 
 ##### Nested Array Element Access Example
 
@@ -1510,7 +1510,7 @@ leaq pgh(, %rax, 4), %rax  # pgh + (20*index)
   - `A[i][j]` is element of type `T`, which requires `K` bytes
   - Address `A + i*(C*K) + j*K = A + (i*C + j)*K`
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.41ycuj7kl1.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.41ycuj7kl1.avif)
 
 ##### Nested Array Element Access Example
 
@@ -1530,7 +1530,7 @@ movl pgh(, %rsi, 4), %eax  # M[pgh + 4*(5*index + dig)]
   - `pgh[index][dig]` is `int`
   - Address: `Mem[pgh + 20*index + 4*dig] = Mem[pgh + 4*(5*index + dig)]`
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.175oor97dc.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.175oor97dc.avif)
 
 ### Multi-Level Array
 
@@ -1548,7 +1548,7 @@ int *univ[UCOUNT] = {mit, cmu, ucb};
 - Each element is a pointer (8 bytes)
 - Each pointer points to array of `int`'s
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1vyy8s8cdr.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1vyy8s8cdr.avif)
 
 #### Element Access in Multi-Level Array
 
@@ -1634,9 +1634,9 @@ ret
 ### Understanding Pointers & Array
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.32i9hg2rcu.avif" />
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.54y25hs26z.avif" />
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.77dutjr9u7.avif" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.32i9hg2rcu.avif" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.54y25hs26z.avif" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.77dutjr9u7.avif" />
 </center>
 
 - Cmp: Compiles (Y/N)
@@ -1676,7 +1676,7 @@ ret
 ```
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.54y26bn705.avif" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.54y26bn705.avif" />
 </center>
 
 - Offset of each structure member determined at compile time
@@ -1710,7 +1710,7 @@ void set_val(struct rec *r, int val) {
 ```
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3uv500dbuh.avif" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3uv500dbuh.avif" />
 </center>
 
 ### Alignment
@@ -1726,7 +1726,7 @@ struct S1 {
 - Unaligned Data
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.175opnv4vk.avif" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.175opnv4vk.avif" />
 </center>
 
 - Aligned Data
@@ -1735,7 +1735,7 @@ struct S1 {
   - Required on some machines; advised on x86-64
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5mo3ux8mbu.avif" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5mo3ux8mbu.avif" />
 </center>
 
 - Motivation for Aligning Data
@@ -1783,7 +1783,7 @@ struct S2 {
 ```
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8dx6316864.avif" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8dx6316864.avif" />
 </center>
 
 ### Arrays of Structures
@@ -1799,7 +1799,7 @@ struct S2 {
 } a[10];
 ```
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6m4784tavb.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6m4784tavb.avif)
 
 ### Accessing Array Elements
 
@@ -1817,7 +1817,7 @@ struct S3 {
 } a[10];
 ```
 
-![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.175opphsk3.avif)
+![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.175opphsk3.avif)
 
 ```c
 short get_j(int idx) {
@@ -1851,7 +1851,7 @@ struct S5 {
 ```
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7i0onl94x5.avif" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7i0onl94x5.avif" />
 </center>
 
 ## Floating Point
@@ -1865,7 +1865,7 @@ struct S5 {
 #### XMM Registers
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7eh2pxhyar.avif" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7eh2pxhyar.avif" />
 </center>
 
 #### Scalar & SIMD Operations
@@ -1876,7 +1876,7 @@ struct S5 {
 - `addps (ADD Packed Single-Precision Floating-Point Values)`
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7snigsk2si.avif" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7snigsk2si.avif" />
 </center>
 
 #### Basics
@@ -1967,7 +1967,7 @@ Floating Point assembly instruction sets are very nasty, though it's principle t
   - Read-only
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7lkalfi3x6.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7lkalfi3x6.avif" alt="" />
 </center>
 
 :::tip
@@ -1990,7 +1990,7 @@ union U1 {
 ```
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7w74exlpis.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7w74exlpis.avif" alt="" />
 </center>
 
 ```c
@@ -2002,7 +2002,7 @@ struct S1 {
 ```
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7lkals7ft7.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7lkals7ft7.avif" alt="" />
 </center>
 
 # Program Optimization
@@ -2199,7 +2199,7 @@ void lower(char *s) {
 - Quadratic performance
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3yeqz6j6zd.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3yeqz6j6zd.avif" alt="" />
 </center>
 
 #### Calling strlen
@@ -2242,7 +2242,7 @@ void lower(char *s) {
 #### Improved Lower Case Conversion Performance
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.67xriorxa3.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.67xriorxa3.avif" alt="" />
 </center>
 
 ### Why couldn't compiler move strlen out of inner loop ?
@@ -2352,7 +2352,7 @@ TODO
 Programs are translated and linked using a compiler driver: `gcc -Og -o prog main.c sum.c`
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7axguzk7iw.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7axguzk7iw.avif" alt="" />
 </center>
 
 ### Why Linkers ?
@@ -2487,8 +2487,8 @@ Local static variables are only initialized at first time encountered, calls aft
   - Can override this with `gcc –fno-common`
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.2dp07cdtux.avif" alt="" />
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3gopi8muuz.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2dp07cdtux.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3gopi8muuz.avif" alt="" />
 </center>
 
 ### Global Variables
@@ -2502,7 +2502,7 @@ Local static variables are only initialized at first time encountered, calls aft
 ## Relocation
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3k8bfyl2zl.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3k8bfyl2zl.avif" alt="" />
 </center>
 
 ### Relocation Entries
@@ -2554,7 +2554,7 @@ Using PC-relative addressing for `sum`: `0x1120 = 0x1151 + 0xffffffcf`
 ## Loading Executable Object Files
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.9kghkpo5fp.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9kghkpo5fp.avif" alt="" />
 </center>
 
 ## Packaging Commonly Used Functions
@@ -2579,7 +2579,7 @@ Using PC-relative addressing for `sum`: `0x1120 = 0x1151 + 0xffffffcf`
 ## Creating Static Libraries
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8z6tz68a3z.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8z6tz68a3z.avif" alt="" />
 </center>
 
 - Archiver allows incremental updates
@@ -2588,7 +2588,7 @@ Using PC-relative addressing for `sum`: `0x1120 = 0x1151 + 0xffffffcf`
 ## Linking with Static Libraries
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.2326ezwqsn.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2326ezwqsn.avif" alt="" />
 </center>
 
 ## Using Static Libraries
@@ -2633,7 +2633,7 @@ libtest.o(.text+0x4): undefined reference to `libfun'
 ### Dynamic Linking at Load-time
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6wr1b588zg.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6wr1b588zg.avif" alt="" />
 </center>
 
 ### Dynamic Linking at Run-time
@@ -2850,7 +2850,7 @@ linux>
   - This sequence is the CPU's control flow (or flow of control)
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3yer7zxizc.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3yer7zxizc.avif" alt="" />
 </center>
 
 Up to now, we have learned two mechanisms for changing control flow:
@@ -2891,13 +2891,13 @@ That's why we need mechanisms for "exceptional control flow".
   - Examples of events: Divide by 0, arithmetic overflow, page fault, I/O request completes, typing `Ctrl‐C`
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8hgsb06g7p.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8hgsb06g7p.avif" alt="" />
 </center>
 
 ### Exception Tables
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8ok06fxc1p.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8ok06fxc1p.avif" alt="" />
 </center>
 
 ### Synchronous Exceptions
@@ -2943,7 +2943,7 @@ That's why we need mechanisms for "exceptional control flow".
 ### Multiprocessing: The Illusion
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.58hoediwx5.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.58hoediwx5.avif" alt="" />
 </center>
 
 - Computer runs many processes simultaneously
@@ -2955,7 +2955,7 @@ That's why we need mechanisms for "exceptional control flow".
 ### Multiprocessing: The (Traditional) Reality
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3nrxewo9gw.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3nrxewo9gw.avif" alt="" />
 </center>
 
 - Single processor executes multiple processes concurrently
@@ -2965,7 +2965,7 @@ That's why we need mechanisms for "exceptional control flow".
 - Save current registers in memory
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7i0oxvaq6t.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7i0oxvaq6t.avif" alt="" />
 </center>
 
 - Schedule next process for execution
@@ -2980,7 +2980,7 @@ That's why we need mechanisms for "exceptional control flow".
     - Scheduling of processors onto cores done by kernel
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.pfnbf3vjq.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.pfnbf3vjq.avif" alt="" />
 </center>
 
 ### Concurrent Processes
@@ -2993,7 +2993,7 @@ That's why we need mechanisms for "exceptional control flow".
   - Sequential: B & C
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7eh3065rhl.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7eh3065rhl.avif" alt="" />
 </center>
 
 #### User View of Concurrent Processes
@@ -3002,7 +3002,7 @@ That's why we need mechanisms for "exceptional control flow".
 - However, we can think of concurrent processes as running in parallel with each other
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.9rjphdkyax.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9rjphdkyax.avif" alt="" />
 </center>
 
 ### Context Switching
@@ -3012,7 +3012,7 @@ That's why we need mechanisms for "exceptional control flow".
 - Control flow passes from one process to another via a context switch
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3d53lsj1f0.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3d53lsj1f0.avif" alt="" />
 </center>
 
 ## Process Control
@@ -3161,7 +3161,7 @@ int main() {
 ```
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.361vqf3v66.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.361vqf3v66.avif" alt="" />
 </center>
 
 #### Interpreting Process Graphs
@@ -3169,25 +3169,25 @@ int main() {
 - Original graph:
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.361vqf3v66.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.361vqf3v66.avif" alt="" />
 </center>
 
 - Relabled graph:
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.sz997t4sc.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.sz997t4sc.avif" alt="" />
 </center>
 
 - Feasible total ordering:
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3d53luu0e1.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3d53luu0e1.avif" alt="" />
 </center>
 
 - Infeasible total ordering:
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.2obu1u7581.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2obu1u7581.avif" alt="" />
 </center>
 
 #### fork Example: Two consecutive forks
@@ -3203,7 +3203,7 @@ void fork2() {
 ```
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.lw1dsgms3.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.lw1dsgms3.avif" alt="" />
 </center>
 
 #### fork Example: Nested forks in parent
@@ -3222,7 +3222,7 @@ void fork4() {
 ```
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.sz9984x39.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.sz9984x39.avif" alt="" />
 </center>
 
 #### fork Example: Nested forks in children
@@ -3241,7 +3241,7 @@ void fork5() {
 ```
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.mdrhqki8.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.mdrhqki8.avif" alt="" />
 </center>
 
 ### Reaping Child Processes
@@ -3359,7 +3359,7 @@ void fork9() {
 ```
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1ovqopl1uh.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1ovqopl1uh.avif" alt="" />
 </center>
 
 #### Another wait Example
@@ -3428,7 +3428,7 @@ void fork11() {
 #### Structure of the stack when a new program starts
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.102h4pubgz.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.102h4pubgz.avif" alt="" />
 </center>
 
 ## Signals
@@ -3436,7 +3436,7 @@ void fork11() {
 ### Linux Process Hierarchy
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7p3wvr5kt0.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7p3wvr5kt0.avif" alt="" />
 </center>
 
 :::tip
@@ -3549,7 +3549,7 @@ void eval(char *cmdline) {
     - Akin to a hardware exception handler being called in response to an asynchronous interrupt:
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6m47kwd250.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6m47kwd250.avif" alt="" />
 </center>
 
 #### Pending and Blocked Signals
@@ -3581,7 +3581,7 @@ void eval(char *cmdline) {
 - Every process belongs to exactly one process group
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8ok08z1t1v.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8ok08z1t1v.avif" alt="" />
 </center>
 
 - `getpgrp()` Return process group of current process
@@ -3748,8 +3748,8 @@ int main() {
 - A signal handler is a separate logical flow (not process) that runs concurrently with the main program
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.67xru5q4nt.avif" alt="" />
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5fkwcfa6bb.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.67xru5q4nt.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5fkwcfa6bb.avif" alt="" />
 </center>
 
 ### Nested Signal Handlers
@@ -3757,7 +3757,7 @@ int main() {
 - Handlers can be interrupted by other handlers
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6m47l103is.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6m47l103is.avif" alt="" />
 </center>
 
 ### Blocking and Unblocking Signals
@@ -4207,7 +4207,7 @@ P3() {
 ```
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1lc4v4zquz.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1lc4v4zquz.avif" alt="" />
 </center>
 
 ```c
@@ -4230,7 +4230,7 @@ P3() {
 ```
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5j4ibtsb04.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5j4ibtsb04.avif" alt="" />
 </center>
 
 # Virtual Memory
@@ -4250,7 +4250,7 @@ TODO
 - Dynamic memory allocators manage an area of process virtual memory known as the heap
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.99to01ffdl.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.99to01ffdl.avif" alt="" />
 </center>
 
 - Allocator maintains heap as collection of variable sized blocks, which are either allocated or free
@@ -4355,7 +4355,7 @@ void foo(int n) {
 - For a given block, _internal fragmentation_ occurs if payload is smaller than block size
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5j4iev728s.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5j4iev728s.avif" alt="" />
 </center>
 
 - Caused by
@@ -4371,7 +4371,7 @@ void foo(int n) {
 - Occurs when there is enough aggregate heap memory, but no single free block is large enough
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8ok0dtbq9w.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8ok0dtbq9w.avif" alt="" />
 </center>
 
 - Depends on the pattern of future requests
@@ -4393,7 +4393,7 @@ void foo(int n) {
   - Requires an extra word for every allocated block
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.67xryw937x.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.67xryw937x.avif" alt="" />
 </center>
 
 ## Keeping Track of Free Blocks
@@ -4401,13 +4401,13 @@ void foo(int n) {
 - Method 1: _Implicit list_ using length-links all blocks
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7eh37i35k3.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7eh37i35k3.avif" alt="" />
 </center>
 
 - Method 2: _Explicit list_ among the free blocks using pointers
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.96a22enk2p.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.96a22enk2p.avif" alt="" />
 </center>
 
 - Method 3: _Segregated free list_
@@ -4425,7 +4425,7 @@ void foo(int n) {
   - When reading size word, must mask out this bit
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.sz9ghda3u.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.sz9ghda3u.avif" alt="" />
 </center>
 
 #### Detailed Implicit Free List Example
@@ -4433,7 +4433,7 @@ void foo(int n) {
 - Payload must be double-word aligned
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.51egqb4ltk.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.51egqb4ltk.avif" alt="" />
 </center>
 
 - We have an internal fragmentation in first allocated block because of payload is only 2 words but allocated 4 words
@@ -4468,7 +4468,7 @@ while ((p < end) &&  // not passed end
   - Since allocated space might be smaller than free space, we might want to split the block
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8z6u7er5p4.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8z6u7er5p4.avif" alt="" />
 </center>
 
 ```c
@@ -4489,7 +4489,7 @@ void addblock(ptr p, int len) {
   - But can lead to "false fragmentation"
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5q7qar6trr.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5q7qar6trr.avif" alt="" />
 </center>
 
 - There is enough free space, but the allocator won't be able to find it
@@ -4500,7 +4500,7 @@ void addblock(ptr p, int len) {
   - Coalescing with next block
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.26lsky9ul8.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.26lsky9ul8.avif" alt="" />
 </center>
 
 ```c
@@ -4522,37 +4522,37 @@ void free_block(ptr p) {
   - Important and general technique !
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.175p7t1o10.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.175p7t1o10.avif" alt="" />
 </center>
 
 #### Constant Time Coalescing
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.70anh3q3vv.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.70anh3q3vv.avif" alt="" />
 </center>
 
 ##### Case 1
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.2obu9k7i8c.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2obu9k7i8c.avif" alt="" />
 </center>
 
 ##### Case 2
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.60uk3xpdgb.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.60uk3xpdgb.avif" alt="" />
 </center>
 
 ##### Case 3
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.4xuut1u639.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4xuut1u639.avif" alt="" />
 </center>
 
 ##### Case 4
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.51egqrns7m.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.51egqrns7m.avif" alt="" />
 </center>
 
 #### Disadvantages of Boundary Tags
@@ -4580,7 +4580,7 @@ void free_block(ptr p) {
 #### Explicit Free Lists
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.sz9hl07hh.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.sz9hl07hh.avif" alt="" />
 </center>
 
 - Maintain list(s) of free blocks, not all blocks
@@ -4593,20 +4593,20 @@ void free_block(ptr p) {
 - Logically
 
 <center>
-<img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.9rjpptl2pw.avif" alt="" />
+<img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9rjpptl2pw.avif" alt="" />
 </center>
 
 - Physically
   - Blocks can be in any order
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.96a23irl8y.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.96a23irl8y.avif" alt="" />
 </center>
 
 #### Allocating From Explicit Free Lists
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.96a23iucj4.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.96a23iucj4.avif" alt="" />
 </center>
 
 #### Freeing With Explicit Free Lists
@@ -4624,49 +4624,49 @@ void free_block(ptr p) {
 ##### Freeing With a LIFO Policy (Case 1)
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.39lhwikezf.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.39lhwikezf.avif" alt="" />
 </center>
 
 - Insert the freed block at the root of the list
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8s3mcnt6bl.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8s3mcnt6bl.avif" alt="" />
 </center>
 
 ##### Freeing With a LIFO Policy (Case 2)
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6pntolx1mb.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6pntolx1mb.avif" alt="" />
 </center>
 
 - Splice out successor block, coalesce both memory blocks and insert the new block at the root of the list
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5fkwiagcfc.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5fkwiagcfc.avif" alt="" />
 </center>
 
 ##### Freeing With a LIFO Policy (Case 3)
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.45zxljzf4.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.45zxljzf4.avif" alt="" />
 </center>
 
 - Splice out predecessor block, coalesce both memory blocks, and insert the new block at the root of the list
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6bhdxrgljf.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6bhdxrgljf.avif" alt="" />
 </center>
 
 ##### Freeing With a LIFO Policy (Case 4)
 
 <cneter>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.51egrg0by7.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.51egrg0by7.avif" alt="" />
 </cneter>
 
 - Splice out predecessor and successor blocks, coalesce all 3 memory blocks and insert the new block at the root of the list
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.2vf25o9gb5.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2vf25o9gb5.avif" alt="" />
 </center>
 
 #### Explicit List Summary
@@ -4684,7 +4684,7 @@ void free_block(ptr p) {
 - Each _size class_ of blocks has its own free list
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.lw1m8ofkw.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.lw1m8ofkw.avif" alt="" />
 </center>
 
 - Often have separate classes for each small size
@@ -4774,7 +4774,7 @@ void foo() {
   - Locations not in the heap that contain pointers into the heap are called _root_ nodes (e.g. registers, locations on the stack, global variables)
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5mo4du972h.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5mo4du972h.avif" alt="" />
 </center>
 
 - A node (block) is _reachable_ if there is a path from any root to that node
@@ -4790,7 +4790,7 @@ void foo() {
   - Sweep: Scan all blocks and free blocks that are not marked
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.77dvdbc32w.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.77dvdbc32w.avif" alt="" />
 </center>
 
 ### Assumptions For a Simple Implementation
@@ -4842,7 +4842,7 @@ ptr sweep(ptr p, ptr end) {
   - But, in C pointers can point to the middle of a block
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5xay70tuij.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5xay70tuij.avif" alt="" />
 </center>
 
 - So how to find the beginning of the block ?
@@ -4850,7 +4850,7 @@ ptr sweep(ptr p, ptr end) {
   - Balanced-tree pointers can be stored in header (use two additional words)
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.102hd6hgaj.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.102hd6hgaj.avif" alt="" />
 </center>
 
 # System-Level I/O
@@ -5028,7 +5028,7 @@ ssize_t readn(int fd, void *buf, size_t size) {
     - Refill buffer when empty
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.32i9yxiff2.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.32i9yxiff2.avif" alt="" />
 </center>
 
 ### Example
@@ -5132,7 +5132,7 @@ int main(int argc, char **argv) {
 - Two descriptors referencing two distinct open files. Descriptor 1 (stdout) points to terminal, and descriptor 4 points to open disk file
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.77dvalgr0d.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.77dvalgr0d.avif" alt="" />
 </center>
 
 ### File Sharing
@@ -5141,7 +5141,7 @@ int main(int argc, char **argv) {
   - E.g., Calling open twice with the same filename argument
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6t7fjqff22.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6t7fjqff22.avif" alt="" />
 </center>
 
 ### Processes Share Files: fork
@@ -5152,13 +5152,13 @@ int main(int argc, char **argv) {
 Before fork call:
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5fkwfp776w.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5fkwfp776w.avif" alt="" />
 </center>
 
 After fork call:
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5q7q8unvle.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5q7q8unvle.avif" alt="" />
 </center>
 
 - Child's table same as parent's, and +1 to each refcnt
@@ -5169,7 +5169,7 @@ After fork call:
   - Copies (per-process) descriptor table entry `oldfd` to entry `newfd`
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.b97qg02me.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.b97qg02me.avif" alt="" />
 </center>
 
 #### Example
@@ -5178,14 +5178,14 @@ After fork call:
   - Happens in child executing shell code, before `exec`
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5fkwfp776w.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5fkwfp776w.avif" alt="" />
 </center>
 
 - Call `dup2(4,1)`
   - Cause fd=1 (stdout) to refer to disk file pointed at by fd=4
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.64e5zqr4gh.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.64e5zqr4gh.avif" alt="" />
 </center>
 
 ## Standard I/O
@@ -5216,7 +5216,7 @@ int main() {
 - Standard I/O functions use buffered I/O
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.86tyo7q78o.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.86tyo7q78o.avif" alt="" />
 </center>
 
 ```c
@@ -5245,13 +5245,13 @@ int main() {
   - Server activated by request from client (vending machine analogy)
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.39lhxow3xq.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.39lhxow3xq.avif" alt="" />
 </center>
 
 ## Hardware Organization of a Network Host
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6ikluckl12.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6ikluckl12.avif" alt="" />
 </center>
 
 ## Computer Networks
@@ -5269,7 +5269,7 @@ int main() {
 ### Lowest Level: Ethernet Segment
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.2h8mfz4s04.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2h8mfz4s04.avif" alt="" />
 </center>
 
 - Ethernet segment consists of a collection of _hosts_ connected by wires (twisted pairs) to a _hub_
@@ -5285,7 +5285,7 @@ int main() {
 ### Next Level: Bridged Ethernet Segment
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3uv5k0i2h2.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3uv5k0i2h2.avif" alt="" />
 </center>
 
 - Spans building or campus
@@ -5296,7 +5296,7 @@ int main() {
 - For simplicity, hubs, bridges, and wires are often shown as a collection of hosts attached to a single wire:
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6t7fnixz7p.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6t7fnixz7p.avif" alt="" />
 </center>
 
 ### Next Level: internets (lower case)
@@ -5305,13 +5305,13 @@ int main() {
 - The connected networks are called an _internet (lower case)_
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6f0zwnrlpo.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6f0zwnrlpo.avif" alt="" />
 </center>
 
 #### Logical Structure of an internet
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.102he8lxu9.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.102he8lxu9.avif" alt="" />
 </center>
 
 - Ad hoc interconnection of networks
@@ -5342,7 +5342,7 @@ int main() {
 ## Transferring internet Data Via Encapsulation
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3nrxombk5z.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3nrxombk5z.avif" alt="" />
 </center>
 
 ## Other Issues
@@ -5369,7 +5369,7 @@ int main() {
 ### Hardware and Software Organization of an Internet Application
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.70anj0giea.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.70anj0giea.avif" alt="" />
 </center>
 
 ## A Programmer's View of the Internet
@@ -5410,7 +5410,7 @@ struct in_addr {
 - IP (V4) Address space divided into classes:
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.361w0affk7.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.361w0affk7.avif" alt="" />
 </center>
 
 - Network ID Written in form `w.x.y.z/n`
@@ -5423,7 +5423,7 @@ struct in_addr {
 ## Internet Domain Names
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.54y2qeyeg2.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.54y2qeyeg2.avif" alt="" />
 </center>
 
 ## Domain Naming System (DNS)
@@ -5450,7 +5450,7 @@ struct in_addr {
 ### Internet Connection Hierarchy
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7axhcdd0ob.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7axhcdd0ob.avif" alt="" />
 </center>
 
 ## Internet Connections
@@ -5480,13 +5480,13 @@ struct in_addr {
   - **(cliaddr\:cliport, servaddr\:servport)**
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.4cl78pkn70.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4cl78pkn70.avif" alt="" />
 </center>
 
 ### Using Ports to Identify Services
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8dx6n3pxbi.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8dx6n3pxbi.avif" alt="" />
 </center>
 
 ## Sockets
@@ -5498,7 +5498,7 @@ struct in_addr {
 - Clients and servers communicate with each other by reading from and writing to socket descriptors
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.lw1nh894p.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.lw1nh894p.avif" alt="" />
 </center>
 
 - The main distinction between regular file I/O and socket I/O is how the application "opens" the socket descriptors
@@ -5518,7 +5518,7 @@ struct sockaddr {
 ```
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.60uk5wqkow.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.60uk5wqkow.avif" alt="" />
 </center>
 
 - Internet-specific socket address:
@@ -5534,7 +5534,7 @@ struct sockaddr_in {
 ```
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.175p9siabs.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.175p9siabs.avif" alt="" />
 </center>
 
 ### Sockets Interface
@@ -5544,7 +5544,7 @@ struct sockaddr_in {
 - Available on all modern systems
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.icfpssdsb.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.icfpssdsb.avif" alt="" />
 </center>
 
 #### socket
@@ -5580,7 +5580,7 @@ Best practice is to use **getaddrinfo** to supply the arguments _addr_ and _addr
 - Returns a _connected descriptor_ that can be used to communicate with the client via Unix I/O routines
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.9rjps6vs6d.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9rjps6vs6d.avif" alt="" />
 </center>
 
 #### connect
@@ -5642,7 +5642,7 @@ const char *gai_strerror(int errcode);        /* Return error msg. */
 ##### Linked List Returned by getaddrinfo
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.9gwvy3bd6e.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9gwvy3bd6e.avif" alt="" />
 </center>
 
 - Clients: walk this list, trying each socket address in turn, until the calls to `socket` and `connect` succeed
@@ -5893,7 +5893,7 @@ void echo(int connfd) {
   - <https://www.w3.org/Protocols/rfc2616/rfc2616.html>
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1apb8pv8vn.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1apb8pv8vn.avif" alt="" />
 </center>
 
 ### HTTP Versions
@@ -6095,20 +6095,20 @@ void serve_static(int fd, char *filename, int filesize) {
 - If request URI contains the string `/cgi-bin`, the Tiny server assumes that the request is for dynamic content
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.73u9i3gtdb.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.73u9i3gtdb.avif" alt="" />
 </center>
 
 - The server creates a child process and runs the program identified by the URI in that process
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1hsj48hkw0.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1hsj48hkw0.avif" alt="" />
 </center>
 
 - The child runs and generates the dynamic content
 - The server captures the content of the child and forwards it without modification to the client
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7snj247ym0.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7snj247ym0.avif" alt="" />
 </center>
 
 ##### Issues in Serving Dynamic Content
@@ -6120,7 +6120,7 @@ void serve_static(int fd, char *filename, int filesize) {
 - These issues are addressed by the **Common Gateway Interface (CGI)** specification
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6pntr8h24a.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6pntr8h24a.avif" alt="" />
 </center>
 
 #### CGI
@@ -6213,7 +6213,7 @@ exit(0);
   - To the server, the proxy acts like a client
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.73u9i5t2mo.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.73u9i5t2mo.avif" alt="" />
 </center>
 
 #### Why Proxies ?
@@ -6222,7 +6222,7 @@ exit(0);
   - Examples: Caching, logging, anonymization, filtering, transcoding
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3k8bscs4il.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3k8bscs4il.avif" alt="" />
 </center>
 
 # Concurrent Programming
@@ -6246,7 +6246,7 @@ exit(0);
 - Iterative servers process one request at a time
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1e8x710wyz.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1e8x710wyz.avif" alt="" />
 </center>
 
 - Second client attempts to connect to iterative server
@@ -6260,7 +6260,7 @@ exit(0);
   - Server hasn't written anything for it to read yet
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3rbjo7ya1q.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3rbjo7ya1q.avif" alt="" />
 </center>
 
 - Solution: use _concurrent servers_ instead
@@ -6285,7 +6285,7 @@ exit(0);
 - Spawn separate process for each client
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3gopv35xfr.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3gopv35xfr.avif" alt="" />
 </center>
 
 #### Process-Based Concurrent Echo Server
@@ -6323,7 +6323,7 @@ int main(int argc, char **argv) {
 #### Process-based Server Execution Model
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1e8x71ngul.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1e8x71ngul.avif" alt="" />
 </center>
 
 - Each client handled by independent child process
@@ -6367,7 +6367,7 @@ int main(int argc, char **argv) {
 #### I/O Multiplexed Event Processing
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.39lhzoqkql.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.39lhzoqkql.avif" alt="" />
 </center>
 
 #### Pros and Cons of Event-based Servers
@@ -6393,7 +6393,7 @@ int main(int argc, char **argv) {
 - Process = Process Context + Code, Data, and Stack
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.99to4u73a0.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.99to4u73a0.avif" alt="" />
 </center>
 
 #### Alternate View of a Process
@@ -6401,7 +6401,7 @@ int main(int argc, char **argv) {
 Process = Thread + Code, Data, and Kernel Context
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.2326ria3fm.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2326ria3fm.avif" alt="" />
 </center>
 
 #### A Process With Multiple Threads
@@ -6414,7 +6414,7 @@ Process = Thread + Code, Data, and Kernel Context
   - Each thread has its own **Thread ID (TID)**
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8adkroasgr.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8adkroasgr.avif" alt="" />
 </center>
 
 #### Logical View of Threads
@@ -6423,7 +6423,7 @@ Process = Thread + Code, Data, and Kernel Context
   - Unlike processes which form a tree hierarchy
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8ok0ijlb4s.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8ok0ijlb4s.avif" alt="" />
 </center>
 
 #### Concurrent Threads
@@ -6435,7 +6435,7 @@ Process = Thread + Code, Data, and Kernel Context
   - Sequential: B & C
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8vn8dza7zb.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8vn8dza7zb.avif" alt="" />
 </center>
 
 #### Concurrent Thread Execution
@@ -6446,7 +6446,7 @@ Process = Thread + Code, Data, and Kernel Context
   - Can have true parallelism
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.175pc2d71f.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.175pc2d71f.avif" alt="" />
 </center>
 
 #### Threads vs. Processes
@@ -6500,7 +6500,7 @@ void *thread(void *vargp) {
 ```
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5fkwlxka11.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5fkwlxka11.avif" alt="" />
 </center>
 
 ### Thread-Based Concurrent Echo Server
@@ -6544,7 +6544,7 @@ void *thread(void *vargp) {
 ### Thread-based Server Execution Model
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1apb9tsbn9.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1apb9tsbn9.avif" alt="" />
 </center>
 
 - Each client handled by individual peer thread
@@ -6687,7 +6687,7 @@ linux>
 ### Assembly Code for Counter Loop
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.4xuuy2hxud.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4xuuy2hxud.avif" alt="" />
 </center>
 
 ### Concurrent Execution
@@ -6697,19 +6697,19 @@ linux>
   - $\%rdx_{i}$ is the content of $\%rdx$ in thread $i$'s context
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7eh3czreim.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7eh3czreim.avif" alt="" />
 </center>
 
 - Incorrect ordering: two threads increment the counter, but the result is 1 instead of 2
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.4n814xg1sw.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4n814xg1sw.avif" alt="" />
 </center>
 
 - And the following ordering is still wrong
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.175pcu751p.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.175pcu751p.avif" alt="" />
 </center>
 
 - We can analyze the behavior using a _progress graph_
@@ -6717,7 +6717,7 @@ linux>
 ## Progress Graphs
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.4cl7bsa74r.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4cl7bsa74r.avif" alt="" />
 </center>
 
 - A _progress graph_ depicts the discrete _execution state space_ of concurrent threads
@@ -6728,7 +6728,7 @@ linux>
 ### Trajectories in Progress Graphs
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.54y2tjvj2j.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.54y2tjvj2j.avif" alt="" />
 </center>
 
 - A _trajectory_ is a sequence of legal state transitions that describes one possible concurrent execution of the threads
@@ -6736,7 +6736,7 @@ linux>
 ### Critical Sections and Unsafe Regions
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1sfcz6wzxo.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1sfcz6wzxo.avif" alt="" />
 </center>
 
 - $L$, $U$, and $S$ form a _critical section_ with respect to the shared variable **cnt**
@@ -6746,7 +6746,7 @@ linux>
 - Claim: A trajectory is correct (write **cnt**) iff it is safe
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3yerkyvgg9.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3yerkyvgg9.avif" alt="" />
 </center>
 
 ## Enforcing Mutual Exclusion
@@ -6822,7 +6822,7 @@ Its orders of magnitude slower than improper one.
 ## Why Mutexes Work
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7lkb8jafx7.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7lkb8jafx7.avif" alt="" />
 </center>
 
 - Provide mutually exclusive access to shared variable by surrounding critical section with _P_ and _V_ operations on semaphore _s_ (initially set to 1)
@@ -6840,7 +6840,7 @@ Its orders of magnitude slower than improper one.
 ### Producer-Consumer Problem
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.4jof8anjlq.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4jof8anjlq.avif" alt="" />
 </center>
 
 - Common synchronization pattern:
@@ -6979,7 +6979,7 @@ void writer(void) {
 ## Putting It All Together: Prethreaded Concurrent Server
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.51egwy30p4.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.51egwy30p4.avif" alt="" />
 </center>
 
 ### Prethreaded Concurrent Server
@@ -7133,7 +7133,7 @@ char *ctime_ts(const time_t *timep, char *privatep) {
     - Only way to make a Class 2 function thread-safe is to make it reetnrant (e.g., **rand_r**)
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3gopxkdcbi.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3gopxkdcbi.avif" alt="" />
 </center>
 
 ## Thread-Safe Library Functions
@@ -7187,7 +7187,7 @@ for (i = 0; i < N; i++)
 ```
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.96a295pdt6.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.96a295pdt6.avif" alt="" />
 </center>
 
 - Race between increment of _i_ in main thread and deref of _vargp_ in peer thread:
@@ -7223,7 +7223,7 @@ void *thread(void *vargp) {
 #### Experimental Results
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.102hintuxg.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.102hintuxg.avif" alt="" />
 </center>
 
 ### Race Elimination
@@ -7294,7 +7294,7 @@ void *count(void *vargp) {
 #### Deadlock Visualized in Progress Graph
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.b97yq3ac7.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.b97yq3ac7.avif" alt="" />
 </center>
 
 - Locking introduces the potential for _deadlock_
@@ -7332,7 +7332,7 @@ void *count(void *vargp) {
 #### Avoided Deadlock in Progress Graph
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.9kgi04fb70.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9kgi04fb70.avif" alt="" />
 </center>
 
 - No way for trajectory to get stuck
@@ -7350,7 +7350,7 @@ void *count(void *vargp) {
 ## Typical Multicore Processor
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8vn8gw7tpk.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8vn8gw7tpk.avif" alt="" />
 </center>
 
 - Multiple processors operating with coherent view of memory
@@ -7358,7 +7358,7 @@ void *count(void *vargp) {
 ## Out-of-Order Processor Structure
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.6f101z48kj.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6f101z48kj.avif" alt="" />
 </center>
 
 - Instruction control dynamically converts program into stream of operations
@@ -7367,7 +7367,7 @@ void *count(void *vargp) {
 ## Hyperthreading Implementation
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.2obugqgy9n.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2obugqgy9n.avif" alt="" />
 </center>
 
 - Replicate enough instruction control to process K instruction streams
@@ -7439,7 +7439,7 @@ void *sum_mutex(void *vargp) {
 - Shark machine with 8 cores, $n=2^{31}$
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1hsj867jxo.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1hsj867jxo.avif" alt="" />
 </center>
 
 - Nasty surprise:
@@ -7471,7 +7471,7 @@ void *sum_array(void *vargp) {
 - Orders of magnitude faster than **psum-mutex**
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8s3mj82urh.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8s3mj82urh.avif" alt="" />
 </center>
 
 ### Next Attempt: psum-local
@@ -7498,7 +7498,7 @@ void *sum_local(void *vargp) {
 - Significantly faster than **psum-array**
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7snj6299lj.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7snj6299lj.avif" alt="" />
 </center>
 
 ## Characterizing Parallel Program Performance
@@ -7515,7 +7515,7 @@ void *sum_local(void *vargp) {
 ### Performance of psum-local
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.83acz862f4.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.83acz862f4.avif" alt="" />
 </center>
 
 - Efficiencies OK, not great
@@ -7566,9 +7566,9 @@ void *sum_local(void *vargp) {
 ### Sequential Quicksort Visualized
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.99to7v3zp2.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.99to7v3zp2.avif" alt="" />
   <br />
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5fkwowmozi.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5fkwowmozi.avif" alt="" />
 </center>
 
 ### Sequential Quicksort Code
@@ -7612,13 +7612,13 @@ void qsort_serial(data_t *base, size_t nele) {
 #### Parallel Quicksort Visualized
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3d540v0iic.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3d540v0iic.avif" alt="" />
 </center>
 
 #### Thread Structure: Sorting Tasks
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.2a5epz84ec.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2a5epz84ec.avif" alt="" />
 </center>
 
 - Task: Sort subrange of data
@@ -7630,7 +7630,7 @@ void qsort_serial(data_t *base, size_t nele) {
 #### Small Sort Task Operation
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5fkwox4jmq.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5fkwox4jmq.avif" alt="" />
 </center>
 
 - Sort subrange using serial quicksort
@@ -7638,7 +7638,7 @@ void qsort_serial(data_t *base, size_t nele) {
 #### Large Sort Task Operation
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.96a2a5u9cs.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.96a2a5u9cs.avif" alt="" />
 </center>
 
 #### Top-Level Function (Simplified)
@@ -7704,7 +7704,7 @@ static void *sort_thread(void *vargp) {
 #### Parallel Quicksort Performance
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.70anoekfdi.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.70anoekfdi.avif" alt="" />
 </center>
 
 - Serial fraction: Fraction of input at which do serial sort
@@ -7728,7 +7728,7 @@ static void *sort_thread(void *vargp) {
 #### Parallelizing Partitioning Step
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.83aczat3uo.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.83aczat3uo.avif" alt="" />
 </center>
 
 #### Experience with Parallel Partitioning
@@ -7751,7 +7751,7 @@ static void *sort_thread(void *vargp) {
 ## Memory Consistency
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.8adkuqke98.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8adkuqke98.avif" alt="" />
 </center>
 
 - What are the possible values printed ?
@@ -7764,7 +7764,7 @@ static void *sort_thread(void *vargp) {
 ### Sequential Consistency Example
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.45hzimw23z.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.45hzimw23z.avif" alt="" />
 </center>
 
 - Impossible outputs
@@ -7776,7 +7776,7 @@ static void *sort_thread(void *vargp) {
 - Write-back caches, without coordination between them
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7lkbaqah0b.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7lkbaqah0b.avif" alt="" />
 </center>
 
 ### Snoopy Caches
@@ -7787,7 +7787,7 @@ static void *sort_thread(void *vargp) {
   - `Exclusive` - Writeable copy
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1e8xakhfbo.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1e8xakhfbo.avif" alt="" />
 </center>
 
 - When cache sees request for one of its E-tagged blocks
@@ -7795,7 +7795,7 @@ static void *sort_thread(void *vargp) {
   - Set tag to S
 
 <center>
-  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.26lssazxce.avif" alt="" />
+  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.26lssazxce.avif" alt="" />
 </center>
 
 # References
