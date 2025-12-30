@@ -3,7 +3,7 @@ title: "CHOP Suey: 端上异常处理的攻击盛宴"
 published: 2025-09-23
 updated: 2025-09-24
 description: "Try-Catch, Catch Me If You Can: 异常的刀锋之 Catch Handler Oriented Programming 学习小记。"
-image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.67xtux8127.avif"
+image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.67xtux8127.avif"
 tags: ["Pwn", "CHOP", "Notes"]
 category: "Notes"
 draft: false
@@ -420,13 +420,13 @@ void input() {
 首先是只覆盖了 `rbp`，我们发现执行 `_Unwind_Resume` 前 `rbp` 是 `0x7ffe29f72c50 ◂— 0x4242424242424242 ('BBBBBBBB')`：
 
 <center>
-  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2ksaalfwn4.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2ksaalfwn4.avif" alt="" />
 </center>
 
 执行完 `_Unwind_Resume` 后 `rbp` 就变成了我们写入的 `B`，然后继续往下执行，最终卡在了这个地方：
 
 <center>
-  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.pfphz109v.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.pfphz109v.avif" alt="" />
 </center>
 
 原因是不能解引用 `rbp - 0x18` 这个地址，因为它是非法地址。
@@ -454,20 +454,20 @@ pwndbg> x/s $rax
 既然 rbp 只要是能 rw 的地址，程序又没开 PIE，那我们直接将其修改为 bss 的地址，就可以继续往下执行了：
 
 <center>
-  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6f11tkdlft.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6f11tkdlft.avif" alt="" />
 </center>
 
 现在我们尝试覆盖返回地址，看看会发生什么：
 
 <center>
-  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.szbfpmqwq.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.szbfpmqwq.avif" alt="" />
 </center>
 
 又是因为访问非法地址而 abort，这次是 `rax`，而 `rax` 存的是我们覆盖的返回地址。嗯……如果继续用 bss 地址代替会发生什么呢？
 
 <center>
-  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.45i1a3etar.avif" alt="" />
-  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6m49p0rvc0.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.45i1a3etar.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6m49p0rvc0.avif" alt="" />
 </center>
 
 发现程序进入了 `std::terminate()`，然后输出了 `terminate called after throwing an instance of 'char const*'` 就 abort 了。

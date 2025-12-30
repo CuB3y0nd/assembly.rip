@@ -2,7 +2,7 @@
 title: "2024 年终总结"
 published: 2025-01-01
 description: "开心的事，在年终总结，不开心的事，在年终了结。"
-image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.45zca9h59.avif"
+image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.45zca9h59.avif"
 tags: ["年终总结"]
 category: "年终总结"
 draft: false
@@ -20,7 +20,7 @@ draft: false
 
 哦对了，25 年是 Python 年，祝大家 Python 年快乐！懂的都懂哈哈哈哈哈哈哈。
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3yeqv8sam6.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3yeqv8sam6.avif)
 
 # 成就 | 光辉荣耀既往事，策马扬鞭奔前程
 
@@ -33,27 +33,27 @@ draft: false
 - [CVE-2024-25817](https://nvd.nist.gov/vuln/detail/CVE-2024-25817)
 - [GHSA-3qx3-6hxr-j2ch](https://github.com/advisories/GHSA-3qx3-6hxr-j2ch)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5trbnv5g0d.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5trbnv5g0d.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5xaxlkzxd4.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5xaxlkzxd4.avif)
 
 审核通过收到的邮件，开心～
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.67xreqlcnn.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.67xreqlcnn.avif)
 
 意外的是 GitHub 居然把这个漏洞写到我的 Highlights 里面了，太酷啦！
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7axgpmhrm2.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7axgpmhrm2.avif)
 
 其实年底又踩到一个潜在的洞，但是太菜了没研究明白。主要是 gdb 都挂不上去让我很崩溃啊……
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1hsigbvzme.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1hsigbvzme.avif)
 
 ## 开源大业
 
 GitHub 用的也是越来越多了，这差距真是天与地之隔……
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.mdekxcvm.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.mdekxcvm.avif)
 
 24 年应该是我入 GitHub 以来提 PR 最多的一年了，下面简单罗列一下吧。有些太水了的我就不写了，~_要面子 >w<_~
 
@@ -85,7 +85,7 @@ GitHub 用的也是越来越多了，这差距真是天与地之隔……
 
 虽然不是什么大贡献，但成为一个 104k stars 项目的贡献者感觉真不错～
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9kgh94ck30.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9kgh94ck30.avif)
 
 > [Dec 31 01:12 AM] 写到这里发现已经 1 AM 了，不过问题不大，白天睡了一天，现在除了肚子有点饿之外一切安好 LMAO
 >
@@ -99,39 +99,39 @@ GitHub 用的也是越来越多了，这差距真是天与地之隔……
 
 康康 B 站 的学习报告 xD
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6wr0yrkdf9.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6wr0yrkdf9.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2h8lti9gfo.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2h8lti9gfo.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4g4sjugshw.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4g4sjugshw.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6wr0yrof4c.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6wr0yrof4c.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9kgh94i6gk.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9kgh94i6gk.avif)
 
 值得一提的是之前 Vlex 推荐我在星巴克自习，后来我去后发现那边的学习环境确实不错，以后就常去了～
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2a5dy2tchn.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2a5dy2tchn.avif)
 
 草稿纸收藏家 LOL
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9kgh94mtp6.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9kgh94mtp6.avif)
 
 第一次看到这题的时候我以为这辈子也不可能做出来了，什么逆天题嘛，但最后发现也不过是个纸老虎吧哈哈哈。
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.41ycszgcww.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.41ycszgcww.avif)
 
 试问这样的板书谁不爱？真正的 Sketch Master。
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3gop6onxtl.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3gop6onxtl.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.icf36h8tg.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.icf36h8tg.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7axgpn8qx2.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7axgpn8qx2.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4g4sjuub7o.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4g4sjuub7o.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6bhdch7omt.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6bhdch7omt.avif)
 
 # 计划 | 言必信，行必果
 
@@ -192,109 +192,109 @@ x86 汇编的话，等有时间了再慢慢看好了，之前看过一半，李�
 
 首先是 Aug 13 和 N1nEmAn 师傅的面基，大佬最多我最菜的一集。
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.26ls0dch11.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.26ls0dch11.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6pnt3ciu1u.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6pnt3ciu1u.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7zqq9o2c4g.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7zqq9o2c4g.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1apakx64is.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1apakx64is.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.64e5h1rztq.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.64e5h1rztq.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.32i9ftr9s9.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.32i9ftr9s9.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.491kofgnpq.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.491kofgnpq.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.32i9ftsavo.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.32i9ftsavo.avif)
 
 然后是 Nov 24 和 Vlex 面基！
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.70amwi4jsd.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.70amwi4jsd.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3gop6p3rdw.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3gop6p3rdw.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7snie8p2ub.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7snie8p2ub.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7snie8qznz.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7snie8qznz.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.41yct03px1.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.41yct03px1.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8vn7p4tncc.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8vn7p4tncc.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6f0za7o156.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6f0za7o156.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6f0za7pkxh.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6f0za7pkxh.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7w74byv4x3.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7w74byv4x3.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.51eg66n2ve.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.51eg66n2ve.avif)
 
 ## Spotify
 
 可恶 Imagine Dragons 居然没上榜。
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1e8wio0zck.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1e8wio0zck.avif)
 
 ## 碎碎念
 
 今年回了几次乡下，随手拍了几张。人生苦短，这才是我所向往的生活～
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.32i9futyn8.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.32i9futyn8.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8ojztpxn6l.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8ojztpxn6l.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6bhdcilf5a.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6bhdcilf5a.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2yyni55xa6.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2yyni55xa6.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2yyni57dkz.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2yyni57dkz.avif)
 
 当然，平时也会想从学校溜出去玩 xD
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.4qrmd1rraw.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4qrmd1rraw.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6m475o5k41.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6m475o5k41.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.92qfklni0q.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.92qfklni0q.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2ks7raeewl.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2ks7raeewl.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.23262pmwhv.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.23262pmwhv.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.mdenpv7j.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.mdenpv7j.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.54y23xqyof.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.54y23xqyof.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7w74c0e4xm.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7w74c0e4xm.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1vyy7a67mg.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1vyy7a67mg.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2ks7raukvq.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2ks7raukvq.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8ojztqy0o2.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8ojztqy0o2.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.99tng1te0e.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.99tng1te0e.avif)
 
 还有两个人吃六人餐，爽的 LOL
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5mo3sj7f1x.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5mo3sj7f1x.avif)
 
 今年上海还几度被台风光顾，~_这辈子也算是见过场面，无悔了……_~
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.361vdm3sxm.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.361vdm3sxm.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7eh2nfv65s.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7eh2nfv65s.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7w74c0xkwi.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7w74c0xkwi.avif)
 
 明年想去滨江大道看一回日出/日落，上次去正好赶了个尾。
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1apakzun58.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1apakzun58.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2ks7rbdlsv.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2ks7rbdlsv.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.8dx60mbue7.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8dx60mbue7.avif)
 
 哎今年上海还下过雪吗，我好像没印象了，但是我发过[记录](https://memos.cubeyond.net/m/Wu4cEJuJo7gmLRi24fuVem)？
 
@@ -339,31 +339,31 @@ x86 汇编的话，等有时间了再慢慢看好了，之前看过一半，李�
 
 看看书架，目前勉强够放。<s>_以后想归乡隐居，自己建一个大书房，与家人一起，过属于普通人那平凡而又不那么平凡的生活嘿嘿嘿。_</s>是 yy 吗？不，一定可以实现！
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.lw10zk0vg.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.lw10zk0vg.avif)
 
 ## 健身
 
 今年太摆了，练的不多。想练练小臂，感觉小臂维度急需发展啊……
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.icf39sige.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.icf39sige.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2obtp1l0e4.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2obtp1l0e4.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.45hyqsppb7.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.45hyqsppb7.avif)
 
 ## 娱乐
 
 真不敢相信今年自己就玩了 17114 mins。
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.39lhbch4jy.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.39lhbch4jy.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7axgpqlx90.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7axgpqlx90.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5trbnzlben.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5trbnzlben.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.1vyy7bba80.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1vyy7bba80.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.64e5h52azt.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.64e5h52azt.avif)
 
 # 结语
 

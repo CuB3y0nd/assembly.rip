@@ -3,7 +3,7 @@ title: "GLIBC Ptmalloc2 Dynamic Allocator Source Code Analysis"
 published: 2025-09-02
 updated: 2025-09-04
 description: "About how does the malloc / free works, mechanisms inside, and security guards explaintation etc."
-image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6m47vyn1pe.avif"
+image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6m47vyn1pe.avif"
 tags: ["Pwn", "Heap", "GLIBC", "Notes"]
 category: "Notes"
 draft: true
@@ -18,8 +18,8 @@ draft: true
 我原本打算从经典的 GLIBC 2.23 入手，后来一读代码发现这个版本包含的内容有点太少了，故问了下 Civiled，得到了新路线：
 
 <center>
-  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.esuth1g0w.avif" alt="" />
-  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.lw2owmf84.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.esuth1g0w.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.lw2owmf84.avif" alt="" />
 </center>
 
 那就让我们从 2.29 开始入手好了，因为相比于 2.28 也就新加入了一个 key field protection, 所以变化应该不是很大。
@@ -100,7 +100,7 @@ malloc 和 free 并不是真正与系统交互的函数，这些函数背后的�
 - 开启 ASLR 时，**start_brk** 以及 **brk** 也会指向同一位置，只是这个位置是在 data / bss 段结尾后的随机偏移处
 
 <center>
-  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.3k8ctqpino.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3k8ctqpino.avif" alt="" />
 </center>
 
 ```c

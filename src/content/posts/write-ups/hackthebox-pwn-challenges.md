@@ -3,7 +3,7 @@ title: "Write-ups: HackTheBox"
 published: 2025-07-24
 updated: 2025-08-01
 description: "Write-ups for HackTheBox's pwn challenges."
-image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2rvfoyyezu.avif"
+image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2rvfoyyezu.avif"
 tags: ["Pwn", "Write-ups"]
 category: "Write-ups"
 draft: false
@@ -482,7 +482,7 @@ Jesus, its a Rust Pwn challenge! 迎接地狱难度的逆向分析吧。
 先运行看看，感受一下程序的基本逻辑：
 
 <center>
-  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.2yynw63u8w.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2yynw63u8w.avif" alt="" />
 </center>
 
 如其名，完全就是一个井字棋游戏，5 个相同棋子连成一条线就赢了。并且我们的对手……我们哪来的对手？`X` 和 `O` 的棋子都是自己控制的，谁赢谁输都是我们自行决定。嗯……这样的话应该会简单很多吧？至少不用被迫去对抗一个 AI 棋手……~_我下棋最烂了……_~
@@ -501,7 +501,7 @@ int __fastcall main(int argc, const char **argv, const char **envp)
 crate 的话就类似于其它语言中的 package 的概念，一般这些 package 下都包含了多个相关的函数实现，我们可以在 IDA 的 Function name 窗口进行搜索，发现这个 crate 里确实包含了不少东西：
 
 <center>
-  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.9o03kwqvqb.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9o03kwqvqb.avif" alt="" />
 </center>
 
 其中比较引人注目的应该是这个叫做 `tictactoe::execute_c2` 的函数，一眼 backdoor.
@@ -675,7 +675,7 @@ __int64 __fastcall tictactoe::execute_c2(int a1, int a2, int a3, int a4, int a5,
 ```
 
 <center>
-  <img src="https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.54y2hzdi2p.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.54y2hzdi2p.avif" alt="" />
 </center>
 
 进去一看虽说有一大坨，不过细看其实很简单。`std::fs::write` 将 C2 (Command and Control) 后门程序写入到 `/tmp/C2_executable` 中（程序里塞程序，难怪那么大……），并通过 `std::fs::set_permissions` 将权限设置为 `0755`，这一点可以从 `from_mode(493LL)` 看出来。接着，通过 `std::process::Command::new` 创建准备执行的命令行指令（这会设置好它的参数，环境变量等）。用脚想都可以猜出来创建的命令肯定是用来执行 C2 的，根本用不着去分析参数。然后用 `std::process::Command::spawn` 生成子进程，异步运行 Command 创建的指令。嗯……看到这里就不用继续了，后面无非就是释放空间和获取子进程的退出状态等操作，对我们来说没多大用处。

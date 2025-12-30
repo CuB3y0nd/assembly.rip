@@ -3,7 +3,7 @@ title: "Write-ups: BUUCTF"
 published: 2025-07-05
 updated: 2025-07-30
 description: "Write-ups for BUUCTF's pwn aspect."
-image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.77dus3996s.avif"
+image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.77dus3996s.avif"
 tags: ["Pwn", "Write-ups"]
 category: "Write-ups"
 draft: false

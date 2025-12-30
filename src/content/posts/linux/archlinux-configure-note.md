@@ -2,7 +2,7 @@
 title: "Arch Linux + Bspwm 配置小记"
 published: 2023-07-29
 description: "Arch Linux 安装小记"
-image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.7lkaiqpxos.avif"
+image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7lkaiqpxos.avif"
 tags: ["Linux", "Notes"]
 category: "Notes"
 draft: false
@@ -10,13 +10,13 @@ draft: false
 
 # 首先 flex 一下成品图
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.32i9fr99d9.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.32i9fr99d9.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.175on4wtrm.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.175on4wtrm.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.491kocy5ys.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.491kocy5ys.avif)
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.5q7pq42api.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5q7pq42api.avif)
 
 _PS: 上面的成品图已经是远古时期的了，最新效果请看我的项目 [1llusion](https://github.com/CuB3y0nd/1llusion)._
 
@@ -57,7 +57,7 @@ _PS: 上面的成品图已经是远古时期的了，最新效果请看我的项
 
 部分用户右键 **磁盘 0** 可能会发现属性按钮是灰色的，无法点击，这里提供一种命令行的解决方案：「`Win + R` 输入 `diskpart` 回车，在打开的命令行窗口中输入 `list disk` 指令」，输出结果如下：
 
-![](https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.6bhdcf4j00.avif)
+![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6bhdcf4j00.avif)
 
 如果看到 **磁盘 0** 的 **GPT 列表** 标注了一个 **\***，说明你符合我们的安装要求，可以进行下一步操作了。
 

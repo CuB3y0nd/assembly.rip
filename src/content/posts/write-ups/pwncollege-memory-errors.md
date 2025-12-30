@@ -3,7 +3,7 @@ title: "Write-ups: Program Security (Memory Errors) series (Completed)"
 published: 2024-12-05
 updated: 2024-12-25
 description: "Write-ups for pwn.college binary exploitation series."
-image: "https://jsd.cdn.zzko.cn/gh/CuB3y0nd/picx-images-hosting@master/.pfmykyum0.avif"
+image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.pfmykyum0.avif"
 tags: ["Pwn", "Write-ups"]
 category: "Write-ups"
 draft: false
