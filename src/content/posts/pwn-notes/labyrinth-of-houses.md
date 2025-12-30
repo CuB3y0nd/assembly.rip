@@ -3,7 +3,7 @@ title: "屋宇之术：Labyrinth of Houses"
 published: 2025-10-04
 updated: 2025-10-04
 description: "你也想知道这些「屋子」里的秘密吗？"
-image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1sff5zil5e.avif"
+image: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1sff5zil5e.avif"
 tags: ["Pwn", "Heap", "Notes"]
 category: "Notes"
 draft: false

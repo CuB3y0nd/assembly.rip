@@ -3,7 +3,7 @@ title: "无 gadgets 也能翻盘：ret2gets 能否成为核武器？"
 published: 2025-09-26
 updated: 2025-09-29
 description: 'Who needs "pop rdi" when you have gets() ?'
-image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7lkcyy54li.avif"
+image: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7lkcyy54li.avif"
 tags: ["Pwn", "Notes"]
 category: "Notes"
 draft: false
@@ -162,8 +162,8 @@ Gadgets
 这里我们在调用 `gets` 的地方下断点，执行 `gets` 之前 `rdi` 指向的是 buf 的栈地址，`ni`，随便输入什么后，发现 `rdi` 寄存器变成了 `*RDI  0x7ffff7e137c0 (_IO_stdfile_0_lock) ◂— 0`：
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1lc6yoffsz.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.13m5a38r8s.avif" alt="" />
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1lc6yoffsz.avif" alt="" />
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.13m5a38r8s.avif" alt="" />
 </center>
 
 定位一下，发现该结构体位于 libc 后的 rw 匿名映射段中：
@@ -435,9 +435,9 @@ _IO_acquire_lock_fct (FILE **p)
 很关键的一点就是，`_IO_release_lock(_fp)` 也属于这个定义域，所以如果 `_IO_release_lock(_fp)` 返回了，也会自动调用上面设置的 cleanup 函数。
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.96a43f63z9.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7pnv6o8tk.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.esvqmae96.avif" alt="" />
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.96a43f63z9.avif" alt="" />
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7pnv6o8tk.avif" alt="" />
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.esvqmae96.avif" alt="" />
 </center>
 
 观察上面的调试输出，我们执行完 `_IO_lock_unlock (*(_fp)->_lock)` 后就直接返回到了 `main`，并且执行完这个函数后在 epilogue 阶段并没有恢复 rdi，也就是说 rdi 会沿用最后一个被调用的函数的 rdi，即 `_IO_stdfile_0_lock` 这个值。
@@ -476,7 +476,7 @@ target.sendline(payload)
 ```
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9o05sn4ed6.avif" alt="" />
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.9o05sn4ed6.avif" alt="" />
 </center>
 
 从上图我们可以看到，rdi 已经变成了我们的预期值，尽管会触发 SIGSEGV，但这也是必然的，毕竟我们还没有写入后续的 ROP Chain 。
@@ -522,7 +522,7 @@ _PS: Reference 中那篇文章这里说要绕过 `_IO_lock_lock`，我怀疑作�
 可以看下图，是第二次 gets 后将 `cnt` 填充为垃圾字节后的结果，此时 `owner` 还持有着一个地址，但并不是 TLS 地址（虽然但是，这并不妨碍我们接下来泄漏 TLS）：
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7p3z2o4g2j.avif" alt="" />
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.7p3z2o4g2j.avif" alt="" />
 </center>
 
 之后它会将 `cnt` 减一，就变成了 `0x4141414000000000`。
@@ -534,13 +534,13 @@ _PS: Reference 中那篇文章这里说要绕过 `_IO_lock_lock`，我怀疑作�
 那么我们输入四个 junk value padding 掉 `lock` 就会导致 `cnt` 低位变成 `\x00`，如下图：
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4qroz5qju4.avif" alt="" />
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.4qroz5qju4.avif" alt="" />
 </center>
 
 但是紧接着就会将 `cnt` 自减，`\x00` 变成 `\xff`：
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1lc708fw6z.avif" alt="" />
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.1lc708fw6z.avif" alt="" />
 </center>
 
 而此时，我们发现已经不存在截断 `puts` 输出的空字节了，此时我们可以直接通过 `puts` 输出 `_IO_stdfile_0_lock`，这会连带泄漏 TLS 结构体的地址，减掉它与 ld 的固定偏移就拿到 ld 基地址了。同时，由于 ld 中存在大量 gadgets，我们可以尽情抒写 ROP 狂想曲 LOL
@@ -889,7 +889,7 @@ int main() {
 没毛病，rdi 的值还残留着 `_IO_2_1_stdout_`，成功令它变成可写地址，那现在就可以像上面一样使用 `gets` 了。
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3nrzsf095k.avif" alt="" />
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.3nrzsf095k.avif" alt="" />
 </center>
 
 据说这里能用 FSOP 进行 leak，不过我还没学过，暂时先把参考链接放上来，以后有时间了再研究研究：
@@ -1037,7 +1037,7 @@ weak_alias(getchar, getchar_unlocked)
 此外，根据引用我们推测，下面这些函数可能也存在同样的问题，不过还是需要自己去看代码才能确定。
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5treegc8sj.avif" alt="" />
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.5treegc8sj.avif" alt="" />
 </center>
 
 下面是多线程版本，`getchar` 最终结束后 rdi 中会残留 `_IO_stdfile_0_lock`。

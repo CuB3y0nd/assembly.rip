@@ -3,7 +3,7 @@ title: "Write-ups: System Security (Kernel Security) series"
 published: 2025-12-19
 updated: 2025-12-25
 description: "Write-ups for pwn.college kernel exploitation series."
-image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.pfs8v4jqs.avif"
+image: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.pfs8v4jqs.avif"
 tags: ["Pwn", "Write-ups", "Kernel"]
 category: "Write-ups"
 draft: false
@@ -92,7 +92,7 @@ ssize_t __fastcall device_read(file *file, char *buffer, size_t length, loff_t *
 最后庆祝一下人生中第一道 kernel（
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.lw6yu8lcj.avif" alt="" />
+  <img src="https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.lw6yu8lcj.avif" alt="" />
 </center>
 
 ## Exploit
@@ -891,3 +891,17 @@ int main(void) {
   return 0;
 }
 ```
+
+# Level 11.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Exploit a kernel device utilizing a userspace binary, with a twist!
+
+## Write-up
+
+## Exploit
