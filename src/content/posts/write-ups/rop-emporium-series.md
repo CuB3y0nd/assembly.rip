@@ -133,7 +133,7 @@ ret
 
 另外，从 ret2csu gadget 控制 rdi 和 rsi 的另一种方法是通过访问特定的偏移量，可以参考这篇讲 BROP 的论文[^2].
 
-![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4qrmd63stf.svg)
+![](https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.4qrmd63stf.svg)
 
 唯一一个问题可能就是怎么让 `call QWORD PTR [r12 + rbx * 8]` 调用 `_init` 了，不解释，直接看操作：
 

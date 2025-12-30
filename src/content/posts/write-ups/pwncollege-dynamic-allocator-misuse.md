@@ -3,7 +3,7 @@ title: "Write-ups: Program Security (Dynamic Allocator Misuse) series (Completed
 published: 2025-09-08
 updated: 2025-10-14
 description: "Write-ups for pwn.college binary exploitation series."
-image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.41yct5dsj8.avif"
+image: "https://cdn.jsdmirror.com/gh/CuB3y0nd/picx-images-hosting@master/.41yct5dsj8.avif"
 tags: ["Pwn", "Write-ups", "Heap"]
 category: "Write-ups"
 draft: false
