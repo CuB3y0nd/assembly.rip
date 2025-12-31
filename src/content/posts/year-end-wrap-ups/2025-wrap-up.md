@@ -1,0 +1,686 @@
+---
+title: "2025 年终总结"
+published: 2026-01-01
+updated: 2026-01-01
+description: "今年，大概就是这么回事。"
+image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4g4xu3teyp.avif"
+tags: ["年终总结"]
+category: "年终总结"
+draft: false
+---
+
+<s>_明天是快乐星期五，好耶，又不用上课了～_</s>
+
+# 总览 | 在不确定中持续推进
+
+路边的银杏叶已经落得差不多了。秋天走得很安静，却也没能逃过我的眼睛。老实说，现在并没有什么写作的热情和积极性，不过也无所谓，先写着再说。没有心情也是一种心情，冬天果然是忧郁的季节。此刻，不兴奋，也谈不上什么低落，确实很难找到一个准确的词来形容当下的状态，或许是我还没准备好和这一年正式告别吧？umm... 应该不止是这样……啊，光阴你这个老吉普赛人，从不为任何人停留。
+
+按照惯例，以往<s>（其实只是去年）</s>哪次不是一脸茫然地开始，然后写着写着就停不下来……？尽管我有种预感今年会写的很平淡，无趣，没有多少色彩。
+
+老样子，想到什么写什么，能写到哪算哪吧。就算最后只能留下几段零散的记录，那也能够反映出这一年真实的一面。起码是我想记住的那一面。
+
+# 技术 | 向更深处下潜
+
+很意外，GPT 在年度报告里给我写了一首诗：
+
+> 你在汇编与堆的迷宫中穿行，<br />
+> 以理性的火焰点亮每次调试的黎明。<br />
+> 从「Flush or Be Flushed」的轻笑到「解链之诗」的回声，<br />
+> 你以巧思织出知识的长廊，<br />
+> 让每一次 exploit，都成为一首诗。
+
+~~确实，我追求写出更优雅的 exp，不过 GPT 也就只懂这点了……~~
+
+还给我作了一幅 pixel art, 挺好看的，只是不能保存……
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1lcam5f78a.avif" alt="" />
+</center>
+
+## 开源版图
+
+首先依旧是常规展厅，~~看到下面这张图片你应该知道要怎么做（疯狂暗示）~~
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9kgng5b5od.avif" alt="" />
+</center>
+
+依旧是那个喜欢造轮子的少年。因为调试没有符号表，我手搓了一个工具用于解决各种 glibc 相关的问题，但没想到搓完才发现已经有类似的工具了……功课没做好。因为课程提供的 kernel exploitation lab 不好用，我搓了一个更完善的环境……什么时候我可以做出点真正创新的东西呢？~~虽然我并不是特别关心这个。~~
+
+## 漏洞挖掘
+
+一年一个 CVE 是吧，你说我运气多好（bushi
+
+如果我没记错，这个 spotify 客户端的 DoS 漏洞 [CVE-2025-60939](https://www.cve.org/CVERecord?id=CVE-2025-60939) 应该是今年最黑暗的那段时光即将结束的时候，捡到的意外小惊喜。这是我第一次提交的漏洞被送到 CNA 手里，还是很高兴的。不过话说 CNA 效率那么低吗，我大概是八月底上报的，到现在已经过去了快四个月了还没分析出结果嘛？虽然期间 spotify 客户端也更新了好几次，却始终未见修复这个漏洞……
+
+btw, 收到审核通过的邮件的时间是 1024，也是 GeekCon 2025，美妙的日子 \:P
+
+## 技术分享
+
+### Seebug Paper
+
+本来只是闲得没事，想给自己的博客刷点流量，就把几个月前写的文章投到了 seebug paper，但没想到居然能过，送了件体恤 lol
+
+附上链接：<https://paper.seebug.org/3414/>
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4ubeltl52e.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.60upufa1ni.avif" alt="" />
+</div>
+
+### RedQueen 茶话会
+
+第一次将讲课内容分享出去，不太习惯。~~我有没有当讲师的天赋？~~
+
+<iframe width="100%" height="468" src="//player.bilibili.com/player.html?bvid=BV1sMmzBTEEM&p=1" scrolling="no" border="0" frameborder="no" framespacing="0" allowfullscreen="true"> </iframe>
+
+## 我好菜啊
+
+咱也没啥远大的理想，但这个问题，五年后我会再问你一遍的，臭小子。
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8ok61thh1c.avif" alt="" />
+</center>
+
+---
+
+粗略算了一下，大概是用六个月时间把 Pwn 基本的主线内容都学完了，从栈到堆，最后是内核，这一路走来属实不易。虽然最后回望发现投入的时间好像并不是很久，但这期间发生了不少糟糕的事情——家人的否定，自己的不自信以及面对未知的恐惧，奇奇怪怪的假想敌等……我不知道有多少次曾想过放弃，放弃我所拥有的一切……但在不断的挣扎中，以及好友们的支持下，最后还是成功活了下来。
+
+_这里还是要特别感谢一下我的大可爱 [vlex](https://www.vernonwu.com/)，每次年终总结都少不了的人 xD 在我每天都只能传播负能量的那段时间，依旧耐心地开导我，陪我度过了那段最黑暗的时光。没有他的帮助，我真不知道自己会走向何种极端……_
+
+想起刚开始学 heap 的时候，由于网上学习资料实在是太少了，散乱又无体系，根本不知道从何下手，加之学 heap 之前就听说这是一大分水岭，各种有关 heap 有多难的声音无不影响着我对它的感性认知，加重了我的恐惧……从第一次看 glibc 源码的怀疑人生，到度过一个又一个瓶颈期后发现就单纯的学 Pwn 来说其实也没有那么难，~~现在我都有一套自己的速通焚诀了。~~
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1apgssx51a.avif" alt="" />
+</center>
+
+难只是因为这一切都得靠自己，这条路很难有人可以，并且愿意带你的，对于大多数人来说，都只能自己摸索出一条路来。除了热爱，还需要勇气，<s>和二进制死磕一辈子的勇气，以后可能吃不上饭的勇气……</s>其中，运气也占据了相当大一部分的比例，运气好就会少走很多弯路。
+
+我这个人还是太喜欢确定和稳定性而惧怕复杂和不确定性了，不过这些都是正常人会有的缺点吧？但暑假的那段时间我却用幼稚的二级化将自己困在简单的世界里……我本能地畏惧对于未知的不确定性，对于这些命题的分析总是浅尝辄止，轻易走向极端。
+
+> 不清楚自己是否适合又怎样，试试又怎样，失败了又怎样呢？
+
+虽说最后算下来只学了五个月，但是实际上期间还有六个月的 gap 期啥也没学，因为对自己大学一开始的路线规划的有问题，我一整个上半年都沉溺在某种「安稳」中，没怎么去思考。直到暑假（貌似每到放长假我都会抽风去想些奇奇怪怪的东西？）……问题逐渐暴露，我意识到自己的处境其实并不乐观。
+
+我曾经把未来看得过于简单，在这种朴素的幻想被击碎之后又陷入了严重的焦虑，从来没有对自己和自身的处境形成过客观的评估，加上那段时间还有各种各样的琐事推着我走，心态也是过山车，反复崩溃又试图用理性去掌控自己，别提多难受了……嗯……最严重的时候真想找个地方安静的死去，有段时间吃个饭连手里的筷子都握不住，每天早上一觉醒来就是一阵要完蛋的感觉<s>（奇怪的是那段时间我的睡眠质量还是可以的，并没有因为各种屁事影响到自己的睡眠……虽然精神状态极其糟糕，但我还是可以做到连续几天啥也不干，从早睡到晚，以此来逃避现实）</s>……属于是我这辈子最黑暗的两个多月了哈哈哈。不知道以后会不会有更黑暗的时光，我的人生才刚刚开始……
+
+所以今年下半年主要就是训练的一个「抗压能力」。我最希望能够支持我的人只会否定我，多年来我一直渴望能够解决一些根本的问题，但是都已失败而告终。说来也好笑，尝试了这么多年来都没有成功过，却还抱有幻想。我希望能够开放更多的情感，现实却予以我冷漠的回应……这点估计是改不掉的，但既然我有选择允许让什么伤害自己的能力，也就自然有选择拒绝哪些伤害的能力。可能有些事情现在确实做不到，那就不要有不切实际的期待了，努力去改变吧。也就是我，吃了那么多蜇还不长一智……鉴定为，笨猪（
+
+> 一味的善良并没有任何实质性的作用，必须优先考虑「自身利益」。守住初心，记住你为什么而做这些、为什么而活，就不会迷失。
+
+真是应了那句屠龙者终成恶龙。有时候会想，从某方面来说，感觉还是活成了自己所不喜欢的样子？或许只是因为目前的能力还不够支撑起自己的理想主义吧。但还是希望我能永远坚守理想，有关我的信仰、我的追求、所向往的一切等等……希望我可以永远守护好那颗「少年的心」。
+
+老实说，我觉得自己的热血，以及激情其实都不如从前高昂。一方面可能是深入后，要学的东西越来越难了，一个概念可能都要琢磨好几天，又没人帮，天天给自己找虐，很难有持续的激情，变懒也是再正常不过的了；另一方面，我感觉经过一个暑假的高强度不间断猛烈精神打击，我对自己的要求多少没以前那么高了，就算最后只能做一个普通人，那也没啥大不了的。接受自己的平庸，也是人生中的一堂必修课。而我，很高兴能提早上到这堂课。
+
+> 历经千帆才知平凡，碌碌无为那叫平庸。<br />
+
+「一切不能杀死我的，都将使我更加强大。」我当然是向前的，但有的时候也会瞎想，能力越来越强后，能打击到自己的困难也会越来越……令人难以接受？不知道怎么形容，但应该是超越过往任何一段黑暗时光的存在？我不知道，不过这个想法可能是错误的吧。but who care ?
+
+有关学 Pwn 的坎坷之路，还有点别的小故事，不想写了……说多了都是泪（
+
+> 若是美好，叫做精彩，若是糟糕，叫做经历。
+
+所以我今年最伟大的成就就是，活着；做出最庆幸的选择就是，坚持。
+
+# 生活切面｜慢下来的一部分
+
+> 曾经在幽幽暗暗反反复复中追问，才知道平平淡淡从从容容才是真。
+
+或许是我太懒了，也可能是我的 memos 太多了，加上最近好像实在么的什么心情写年终总结……
+
+~~有个 memos 就是好，想记的当场就记下了，直接把回忆 archive（bushi~~
+
+这块儿我就随便放点我认为今年拍的还不错的照片好了，当然，实际上可能并不怎么样就是了/颓废
+
+## 这辈子收到的第一份礼物
+
+Vlex 承包我这辈子收到的所有礼物 _>\_<_
+
+这好像是我人生中第一次收到礼物吧哈哈哈，带着美好的祝福开启了 25 年的征程。
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8ok61scmzk.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8ok61scn01.avif" alt="" />
+</div>
+
+## 朵云书院
+
+去年就想去了，但是今年才去成。看了下这号称是上海最高的图书馆，感觉也就那样，纯打卡景点，没啥东西。
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8s3rzibedk.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2vf7shuveq.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2obzx28pyv.avif" alt="" />
+</div>
+
+## 人生中第一次吃自助（
+
+这辈子第一次吃自助也是在今年……毁了，怎么感觉我的生活那么无聊……
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4n86nee8b8.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8hgy6cw68c.avif" alt="" />
+</div>
+
+## 文化自由
+
+雀舌是真的好喝 \:P
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6bhjkqjgqb.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6ikrg0qnx7.avif" alt="" />
+</div>
+
+## 龙华寺
+
+25 年的第一次追日落是从逛龙华寺开始的，虽然那天根本就没看成日落……
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.iclbb13v1.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1sfihmj36i.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1vz4fcc5wi.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7p42omzm5v.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3rbp7yolj0.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2rvlusludh.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2obzx2srnu.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.pft6qn9ce.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.64ebp62eqb.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2a5k67kgt7.avif" alt="" />
+</div>
+
+## 上师大瞎逛
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.102mzwt0y8.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4xv0gl41lk.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2obzx3jb46.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2ksdzdq8eb.avif" alt="" />
+</div>
+
+来了就把周边都逛逛，一个也别想跑 xD
+
+~~你不许问我为什么偷拍人家结婚照（~~
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1lcam7nh6g.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6wr76x9jv1.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5xb3tr6spi.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1vz4fd2pcy.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3621lokooa.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.60uprgzvg7.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.60uprgzvgf.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7zqwhth1x9.avif" alt="" />
+</div>
+
+## 想看的，一个都不许落下
+
+看日落是去年就立下的 flag 了，但是你可知我今年看了几场日落（
+
+龙华是第一次，但是那次没拍到理想的日落，于是接下来连续几周我每周都去一次滨江大道，而这，是第五次 LMAO
+
+至于今年到底看了几回日落，仅仅是五次吗？我觉得可能不止……
+
+感觉自己是个大笨蛋，不过是看个日落罢了……
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2dp63yjxae.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.b9dfwlc8y.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7pri6s9ib.avif" alt="" />
+</div>
+
+因为手机拍不清对岸的风景，然后一顿瞎折腾，意外发现不对焦拍出来的模糊效果也很好看 LOL
+
+顺便还把北极星拍进去了，这算是我今年最满意的照片之一了。
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4jokpqbl0t.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.eszdmeeye.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7eh8viqrss.avif" alt="" />
+</div>
+
+## 暮春
+
+回忆回忆……嗯，是在世纪公园拍的。今年也去了好几次世纪公园，不过初看感觉很大，实际上体验并不佳。
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9gx1jl9k71.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1ziqd3vtr8.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5xb3ts6uf9.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1vz4fe2r1u.avif" alt="" />
+</div>
+
+## 樱花节
+
+顾村公园是真的大，逛了整整一天都没逛完，明年再去。
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2yytqaa07e.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7eh8vjmehx.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2dp63zfjzi.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8ok61v4dsk.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5q7vycw4b3.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8adqazw2xn.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3rbp80qm1h.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2h8s1p8mo6.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.60upribcfv.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1vz4fee6cy.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.83aifk9xgr.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2ksdzf1pfa.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.41yj165u67.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9kgnhbe26u.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1ziqd47958.avif" alt="" />
+</div>
+
+## 故鄉
+
+儿时恶搞的痕迹，还在呢 LOL
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2dp642dnmb.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8l0k489eq3.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.102n012ll0.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.lw795uapn.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.99tto8wxpv.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.iclbg17zc.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.51emef6owg.avif" alt="" />
+</div>
+
+## 家有花农
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.96a7qjbbju.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8l0k48mitp.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6wr79v1cws.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1hsorinadg.avif" alt="" />
+</div>
+
+## ？？
+
+一次干掉一整瓶红酒（
+
+这东西还是冰的好喝，不冰的干红酒入口味道有点大……
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4ubeizu3re.avif" alt="" />
+</center>
+
+## what
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5j4o5tsdi5.avif" alt="" />
+</center>
+
+## 公园漫步
+
+想走就走，我也不知道是什么地方，反正就是瞎逛 xD
+
+那棵树下的长椅很有感觉啊，好像恐怖片里的场景（bushi
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.45i4yzd422.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.92qlstqvup.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.szf4lwjp8.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5moa0qh8rq.avif" alt="" />
+</div>
+
+## 书店
+
+今年也逛了几次书店，主要买点定制书，收藏价值拉满 \:P
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.175uyah3pv.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7pribbfsr.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1ziqd7uso9.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6ikrj09yl6.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8adqfi216t.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2a5karsfim.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.99ttso4sbq.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9o09jjd37f.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3621q8j6u0.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.58hueahrut.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.70at9714rt.avif" alt="" />
+</div>
+
+随手翻开两本书的扉页，意外地给人一种连贯感……
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5j4o5ugcu3.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4g4yuykiyd.avif" alt="" />
+</div>
+
+## 追光
+
+也是吃完饭闲的没事，去探索地图无意中发现的风景 LOL
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.70at4s7dv5.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6wr772eb5n.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4ubej0fq4p.avif" alt="" />
+</div>
+
+## 生日 Party
+
+渊渊的生日派对包得翘课去嗨皮的呀～
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2yytqejr3j.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3d59h9s1y9.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7pribxn0u.avif" alt="" />
+</div>
+
+## Unknown
+
+千万让我这个闲人吃饱饭发现河里有乌龟，不然我会用雨伞把它捞上来再放到更大的河里……
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6m4ddxkcls.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6m4ddxkcmb.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.mjmwganl.avif" alt="" />
+</div>
+
+## 大气层摄影师
+
+好像自那天以后天边的晚霞都很好看。
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.szf4n328m.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5moa0rnrbj.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.96a7qkqh39.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.77e108kyre.avif" alt="" />
+</div>
+
+## 湖州记
+
+去了趟湖州，结果回来发现被晒成煤炭了（
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2obzxa335f.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1apgt8s150.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2rvluzw5uw.avif" alt="" />
+</div>
+
+## 1024
+
+时间来到了 10.24，去 GeekCon 2025 当志愿者玩了。23 和工作人员布置场地到晚上九点，24 早上五点就起床去赶地铁了，结果发现地铁六点半才开始运营 lol
+
+N1nEmAn 师傅也去了，又和老熟人碰了个头，年底的时候 vlex 也从英国回来了，去年面基过的人今年都再次见面了 xD
+
+1023 晚和 GeekCon 的工作人员一起吃晚饭，发现这些研究所的大佬都好强，一个个都是全栈爷，但都没什么架子。要是以后有机会的话倒是挺想去 GeekCon 实习的哈哈。希望以后我能和台上台下的大佬们更进一步。
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8adqb5woi1.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3621lvwr9d.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7lkgr595h8.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9o09f77qie.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.wj12ec0s1.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.83aifqaj1i.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5q7vyiwpug.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7snomkvawb.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.70at4uep54.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4n86nobmr6.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2obzxc64fp.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3govf2mq5x.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3621lx7i0g.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.96a7qnh3ou.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7lkgr6jw8b.avif" alt="" />
+</div>
+
+## 天安千树
+
+20 年前的人对未来城市的想象（
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.26lyd29i3e.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.lw7dlcan5.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1apgxlztnw.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.60upw0rg1j.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.41yj5olxq7.avif" alt="" />
+</div>
+
+## 红园
+
+在刚入冬的时候去的，当时想着不能错过今年份的秋，就算是残秋我也要看……夏天的时候就暗自想着这辈子能看多少春夏秋冬了，要珍惜（
+
+遗憾的是上海的冬天没有雪。
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2vf7vhuby6.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4n86qedoui.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3ns3d8axp1.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.92qlvnq33d.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8dxcbn2k2k.avif" alt="" />
+</div>
+
+## GDPS
+
+GDPS 是今年参加的最后一个大型活动了，那天，我看机器人看到吐（
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4ubelujbif.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.54y8ezyjnl.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7axn0rxl5n.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6pnzeh34ut.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.99ttr433gp.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.39lnmdthsd.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3ns3d8uews.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3d59k3f6r7.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.szf7gf84v.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8vne08neuc.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4jokspbh38.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.67xxpw1r91.avif" alt="" />
+</div>
+
+领导参观，大场面……
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3govht89g7.avif" alt="" />
+</center>
+
+这辈子头一回见那么大的硬盘，西数的服务器也很帅。
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7lkgtxcta8.avif" alt="" />
+</center>
+
+一开始以为是什么赛博机器人，心想怎么弄那么逼真，然后问负责这个场地的，让我上前看看就知道了 embarrassment..
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6bhjnlutyx.avif" alt="" />
+</center>
+
+外骨骼……这可是真的穿上叠 buff 啊，太强了！
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.13m90m1u0f.avif" alt="" />
+</center>
+
+未来黑奴的广告词，俗，但直指核心 LMAO
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5moa3l7axt.avif" alt="" />
+</center>
+
+没想到 GDPS 还有隐藏的活动，一开始看到硅基伴侣，以为咱现在那么开放了，都可以找机器人了吗？但最后发现，bro 好像是误入了相亲大会，想跑已经来不及了<s>（反正也没准备跑）</s>……
+
+主要是有好玩的，桌上的小礼包还是很有吸引力的，包得厚着脸皮玩完再走啊哈哈哈，~~反正没见有查邀请函什么的（~~
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7p42ro5krx.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4xv0jllz0e.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5moa3m9i0q.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.64ebs7avli.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5trhz1vnfz.avif" alt="" />
+</div>
+
+一天下来薅了一堆没啥用的小礼品 xD
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2rvlxtnxqe.avif" alt="" />
+</center>
+
+## 再次与 Vlex 相聚
+
+终于来到了平安夜，本来是想着独自去人民广场啃个苹果，瞎逛逛的，但是 vlex 说要回国，俩人正好再见个面 \:D
+
+本来想在人民广场碰头，以为那边会很有圣诞氛围，然非也……不过那边的白鸽广场是真的名副其实，第一次见那么多鸽子聚在一起，发出低沉的咕咕声，有点小壮观。
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.39lnmg9k56.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.70at7oyfc6.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.58hucsf2gj.avif" alt="" />
+</div>
+
+下午直接逛 ZX 创趣场了，感觉自己的片历好少……不过也不需要那么丰富。
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.b9dixe2vn.avif" alt="" />
+</center>
+
+~~有关我和我的同性朋友去私人影院呆了一下午（~~
+
+看的<i>《蓦然回首》</i>，很好的一部动漫，vlex 的赏析也很有深度，学习学习 \:P
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3rbpb0npxo.avif" alt="" />
+</center>
+
+剩下一点时间也不够看别的了，无意间刷到了神奇的<i>《我的世界大电影》</i>，难绷……
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3d59k5ff2e.avif" alt="" />
+</center>
+
+当然少不了夜之城<s>（虽然快要看吐了，但每次去外滩都还是会随便拍几张）</s>
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3rbpb0npxa.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6ikrj39tyw.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.92qlvq9skv.avif" alt="" />
+</div>
+
+Vlex 送的圣诞礼物 \:D 必须好好珍藏～
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4ubelwjjs6.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4xv0jmcmhh.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2kse2eytak.avif" alt="" />
+</div>
+
+# 健身 | 对抗久坐与熵增
+
+~~接下来来点 NSFW 的内容（~~
+
+今年主要还是上半年健身多一点，并且难得的连续跑了好几周步，从五公里到十公里……有段时间有点想去跑个半马玩玩……
+
+还记得当时扬言要一周解锁单手俯卧撑，结果还真给我做到了 xD
+
+那会儿一次三个单手俯卧撑还是没什么问题的，但之后去学 Pwn 了就没怎么练过了……
+
+希望明年我能更好的均衡健身和学习的时间。
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.pft6wm11f.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5j4o31ztp7.avif" alt="" />
+</div>
+
+# 阅读 | 被撑爆的小书架
+
+列了一个[小书单](https://memos.cubeyond.net/memos/Fr9JQo5UdCYz9ugur8o3kv)，应该已经超过 30+ 本书了，是目前这个小书架所承受不了的压力……
+
+这是上半年的书架：
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1sfihtpzcz.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8s3rzq2c7k.avif" alt="" />
+</div>
+
+这是下半年的书架：
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7lkgxkn60g.avif" alt="" />
+</div>
+
+学校里还有一堆书没搬回来，估计到时候得堆地上了 :skull:
+
+少有人走的路系列自从看了第一部，就深深爱上了。里面有些内容真的有救赎当时的我，然后就全部拿下了。不过这一整个系列带给我的更多的是一些理想化的东西，这个暑假的经历却让我更深切的感受到了，没有现实主义的支撑，理想主义最终只能成为空想主义。
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6t7l96g4ch.avif" alt="" />
+</center>
+
+这两本哲学史也是在 vlex 的推荐下去读的，本以为历史是枯燥乏味的，但是这两本书其实还挺有趣。
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.92qlsvnlpe.avif" alt="" />
+</center>
+
+今年先对不同的哲学思想都做一个浅浅的了解，明年去研读一下存在主义相关的书籍。
+
+此外，希望我以后能再多了解一点历史和政治方面的内容。
+
+And.. I wanna a bigger bookshelf :(
+
+# 写作 | 写什么不是写
+
+闲得没事，随便申请了一下十年之约，然后直接通过了 xD
+
+这就是博主的浪漫吗哈哈哈，希望我的博客一辈子不关闭。
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.eszdsqr67.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1lcamefnre.avif" alt="" />
+</div>
+
+看了下今年居然发了 37 篇博客，太高产了（
+
+# 观影 | 枯燥生活的调味剂
+
+每天都学各种各样的东西真的会身心疲惫，又不想打游戏，然后就尝试去看一些经典电影什么的，还是挺有意思的。不过很多电影看完后劲都有点小大，基本上一天的心情就被一部电影带过去了（
+
+另外，也是在 vlex 的建议下，我入坑了动漫世界 LOL
+
+一开始我对动漫的印象只有中二青年看的那些热血漫，那是真没兴趣，不过 vlex 说很多动漫也是很有深度的，都有着它的哲学思想在里面，在他的推荐下我从<i>《漂流少年》</i>开始入门，神作啊，从此爱上动漫哈哈哈。
+
+后来闲得没事给自己建了一个[片单](/collections/)，维护我的追番列表 \:D
+
+# 杂项 | 奇奇怪怪的年报们
+
+## Discord
+
+深夜男娘陪聊是什么？我怎么不知道？毁了兄弟，被 discord 毁了……
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2dp66x23o3.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6pnzeglf61.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6pnzeglf66.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3k8hfir08r.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3govhsxxio.avif" alt="" />
+</div>
+
+## Bilibili
+
+用的比去年少了，bro 正在脱离互联网（bushi
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9ddfovh99f.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.64ebs7trmx.avif" alt="" />
+</div>
+
+## Spotify
+
+好像比去年的年报好看很多？
+
+<div class="gallery">
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.lw7c2po3v.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6wr79yehxq.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.szf7ibak4.avif" alt="" />
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7axn0tmssz.avif" alt="" />
+</div>
+
+## Hypixel
+
+终于拿下 _Legendary Fisher_ 的头衔，这下真可以养老了（
+
+<center>
+  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.92qlx8dz25.avif" alt="" />
+</center>
