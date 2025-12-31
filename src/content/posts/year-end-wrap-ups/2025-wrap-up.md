@@ -687,3 +687,16 @@ And.. I wanna a bigger bookshelf :(
   <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.92qlx8dz25.avif" alt="" />
   <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4jokwx3oi7.avif" alt="" />
 </div>
+
+每年的最后一刻一定是在 Hypixel 看 hanabi <3
+
+<div class="gallery">
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3ns3hri9jr.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4ubeqd764x.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6wr7ef5r5w.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2kse6vmfmq.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.9kgnoryshl.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8vne4rb9i6.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1ziqkkrzdw.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7w7arl8icq.avif" alt="" />
+</div>
