@@ -681,6 +681,9 @@ And.. I wanna a bigger bookshelf :(
 
 终于拿下 _Legendary Fisher_ 的头衔，这下真可以养老了（
 
-<center>
+话说去年总游戏时长还有 12d，今年直接缩了一半吗？I love fishing!
+
+<div class="gallery">
   <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.92qlx8dz25.avif" alt="" />
-</center>
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4jokwx3oi7.avif" alt="" />
+</div>
