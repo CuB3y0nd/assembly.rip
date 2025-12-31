@@ -3,7 +3,7 @@ title: "分岔的森林：angr 符号执行札记"
 published: 2025-10-01
 updated: 2025-10-01
 description: "In the Forest of Branches: angr's Predictions"
-image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.26luturh6l.avif"
+image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.26luturh6l.avif"
 tags: ["Pwn", "Reverse", "Angr", "Notes"]
 category: "Notes"
 draft: false

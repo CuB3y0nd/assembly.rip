@@ -903,7 +903,7 @@ Flag: `pwn.college{o7dF6gbwKmwO-Xrdr1WGG5iKIQ-.0lN0MDL5cTNxgzW}`
 
 嗯……自己构造 `/flag` 或者别的字符串未免也太麻烦了点，我们直接让 IDA 老婆看看程序本身有没有什么现成的好东西是我们可以直接利用的：
 
-![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8z6tmzp4ta.avif)
+![](https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8z6tmzp4ta.avif)
 
 像这个 `ret` 看上去就很~清秀~了，我很喜欢～
 
@@ -3557,7 +3557,7 @@ Flag: `pwn.college{kq62r2gqRuS8CCZ5IsBJ4-OK_E-.0FM2MDL5cTNxgzW}`
 
 唯有一点我不太懂，你这是何必呢？
 
-![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9rjp4q6h43.avif)
+![](https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.9rjp4q6h43.avif)
 
 ## Exploit
 

@@ -3,7 +3,7 @@ title: "2025 年终总结"
 published: 2026-01-01
 updated: 2026-01-01
 description: "今年，大概就是这么回事。"
-image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4g4xu3teyp.avif"
+image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4g4xu3teyp.avif"
 tags: ["年终总结"]
 category: "年终总结"
 draft: false
@@ -34,7 +34,7 @@ draft: false
 还给我作了一幅 pixel art, 挺好看的，只是不能保存……
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1lcam5f78a.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1lcam5f78a.avif" alt="" />
 </center>
 
 ## 开源版图
@@ -42,7 +42,7 @@ draft: false
 首先依旧是常规展厅，~~看到下面这张图片你应该知道要怎么做（疯狂暗示）~~
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9kgng5b5od.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.9kgng5b5od.avif" alt="" />
 </center>
 
 依旧是那个喜欢造轮子的少年。因为调试没有符号表，我手搓了一个工具用于解决各种 glibc 相关的问题，但没想到搓完才发现已经有类似的工具了……功课没做好。因为课程提供的 kernel exploitation lab 不好用，我搓了一个更完善的环境……什么时候我可以做出点真正创新的东西呢？~~虽然我并不是特别关心这个。~~
@@ -64,8 +64,8 @@ btw, 收到审核通过的邮件的时间是 1024，也是 GeekCon 2025，美妙
 附上链接：<https://paper.seebug.org/3414/>
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4ubeltl52e.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.60upufa1ni.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4ubeltl52e.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.60upufa1ni.avif" alt="" />
 </div>
 
 ### RedQueen 茶话会
@@ -79,7 +79,7 @@ btw, 收到审核通过的邮件的时间是 1024，也是 GeekCon 2025，美妙
 咱也没啥远大的理想，但这个问题，五年后我会再问你一遍的，臭小子。
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8ok61thh1c.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8ok61thh1c.avif" alt="" />
 </center>
 
 ---
@@ -91,7 +91,7 @@ _这里还是要特别感谢一下我的大可爱 [vlex](https://www.vernonwu.co
 想起刚开始学 heap 的时候，由于网上学习资料实在是太少了，散乱又无体系，根本不知道从何下手，加之学 heap 之前就听说这是一大分水岭，各种有关 heap 有多难的声音无不影响着我对它的感性认知，加重了我的恐惧……从第一次看 glibc 源码的怀疑人生，到度过一个又一个瓶颈期后发现就单纯的学 Pwn 来说其实也没有那么难，~~现在我都有一套自己的速通焚诀了。~~
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1apgssx51a.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1apgssx51a.avif" alt="" />
 </center>
 
 难只是因为这一切都得靠自己，这条路很难有人可以，并且愿意带你的，对于大多数人来说，都只能自己摸索出一条路来。除了热爱，还需要勇气，<s>和二进制死磕一辈子的勇气，以后可能吃不上饭的勇气……</s>其中，运气也占据了相当大一部分的比例，运气好就会少走很多弯路。
@@ -139,8 +139,8 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 这好像是我人生中第一次收到礼物吧哈哈哈，带着美好的祝福开启了 25 年的征程。
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8ok61scmzk.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8ok61scn01.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8ok61scmzk.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8ok61scn01.avif" alt="" />
 </div>
 
 ## 朵云书院
@@ -148,9 +148,9 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 去年就想去了，但是今年才去成。看了下这号称是上海最高的图书馆，感觉也就那样，纯打卡景点，没啥东西。
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8s3rzibedk.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2vf7shuveq.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2obzx28pyv.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8s3rzibedk.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2vf7shuveq.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2obzx28pyv.avif" alt="" />
 </div>
 
 ## 人生中第一次吃自助（
@@ -158,8 +158,8 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 这辈子第一次吃自助也是在今年……毁了，怎么感觉我的生活那么无聊……
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4n86nee8b8.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8hgy6cw68c.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4n86nee8b8.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8hgy6cw68c.avif" alt="" />
 </div>
 
 ## 文化自由
@@ -167,8 +167,8 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 雀舌是真的好喝 \:P
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6bhjkqjgqb.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6ikrg0qnx7.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6bhjkqjgqb.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6ikrg0qnx7.avif" alt="" />
 </div>
 
 ## 龙华寺
@@ -176,25 +176,25 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 25 年的第一次追日落是从逛龙华寺开始的，虽然那天根本就没看成日落……
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.iclbb13v1.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1sfihmj36i.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1vz4fcc5wi.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7p42omzm5v.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3rbp7yolj0.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2rvlusludh.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2obzx2srnu.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.pft6qn9ce.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.64ebp62eqb.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2a5k67kgt7.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.iclbb13v1.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1sfihmj36i.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1vz4fcc5wi.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7p42omzm5v.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3rbp7yolj0.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2rvlusludh.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2obzx2srnu.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.pft6qn9ce.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.64ebp62eqb.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2a5k67kgt7.avif" alt="" />
 </div>
 
 ## 上师大瞎逛
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.102mzwt0y8.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4xv0gl41lk.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2obzx3jb46.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2ksdzdq8eb.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.102mzwt0y8.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4xv0gl41lk.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2obzx3jb46.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2ksdzdq8eb.avif" alt="" />
 </div>
 
 来了就把周边都逛逛，一个也别想跑 xD
@@ -202,14 +202,14 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 ~~你不许问我为什么偷拍人家结婚照（~~
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1lcam7nh6g.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6wr76x9jv1.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5xb3tr6spi.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1vz4fd2pcy.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3621lokooa.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.60uprgzvg7.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.60uprgzvgf.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7zqwhth1x9.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1lcam7nh6g.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6wr76x9jv1.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.5xb3tr6spi.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1vz4fd2pcy.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3621lokooa.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.60uprgzvg7.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.60uprgzvgf.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7zqwhth1x9.avif" alt="" />
 </div>
 
 ## 想看的，一个都不许落下
@@ -223,9 +223,9 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 感觉自己是个大笨蛋，不过是看个日落罢了……
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2dp63yjxae.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.b9dfwlc8y.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7pri6s9ib.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2dp63yjxae.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.b9dfwlc8y.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7pri6s9ib.avif" alt="" />
 </div>
 
 因为手机拍不清对岸的风景，然后一顿瞎折腾，意外发现不对焦拍出来的模糊效果也很好看 LOL
@@ -233,9 +233,9 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 顺便还把北极星拍进去了，这算是我今年最满意的照片之一了。
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4jokpqbl0t.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.eszdmeeye.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7eh8viqrss.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4jokpqbl0t.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.eszdmeeye.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7eh8viqrss.avif" alt="" />
 </div>
 
 ## 暮春
@@ -243,10 +243,10 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 回忆回忆……嗯，是在世纪公园拍的。今年也去了好几次世纪公园，不过初看感觉很大，实际上体验并不佳。
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9gx1jl9k71.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1ziqd3vtr8.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5xb3ts6uf9.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1vz4fe2r1u.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.9gx1jl9k71.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1ziqd3vtr8.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.5xb3ts6uf9.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1vz4fe2r1u.avif" alt="" />
 </div>
 
 ## 樱花节
@@ -254,21 +254,21 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 顾村公园是真的大，逛了整整一天都没逛完，明年再去。
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2yytqaa07e.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7eh8vjmehx.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2dp63zfjzi.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8ok61v4dsk.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5q7vycw4b3.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8adqazw2xn.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3rbp80qm1h.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2h8s1p8mo6.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.60upribcfv.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1vz4fee6cy.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.83aifk9xgr.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2ksdzf1pfa.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.41yj165u67.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9kgnhbe26u.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1ziqd47958.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2yytqaa07e.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7eh8vjmehx.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2dp63zfjzi.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8ok61v4dsk.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.5q7vycw4b3.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8adqazw2xn.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3rbp80qm1h.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2h8s1p8mo6.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.60upribcfv.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1vz4fee6cy.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.83aifk9xgr.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2ksdzf1pfa.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.41yj165u67.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.9kgnhbe26u.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1ziqd47958.avif" alt="" />
 </div>
 
 ## 故鄉
@@ -276,22 +276,22 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 儿时恶搞的痕迹，还在呢 LOL
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2dp642dnmb.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8l0k489eq3.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.102n012ll0.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.lw795uapn.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.99tto8wxpv.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.iclbg17zc.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.51emef6owg.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2dp642dnmb.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8l0k489eq3.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.102n012ll0.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.lw795uapn.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.99tto8wxpv.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.iclbg17zc.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.51emef6owg.avif" alt="" />
 </div>
 
 ## 家有花农
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.96a7qjbbju.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8l0k48mitp.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6wr79v1cws.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1hsorinadg.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.96a7qjbbju.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8l0k48mitp.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6wr79v1cws.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1hsorinadg.avif" alt="" />
 </div>
 
 ## ？？
@@ -301,13 +301,13 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 这东西还是冰的好喝，不冰的干红酒入口味道有点大……
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4ubeizu3re.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4ubeizu3re.avif" alt="" />
 </center>
 
 ## what
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5j4o5tsdi5.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.5j4o5tsdi5.avif" alt="" />
 </center>
 
 ## 公园漫步
@@ -317,10 +317,10 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 那棵树下的长椅很有感觉啊，好像恐怖片里的场景（bushi
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.45i4yzd422.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.92qlstqvup.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.szf4lwjp8.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5moa0qh8rq.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.45i4yzd422.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.92qlstqvup.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.szf4lwjp8.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.5moa0qh8rq.avif" alt="" />
 </div>
 
 ## 书店
@@ -328,24 +328,24 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 今年也逛了几次书店，主要买点定制书，收藏价值拉满 \:P
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.175uyah3pv.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7pribbfsr.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1ziqd7uso9.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6ikrj09yl6.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8adqfi216t.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2a5karsfim.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.99ttso4sbq.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9o09jjd37f.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3621q8j6u0.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.58hueahrut.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.70at9714rt.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.175uyah3pv.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7pribbfsr.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1ziqd7uso9.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6ikrj09yl6.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8adqfi216t.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2a5karsfim.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.99ttso4sbq.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.9o09jjd37f.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3621q8j6u0.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.58hueahrut.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.70at9714rt.avif" alt="" />
 </div>
 
 随手翻开两本书的扉页，意外地给人一种连贯感……
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5j4o5ugcu3.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4g4yuykiyd.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.5j4o5ugcu3.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4g4yuykiyd.avif" alt="" />
 </div>
 
 ## 追光
@@ -353,9 +353,9 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 也是吃完饭闲的没事，去探索地图无意中发现的风景 LOL
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.70at4s7dv5.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6wr772eb5n.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4ubej0fq4p.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.70at4s7dv5.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6wr772eb5n.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4ubej0fq4p.avif" alt="" />
 </div>
 
 ## 生日 Party
@@ -363,9 +363,9 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 渊渊的生日派对包得翘课去嗨皮的呀～
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2yytqejr3j.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3d59h9s1y9.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7pribxn0u.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2yytqejr3j.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3d59h9s1y9.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7pribxn0u.avif" alt="" />
 </div>
 
 ## Unknown
@@ -373,9 +373,9 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 千万让我这个闲人吃饱饭发现河里有乌龟，不然我会用雨伞把它捞上来再放到更大的河里……
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6m4ddxkcls.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6m4ddxkcmb.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.mjmwganl.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6m4ddxkcls.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6m4ddxkcmb.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.mjmwganl.avif" alt="" />
 </div>
 
 ## 大气层摄影师
@@ -383,10 +383,10 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 好像自那天以后天边的晚霞都很好看。
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.szf4n328m.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5moa0rnrbj.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.96a7qkqh39.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.77e108kyre.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.szf4n328m.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.5moa0rnrbj.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.96a7qkqh39.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.77e108kyre.avif" alt="" />
 </div>
 
 ## 湖州记
@@ -394,9 +394,9 @@ Vlex 承包我这辈子收到的所有礼物 _>\_<_
 去了趟湖州，结果回来发现被晒成煤炭了（
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2obzxa335f.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1apgt8s150.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2rvluzw5uw.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2obzxa335f.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1apgt8s150.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2rvluzw5uw.avif" alt="" />
 </div>
 
 ## 1024
@@ -408,21 +408,21 @@ N1nEmAn 师傅也去了，又和老熟人碰了个头，年底的时候 vlex 也
 1023 晚和 GeekCon 的工作人员一起吃晚饭，发现这些研究所的大佬都好强，一个个都是全栈爷，但都没什么架子。要是以后有机会的话倒是挺想去 GeekCon 实习的哈哈。希望以后我能和台上台下的大佬们更进一步。
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8adqb5woi1.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3621lvwr9d.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7lkgr595h8.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9o09f77qie.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.wj12ec0s1.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.83aifqaj1i.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5q7vyiwpug.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7snomkvawb.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.70at4uep54.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4n86nobmr6.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2obzxc64fp.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3govf2mq5x.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3621lx7i0g.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.96a7qnh3ou.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7lkgr6jw8b.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8adqb5woi1.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3621lvwr9d.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7lkgr595h8.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.9o09f77qie.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.wj12ec0s1.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.83aifqaj1i.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.5q7vyiwpug.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7snomkvawb.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.70at4uep54.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4n86nobmr6.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2obzxc64fp.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3govf2mq5x.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3621lx7i0g.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.96a7qnh3ou.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7lkgr6jw8b.avif" alt="" />
 </div>
 
 ## 天安千树
@@ -430,11 +430,11 @@ N1nEmAn 师傅也去了，又和老熟人碰了个头，年底的时候 vlex 也
 20 年前的人对未来城市的想象（
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.26lyd29i3e.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.lw7dlcan5.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1apgxlztnw.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.60upw0rg1j.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.41yj5olxq7.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.26lyd29i3e.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.lw7dlcan5.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1apgxlztnw.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.60upw0rg1j.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.41yj5olxq7.avif" alt="" />
 </div>
 
 ## 红园
@@ -444,11 +444,11 @@ N1nEmAn 师傅也去了，又和老熟人碰了个头，年底的时候 vlex 也
 遗憾的是上海的冬天没有雪。
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2vf7vhuby6.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4n86qedoui.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3ns3d8axp1.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.92qlvnq33d.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8dxcbn2k2k.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2vf7vhuby6.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4n86qedoui.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3ns3d8axp1.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.92qlvnq33d.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8dxcbn2k2k.avif" alt="" />
 </div>
 
 ## GDPS
@@ -456,48 +456,48 @@ N1nEmAn 师傅也去了，又和老熟人碰了个头，年底的时候 vlex 也
 GDPS 是今年参加的最后一个大型活动了，那天，我看机器人看到吐（
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4ubelujbif.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.54y8ezyjnl.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7axn0rxl5n.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6pnzeh34ut.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.99ttr433gp.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.39lnmdthsd.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3ns3d8uews.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3d59k3f6r7.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.szf7gf84v.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8vne08neuc.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4jokspbh38.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.67xxpw1r91.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4ubelujbif.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.54y8ezyjnl.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7axn0rxl5n.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6pnzeh34ut.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.99ttr433gp.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.39lnmdthsd.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3ns3d8uews.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3d59k3f6r7.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.szf7gf84v.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8vne08neuc.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4jokspbh38.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.67xxpw1r91.avif" alt="" />
 </div>
 
 领导参观，大场面……
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3govht89g7.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3govht89g7.avif" alt="" />
 </center>
 
 这辈子头一回见那么大的硬盘，西数的服务器也很帅。
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7lkgtxcta8.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7lkgtxcta8.avif" alt="" />
 </center>
 
 一开始以为是什么赛博机器人，心想怎么弄那么逼真，然后问负责这个场地的，让我上前看看就知道了 embarrassment..
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6bhjnlutyx.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6bhjnlutyx.avif" alt="" />
 </center>
 
 外骨骼……这可是真的穿上叠 buff 啊，太强了！
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.13m90m1u0f.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.13m90m1u0f.avif" alt="" />
 </center>
 
 未来黑奴的广告词，俗，但直指核心 LMAO
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5moa3l7axt.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.5moa3l7axt.avif" alt="" />
 </center>
 
 没想到 GDPS 还有隐藏的活动，一开始看到硅基伴侣，以为咱现在那么开放了，都可以找机器人了吗？但最后发现，bro 好像是误入了相亲大会，想跑已经来不及了<s>（反正也没准备跑）</s>……
@@ -505,17 +505,17 @@ GDPS 是今年参加的最后一个大型活动了，那天，我看机器人看
 主要是有好玩的，桌上的小礼包还是很有吸引力的，包得厚着脸皮玩完再走啊哈哈哈，~~反正没见有查邀请函什么的（~~
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7p42ro5krx.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4xv0jllz0e.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5moa3m9i0q.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.64ebs7avli.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5trhz1vnfz.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7p42ro5krx.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4xv0jllz0e.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.5moa3m9i0q.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.64ebs7avli.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.5trhz1vnfz.avif" alt="" />
 </div>
 
 一天下来薅了一堆没啥用的小礼品 xD
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2rvlxtnxqe.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2rvlxtnxqe.avif" alt="" />
 </center>
 
 ## 再次与 Vlex 相聚
@@ -525,15 +525,15 @@ GDPS 是今年参加的最后一个大型活动了，那天，我看机器人看
 本来想在人民广场碰头，以为那边会很有圣诞氛围，然非也……不过那边的白鸽广场是真的名副其实，第一次见那么多鸽子聚在一起，发出低沉的咕咕声，有点小壮观。
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.39lnmg9k56.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.70at7oyfc6.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.58hucsf2gj.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.39lnmg9k56.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.70at7oyfc6.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.58hucsf2gj.avif" alt="" />
 </div>
 
 下午直接逛 ZX 创趣场了，感觉自己的片历好少……不过也不需要那么丰富。
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.b9dixe2vn.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.b9dixe2vn.avif" alt="" />
 </center>
 
 ~~有关我和我的同性朋友去私人影院呆了一下午（~~
@@ -541,29 +541,29 @@ GDPS 是今年参加的最后一个大型活动了，那天，我看机器人看
 看的<i>《蓦然回首》</i>，很好的一部动漫，vlex 的赏析也很有深度，学习学习 \:P
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3rbpb0npxo.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3rbpb0npxo.avif" alt="" />
 </center>
 
 剩下一点时间也不够看别的了，无意间刷到了神奇的<i>《我的世界大电影》</i>，难绷……
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3d59k5ff2e.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3d59k5ff2e.avif" alt="" />
 </center>
 
 当然少不了夜之城<s>（虽然快要看吐了，但每次去外滩都还是会随便拍几张）</s>
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3rbpb0npxa.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6ikrj39tyw.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.92qlvq9skv.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3rbpb0npxa.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6ikrj39tyw.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.92qlvq9skv.avif" alt="" />
 </div>
 
 Vlex 送的圣诞礼物 \:D 必须好好珍藏～
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4ubelwjjs6.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.4xv0jmcmhh.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2kse2eytak.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4ubelwjjs6.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4xv0jmcmhh.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2kse2eytak.avif" alt="" />
 </div>
 
 # 健身 | 对抗久坐与熵增
@@ -579,8 +579,8 @@ Vlex 送的圣诞礼物 \:D 必须好好珍藏～
 希望明年我能更好的均衡健身和学习的时间。
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.pft6wm11f.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5j4o31ztp7.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.pft6wm11f.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.5j4o31ztp7.avif" alt="" />
 </div>
 
 # 阅读 | 被撑爆的小书架
@@ -590,14 +590,14 @@ Vlex 送的圣诞礼物 \:D 必须好好珍藏～
 这是上半年的书架：
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1sfihtpzcz.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8s3rzq2c7k.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1sfihtpzcz.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8s3rzq2c7k.avif" alt="" />
 </div>
 
 这是下半年的书架：
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7lkgxkn60g.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7lkgxkn60g.avif" alt="" />
 </div>
 
 学校里还有一堆书没搬回来，估计到时候得堆地上了 :skull:
@@ -605,13 +605,13 @@ Vlex 送的圣诞礼物 \:D 必须好好珍藏～
 少有人走的路系列自从看了第一部，就深深爱上了。里面有些内容真的有救赎当时的我，然后就全部拿下了。不过这一整个系列带给我的更多的是一些理想化的东西，这个暑假的经历却让我更深切的感受到了，没有现实主义的支撑，理想主义最终只能成为空想主义。
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6t7l96g4ch.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6t7l96g4ch.avif" alt="" />
 </center>
 
 这两本哲学史也是在 vlex 的推荐下去读的，本以为历史是枯燥乏味的，但是这两本书其实还挺有趣。
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.92qlsvnlpe.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.92qlsvnlpe.avif" alt="" />
 </center>
 
 今年先对不同的哲学思想都做一个浅浅的了解，明年去研读一下存在主义相关的书籍。
@@ -627,8 +627,8 @@ And.. I wanna a bigger bookshelf :(
 这就是博主的浪漫吗哈哈哈，希望我的博客一辈子不关闭。
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.eszdsqr67.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1lcamefnre.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.eszdsqr67.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1lcamefnre.avif" alt="" />
 </div>
 
 看了下今年居然发了 37 篇博客，太高产了（
@@ -650,11 +650,11 @@ And.. I wanna a bigger bookshelf :(
 深夜男娘陪聊是什么？我怎么不知道？毁了兄弟，被 discord 毁了……
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2dp66x23o3.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6pnzeglf61.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6pnzeglf66.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3k8hfir08r.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3govhsxxio.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2dp66x23o3.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6pnzeglf61.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6pnzeglf66.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3k8hfir08r.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3govhsxxio.avif" alt="" />
 </div>
 
 ## Bilibili
@@ -662,8 +662,8 @@ And.. I wanna a bigger bookshelf :(
 用的比去年少了，bro 正在脱离互联网（bushi
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9ddfovh99f.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.64ebs7trmx.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.9ddfovh99f.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.64ebs7trmx.avif" alt="" />
 </div>
 
 ## Spotify
@@ -671,10 +671,10 @@ And.. I wanna a bigger bookshelf :(
 好像比去年的年报好看很多？
 
 <div class="gallery">
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.lw7c2po3v.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6wr79yehxq.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.szf7ibak4.avif" alt="" />
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7axn0tmssz.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.lw7c2po3v.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6wr79yehxq.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.szf7ibak4.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7axn0tmssz.avif" alt="" />
 </div>
 
 ## Hypixel
@@ -682,5 +682,5 @@ And.. I wanna a bigger bookshelf :(
 终于拿下 _Legendary Fisher_ 的头衔，这下真可以养老了（
 
 <center>
-  <img src="https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.92qlx8dz25.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.92qlx8dz25.avif" alt="" />
 </center>

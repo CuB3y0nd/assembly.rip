@@ -18,7 +18,7 @@ export const siteConfig: SiteConfig = {
   },
   banner: {
     enable: true,
-    src: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1lc58276dr.avif",
+    src: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1lc58276dr.avif",
     position: "center",
     credit: {
       enable: true,
@@ -55,7 +55,7 @@ export const navBarConfig: NavBarConfig = {
 
 export const profileConfig: ProfileConfig = {
   avatar:
-    "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.6bhhs4m1zp.avif",
+    "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6bhhs4m1zp.avif",
   name: "CuB3y0nd",
   bio: "心之所向，一苇以航。",
   links: [

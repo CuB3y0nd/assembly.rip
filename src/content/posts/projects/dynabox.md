@@ -3,7 +3,7 @@ title: "Dynabox: 跨平台 glibc 编译，调试相关问题的统一解决方�
 published: 2025-08-31
 updated: 2025-09-01
 description: "The Swiss Army knife for tackle glibc related problems."
-image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.39li58ci9o.avif"
+image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.39li58ci9o.avif"
 tags: ["Tools", "Notes"]
 category: "Tools"
 draft: false

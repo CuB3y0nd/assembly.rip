@@ -3,7 +3,7 @@ title: "Write-ups: idekCTF 2025"
 published: 2025-09-19
 updated: 2025-09-19
 description: "Write-ups for idekCTF 2025 pwn aspect."
-image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2h8mjvhi43.avif"
+image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2h8mjvhi43.avif"
 tags: ["Pwn", "Write-ups"]
 category: "Write-ups"
 draft: false

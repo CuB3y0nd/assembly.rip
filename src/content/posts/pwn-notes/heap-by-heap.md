@@ -3,7 +3,7 @@ title: "Heap by Heap"
 published: 2025-08-15
 updated: 2025-08-15
 description: "This note is for recording my heap exploitation learning journey."
-image: "https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1apal2wi8c.avif"
+image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1apal2wi8c.avif"
 tags: ["Pwn", "Heap", "Notes"]
 category: "Notes"
 draft: true

@@ -41,13 +41,13 @@ beleaf: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically lin
 
 丢到 IDA 里发现，输入长度小于等于 32 (0x20) 会输出 `Incorrect!`，所以 `flag` 长度起码 33 字节。
 
-![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.70amwgdgyr.avif)
+![](https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.70amwgdgyr.avif)
 
 接下来进入一个简单的 for 循环，将我们输入的每一个字符逐一放到 `calc_idx` 函数中，并将返回值与 `valid_arr[i]` 比较，如果不等于 `valid_arr[i]` 则输出 `Incorrect!`。如果所有字符都通过了验证，则输出 `Correct!`
 
 再看看 `calc_idx` 函数，大致可以看出它的作用是根据传入的字符查找它在 `charset` 中对应的索引。
 
-![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.7axgpltfnz.avif)
+![](https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7axgpltfnz.avif)
 
 `calc_idx` 的核心如下：
 
@@ -162,7 +162,7 @@ aaaa
 Thu Jul 25 05:35:00 PM CST 2024
 ```
 
-![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.102grq5d0o.avif)
+![](https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.102grq5d0o.avif)
 
 从 IDA 里面可以看出，程序可以将一个 24 (0x18) 字节 数据读入 `buf` 中。如果 `v5` 的 HIDWORD（高位四字节）等于 `0xCAF3BAEE` 则返回 shell，否则返回系统时间。
 
@@ -173,7 +173,7 @@ Thu Jul 25 05:35:00 PM CST 2024
 1. 由于 `buf` 只有 16 字节大小（2 \* \_\_int64），而 `read` 却可以读取 24 字节数据，所以这里存在栈溢出漏洞，可以覆盖变量 `v5` 的内容。所以 payload 可以是 16（填满 buf） + 4（填满 4 字节低位使后面的数据可以直接覆盖高位数据，也就是做判断的部分） 字节垃圾数据 + `0xCAF3BAEE`。
 2. 通过调试知道溢出点是 20 (0x14)：
 
-![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.2vf1kcicff.avif)
+![](https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2vf1kcicff.avif)
 
 ## Exploit
 
@@ -232,7 +232,7 @@ I don't know that! Auuuuuuuugh!
 
 咋一看好像没啥东西，丢到 IDA 里面瞧瞧：
 
-![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3uv4xilla4.avif)
+![](https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3uv4xilla4.avif)
 
 显然，根据伪代码可以轻易的知道如何绕过前两问的输入。然后第三问采用了一个 `gets()` 函数接收输入，输入保存到一个 43 字节大小的字符数组里面。由于 `gets()` 不检查输入大小，因此超过 `input` 容量的内容会溢出到 `v5`。最后如果 `v5 == 0xDEA110C8` 则输出 `flag`。
 
@@ -301,25 +301,25 @@ Invalid Password, Try Again!
 
 可能是要获得密码打印 `flag`，丢到 IDA 看看：
 
-![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.9dd9dnufbd.avif)
+![](https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.9dd9dnufbd.avif)
 
 看伪代码发现，就算提供了正确的密码也只是输出一条消息而已，得到密码好像并没有什么用。这就是一个障眼法！
 
-![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.41ycsy8x2i.avif)
+![](https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.41ycsy8x2i.avif)
 
 虽然不需要密码，但是如果你好奇密码的话，也不是不行... 通过 IDA 我们知道密码是 `P@SSW0RD`，于是乎：
 
-![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.92qfkigcwc.avif)
+![](https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.92qfkigcwc.avif)
 
 这里即使有了正确的密码还是提示密码错误的原因是 `fgets` 函数会把换行符也读进去。所以我们只需要在密码后面加上空字符 `\0` 就可以去掉换行符了。
 
-![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.5trbnutfka.avif)
+![](https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.5trbnutfka.avif)
 
 扯远了...
 
 通过之前的伪代码可以发现，`fgets` 接收的输入大小远超 `input` 可容纳的大小。因此通过调试可以知道溢出 padding 是 20 字节：
 
-![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.pfmyku3iw.avif)
+![](https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.pfmyku3iw.avif)
 
 那么有了溢出 padding 后怎么获取 flag 呢？
 
@@ -327,11 +327,11 @@ Invalid Password, Try Again!
 
 嗯...这样就很清晰了。通过 IDA 直接看 `flag` 在 `.bss` 中的地址：
 
-![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.51eg64dvpk.avif)
+![](https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.51eg64dvpk.avif)
 
 当然，如果你想验证它是不是真我们所想覆盖了 `v6` 让 `puts` 输出 `flag` 的内容：
 
-![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.1vyy76k20n.avif)
+![](https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1vyy76k20n.avif)
 
 ## Exploit
 
@@ -386,7 +386,7 @@ WOW:0x40060d
 >wow
 ```
 
-![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.3k8b4day6h.avif)
+![](https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3k8b4day6h.avif)
 
 这种题真就是闭着眼睛做... 一眼出思路：溢出 `v5` 覆盖返回地址为 `easy` 函数即可。
 
@@ -747,7 +747,7 @@ pilot: ELF 64-bit LSB executable, x86-64, version 1 (SYSV), dynamically linked, 
 
 伪代码如下：
 
-![](https://ghproxy.net/https://raw.githubusercontent.com/CuB3y0nd/picx-images-hosting/master/.8ojztnbibt.avif)
+![](https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8ojztnbibt.avif)
 
 可以看到除了 `main` 函数之外就没有别的函数了，那就不是 `ret2win` 题型。
 
