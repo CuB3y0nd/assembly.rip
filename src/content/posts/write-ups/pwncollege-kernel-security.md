@@ -19,6 +19,10 @@ draft: false
 
 ::github{repo="CuB3y0nd/panix"}
 
+之后又因为每次一个 exp 脚本都要写很长很长，而且很多功能重复，就写了一个专用于打 kernel 的 C 版本 pwntools:
+
+::github{repo="CuB3y0nd/axium"}
+
 # Level 1.0
 
 ## Information
@@ -931,6 +935,8 @@ int load_flag()
 ```
 
 是时候祭出我写的 [axium](https://github.com/CuB3y0nd/axium) 了，目前是根据我 pwncollege 做题遇到的需求在拓展功能，后面还会继续更新更多内容，希望能成为 kernel exploitation 界的 pwntools xD
+
+::github{repo="CuB3y0nd/panix"}
 
 看看这道题用上 axium 后的实战效果：
 
