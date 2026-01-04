@@ -936,7 +936,7 @@ int load_flag()
 
 是时候祭出我写的 [axium](https://github.com/CuB3y0nd/axium) 了，目前是根据我 pwncollege 做题遇到的需求在拓展功能，后面还会继续更新更多内容，希望能成为 kernel exploitation 界的 pwntools xD
 
-::github{repo="CuB3y0nd/panix"}
+::github{repo="CuB3y0nd/axium"}
 
 看看这道题用上 axium 后的实战效果：
 
