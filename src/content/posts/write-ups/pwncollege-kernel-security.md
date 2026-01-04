@@ -1018,7 +1018,7 @@ int main(void) {
   snprintf(real_path, sizeof(real_path), "/proc/%d/mem", child_pid);
 
   patch(sc, sc_size, marker, strlen(marker), real_path, strlen(real_path));
-  t_sendline(t, sc, sc_size);
+  sendline(t, sc, sc_size);
 
   return 0;
 }
