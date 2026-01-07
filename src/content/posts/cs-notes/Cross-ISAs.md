@@ -1,0 +1,274 @@
+---
+title: "The Cross-ISAs Notebook"
+published: 2026-01-07
+updated: 2026-01-07
+description: "Common ISAs speedrun notebook."
+image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6m47vyn1pe.avif"
+tags: ["Cross-ISA"]
+category: "Notes"
+draft: false
+---
+
+# ARM
+
+## Data processing
+
+### Data Moving
+
+Similar to amd64, the `mov` instruction can be used. However, literal values must be prefixed with the `#` symbol!
+
+```asm showLineNumbers=false
+mov x1, #0x1337
+```
+
+aarch64 registers are 64 bits in size, but the `mov` instruction only works with 16 bit immediate values.
+
+In order to move larger literal values, the `mov` and `movk` instructions are needed.
+
+`movk` loads a value into the destination register with a _specific bitshift_, retaining all other bytes.
+
+```asm showLineNumbers=false
+mov x1, #0xbeef
+movk x1, #0xdead, lsl #16
+```
+
+Results in `x1` containing the value `0xdeadbeef`.
+
+### Load / Store
+
+Memory addresses cannot be directly accessed in aarch64. Only registers can be operated on.
+
+Values must be loaded from memory to a register with `ldr` and written back to memory via `str`.
+
+For example, to increment a value located at memory address `0x1337`, the following instructions would be needed:
+
+```asm showLineNumbers=false
+mov x1, #0x1337
+ldr x0, [x1]
+add x0, x0, #1
+str x0, [x1]
+```
+
+Locations memory addresses can also be offset from. Example:
+
+```asm showLineNumbers=false
+mov x1, #0x4000
+ldr x0, [x1, #8]
+```
+
+Would load 8 bytes stored at `0x4008` into `x0`.
+
+Consecutive memory addresses can be loaded and stored in a single instruction as a pair:
+
+```asm showLineNumbers=false
+ldp x0, x1, [sp]
+stp x0, x1, [sp]
+```
+
+Above is equivalent to the following instructions:
+
+```asm showLineNumbers=false
+ldr x0, [sp]
+ldr x1, [sp, #8]
+str x0, [sp]
+str x1, [sp, #8]
+```
+
+### Stack
+
+aarch64 does not have the `push/pop` instructions to work with the stack, instead, you must use `ldr` and `str` to retrieve values from the stack.
+
+Fortunately, both `ldr` and `str` have the ability to increment the address passed in pre/post access.
+
+This feature can be used to perform the same action:
+
+Popping the stack would be of the form:
+
+```asm showLineNumbers=false
+ldr x1, [sp], #16
+```
+
+This loads the value located at the stack pointer into register `x1` and then adds 16 to the stack.
+
+Pushing to the stack would be of the form:
+
+```asm showLineNumbers=false
+str x1, [sp, #-16]!
+```
+
+This subtracts 16 from the stack pointer and then stores the value in `x1` at `sp`.
+
+:::note
+In aarch64, the stack pointer must be 16 byte aligned! Accessing the stack pointer when it is not properly aligned will result in a fault!
+
+There is different syntax for accessing memory at an offset, _pre-indexing_, and _post-indexing_. All of these forms are used extensively in aarch64.
+:::
+
+## Arithmetic Instructions
+
+Arithmetic instructions take three arguments:
+
+```asm showLineNumbers=false
+add x0, x1, x2
+```
+
+This is equivalent to `x0 = x1 + x2`.
+
+```asm showLineNumbers=false
+madd x0, x0, x1, x2
+```
+
+This is equivalent to `x0 = x2 + (x0 * x1)`.
+
+Modulo in aarch64 cannot be done in a single instruction.
+
+`r = a % b` is equivalent to:
+
+```plaintext
+q = a / b
+r = a - q * b
+```
+
+For example, calculate `x0 = x0 % x1`:
+
+```asm showLineNumbers=false
+sdiv x2, x0, x1
+msub x0, x2, x1, x0
+```
+
+## Branch Instructions
+
+Loops can be created using conditional branch instructions.
+
+The branch instruction in aarch64 is `b`.
+
+To conditionally branch a dot suffix (ex: `.gt`) is appended resulting in `b.gt`. This would be equivalent to `jg` in amd64.
+
+## Functions
+
+Function calls in aarch64 are done with the branch and link instruction `bl`.
+
+The functions return value is stored in register `x0`.
+
+The `bl` instruction:
+
+- does a _PC relative_ jump the specified location
+- and stores the return address in the link register `lr` (aka `x30`)
+
+It is the caller's responsibility to store the existing `lr` value frame pointer and any needed values in `x0` - `x15`.
+
+Registers `x16` - `x18` will be discussed later.
+
+Registers `x19` - `x28` are callee saved.
+
+The saved return address is stored in a special link register `lr` (aka `x30`).
+
+The saved frame pointer is stored in a special frame register `fr` (aka `x29`).
+
+Given the role of `x29` and `x30`, it is common to see a function prologue similar to:
+
+```asm showLineNumbers=false
+stp x29, x30, [sp, #-48]!
+mov x29, sp
+```
+
+Here, the stack pointer is decremented to create a _function frame_ and `lr` and `fr` are stored on the stack. The last instruction shown sets the frame pointer.
+
+Note that the stack pointer and frame pointer are equal in this case. Local variables are stored **ABOVE** the frame pointer. The stack pointer may decrement further when passing arguments via the stack or for dynamic stack allocations (`alloca`).
+
+Similarly, a function epilogue consists of:
+
+```asm showLineNumbers=false
+ldp x29, x30, [sp], #48
+ret
+```
+
+Which restores `lr`, `fr` and the stack before returning.
+
+### Example 1
+
+Function form `calc_avg(ptr, count)`
+
+where:
+
+- `ptr` is the start of the array
+- `count` is the number of 64 bit numbers in the array
+
+```asm showLineNumbers=false
+mov x0, ptr
+mov x1, 64
+bl calc_avg
+
+calc_avg:
+    stp x29, x30, [sp, #-0x10]!
+    mov x29, sp
+    mov x2, xzr // sum = 0
+    mov x3, x1  // original_count = count
+loop:
+    cbz x1, done
+    ldr x4, [x0], #0x8
+    add x2, x2, x4
+    subs x1, x1, #0x1
+    b.ne loop
+done:
+    sdiv x0, x2, x3
+    mov sp, x29
+    ldp x29, x30, [sp], #0x10
+    ret
+```
+
+### Example 2
+
+Function form `fib(pos)`
+
+where:
+
+- `pos` is position in the fibonacci sequence
+
+```asm showLineNumbers=false
+// fib(0) = 0
+// fib(1) = 1
+// fib(n) = fib(n-1) + fib(n-2)
+
+fib:
+    stp x29, x30, [sp, #-0x10]!
+    mov x29, sp
+    cbz x0, .ret0       // if pos == 0, return 0
+    cmp x0, #0x1
+    b.eq .ret1          // if pos == 1, return 1
+
+    mov x1, #0x0        // prev = 0x0
+    mov x2, #0x1        // curr = 0x1
+    mov x3, x0          // counter = pos
+.loop:
+    add x4, x1, x2      // next = prev + curr
+    mov x1, x2          // prev = curr
+    mov x2, x4          // curr = next
+    subs x3, x3, #0x1
+    cmp x3, #0x1
+    b.gt .loop
+
+    mov x0, x2          // return curr
+    mov sp, x29
+    ldp x29, x30, [sp], #0x10
+    ret
+.ret0:
+    mov x0, xzr
+    mov sp, x29
+    ldp x29, x30, [sp], #0x10
+    ret
+.ret1:
+    mov x0, #0x1
+    mov sp, x29
+    ldp x29, x30, [sp], #0x10
+    ret
+```
+
+## References
+
+- [Learn the Architecture Guides](https://www.arm.com/architecture/learn-the-architecture/)
+- [A64 Instruction Set Architecture Guide](https://developer.arm.com/documentation/102374/latest/)
+
+# MIPS
+
+TODO
