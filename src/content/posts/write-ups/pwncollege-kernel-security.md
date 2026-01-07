@@ -1128,8 +1128,8 @@ int main(void) {
 
   payload_t payload;
   payload_init(&payload);
-  PAYLOAD_PUSH_SC(&payload, sc_write);
-  PAYLOAD_PUSH_SC(&payload, sc_side_channel);
+  payload_push(&payload, sc_write.data, sc_write.size);
+  payload_push(&payload, sc_side_channel.data, sc_side_channel.size);
 
   sendline(t, payload.data, payload.size);
 
