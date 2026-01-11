@@ -124,7 +124,7 @@ Modulo in aarch64 cannot be done in a single instruction.
 
 `r = a % b` is equivalent to:
 
-```plaintext
+```plaintext showLineNumbers=false
 q = a / b
 r = a - q * b
 ```
