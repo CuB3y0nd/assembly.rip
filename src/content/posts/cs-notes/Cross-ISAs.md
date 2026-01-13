@@ -163,7 +163,7 @@ Registers `x19` - `x28` are callee saved.
 
 The saved return address is stored in a special link register `lr` (aka `x30`).
 
-The saved frame pointer is stored in a special frame register `fr` (aka `x29`).
+The saved frame pointer is stored in a special frame register `fp` (aka `x29`).
 
 Given the role of `x29` and `x30`, it is common to see a function prologue similar to:
 
@@ -172,7 +172,7 @@ stp x29, x30, [sp, #-48]!
 mov x29, sp
 ```
 
-Here, the stack pointer is decremented to create a _function frame_ and `lr` and `fr` are stored on the stack. The last instruction shown sets the frame pointer.
+Here, the stack pointer is decremented to create a _function frame_ and `lr` and `fp` are stored on the stack. The last instruction shown sets the frame pointer.
 
 Note that the stack pointer and frame pointer are equal in this case. Local variables are stored **ABOVE** the frame pointer. The stack pointer may decrement further when passing arguments via the stack or for dynamic stack allocations (`alloca`).
 
@@ -183,7 +183,7 @@ ldp x29, x30, [sp], #48
 ret
 ```
 
-Which restores `lr`, `fr` and the stack before returning.
+Which restores `lr`, `fp` and the stack before returning.
 
 ### Example 1
 
