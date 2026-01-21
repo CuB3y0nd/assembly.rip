@@ -339,6 +339,8 @@ services:
 
 然后设置了调用 `read` 用到的几个寄存器，`rax` 不用管，本来就是 `0`，用它设置一下 `rdi`，然后利用内存中的残留值设置 `rdx`，`rsi` 可以最后栈迁移到 shellcode 的时候设置。
 
+最后就是栈迁移回 shellcode，通过操作 `push`，`pop` 定位到要覆盖的指令处，最后将 `\x05` 填上去即可。
+
 ## Exploit
 
 ```python
