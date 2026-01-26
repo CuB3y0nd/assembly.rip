@@ -1,0 +1,236 @@
+---
+title: "Intel Control-flow Enforcement Technology Bypass"
+published: 2026-01-26
+updated: 2026-01-26
+description: "硬件防护并不终结利用，只是改变了路径。"
+image: "https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.mkv52oht.avif"
+tags: ["Pwn", "Intel CET", "Notes"]
+category: "Notes"
+draft: false
+---
+
+# 简介
+
+[Intel Control-flow Enforcement Technology (CET)](https://en.wikipedia.org/wiki/Control-flow_integrity) 由 [Shadow stack (SHSTK)](https://en.wikipedia.org/wiki/Shadow_stack) 和 [Indirect branch tracking (IBT)](https://en.wikipedia.org/wiki/Indirect_branch_tracking) 两部分组成，它们分别实现了不同的防护：
+
+> The kernel must map a region of memory for the shadow stack not writable to user space programs except by special instructions. The shadow stack stores a copy of the return address of each CALL. On a RET, the processor checks if the return address stored in the normal stack and shadow stack are equal. If the addresses are not equal, the processor generates an INT #21 (Control Flow Protection Fault).
+>
+> Indirect branch tracking detects indirect JMP or CALL instructions to unauthorized targets. It is implemented by adding a new internal state machine in the processor. The behavior of indirect JMP and CALL instructions is changed so that they switch the state machine from IDLE to WAIT_FOR_ENDBRANCH. In the WAIT_FOR_ENDBRANCH state, the next instruction to be executed is required to be the new ENDBRANCH instruction (ENDBR32 in 32-bit mode or ENDBR64 in 64-bit mode), which changes the internal state machine from WAIT_FOR_ENDBRANCH back to IDLE. Thus every authorized target of an indirect JMP or CALL must begin with ENDBRANCH. If the processor is in a WAIT_FOR_ENDBRANCH state (meaning, the previous instruction was an indirect JMP or CALL), and the next instruction is not an ENDBRANCH instruction, the processor generates an INT #21 (Control Flow Protection Fault). On processors not supporting CET indirect branch tracking, ENDBRANCH instructions are interpreted as NOPs and have no effect.
+
+简单来说就是如下表所示的这些：
+
+| 特性         | SHSTK                  | IBT                          |
+| ------------ | ---------------------- | ---------------------------- |
+| 所属体系     | Intel CET              | Intel CET                    |
+| 防御重点     | 函数返回地址           | 间接跳转 / 调用              |
+| 防御攻击类型 | ROP                    | JOP / COP                    |
+| 检测时机     | 执行 RET 指令时        | 执行间接跳转后的下一条指令   |
+| 硬件实现     | 维护独立的受保护栈空间 | 状态机检查特定的起始标记指令 |
+
+# 检查硬件支持性
+
+使用以下脚本测试 CPU 是否支持 SHSTK 和 IBT：
+
+```c
+#include <cpuid.h>
+#include <stdint.h>
+#include <stdio.h>
+
+int cpu_supports_cet_shadow_stack() {
+  uint32_t eax = 0, ebx = 0, ecx = 0, edx = 0;
+  __cpuid_count(7, 0, eax, ebx, ecx, edx);
+  return (ecx & (1 << 7)) != 0;
+}
+
+int cpu_supports_cet_ibt() {
+  uint32_t eax = 0, ebx = 0, ecx = 0, edx = 0;
+  __cpuid_count(7, 0, eax, ebx, ecx, edx);
+  return (edx & (1 << 20)) != 0;
+}
+
+int main() {
+  if (cpu_supports_cet_shadow_stack()) {
+    puts("CET Shadow Stack is supported");
+  }
+
+  if (cpu_supports_cet_ibt()) {
+    puts("CET IBT is supported");
+  }
+}
+```
+
+由于我的 CPU 是 `AMD Ryzen 7 4800H`，所以硬件层还没支持 CET，只能通过 patch 后的 QEMU 模拟了。
+
+# 模拟环境搭建
+
+这里使用的是 [QEMU-8.2.2-CET: A Pseudo-Intel-CET Plugin of QEMU](https://github.com/yikesoftware/qemu-8.2.2-cet)，提供了一个伪 Intel CET 插件用于模拟 SHSTK 和 IBT 。
+
+这个项目最后更新在两年前，而我的内核版本，`gcc` 和 `glibc` 都比较新，所以还需要自己 patch 几个地方才可以编译。
+
+```plaintext showLineNumbers=false
+λ ~/ uname -a
+Linux Lux 6.18.6-zen1-1-zen #1 ZEN SMP PREEMPT_DYNAMIC Sun, 18 Jan 2026 00:33:55 +0000 x86_64 GNU/Linux
+λ ~/ ldd --version
+ldd (GNU libc) 2.42
+Copyright (C) 2024 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+Written by Roland McGrath and Ulrich Drepper.
+λ ~/ gcc --version
+gcc (GCC) 15.2.1 20260103
+Copyright (C) 2025 Free Software Foundation, Inc.
+This is free software; see the source for copying conditions.  There is NO
+warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+```
+
+## Patch QEMU-8.2.2-CET
+
+要改的地方不多，也就下面这三个文件：
+
+```diff showLineNumbers=false
+diff --git a/linux-user/strace.c b/linux-user/strace.c
+index cf26e5526..a18ad1ee6 100644
+--- a/linux-user/strace.c
++++ b/linux-user/strace.c
+@@ -51,7 +51,8 @@ struct flags {
+ };
+
+ /* No 'struct flags' element should have a zero mask. */
+-#define FLAG_BASIC(V, M, N)      { V, M | QEMU_BUILD_BUG_ON_ZERO(!(M)), N }
++// #define FLAG_BASIC(V, M, N)      { V, M | QEMU_BUILD_BUG_ON_ZERO(!(M)), N }
++#define FLAG_BASIC(V, M, N)      { V, M, N }
+
+ /* common flags for all architectures */
+ #define FLAG_GENERIC_MASK(V, M)  FLAG_BASIC(V, M, #V)
+```
+
+```diff showLineNumbers=false
+diff --git a/linux-user/syscall.c b/linux-user/syscall.c
+index 189eec0ec..e0205582c 100644
+--- a/linux-user/syscall.c
++++ b/linux-user/syscall.c
+@@ -365,18 +365,19 @@ _syscall3(int, sys_sched_getaffinity, pid_t, pid, unsigned int, len,
+ _syscall3(int, sys_sched_setaffinity, pid_t, pid, unsigned int, len,
+           unsigned long *, user_mask_ptr);
+ /* sched_attr is not defined in glibc */
+-struct sched_attr {
+-    uint32_t size;
+-    uint32_t sched_policy;
+-    uint64_t sched_flags;
+-    int32_t sched_nice;
+-    uint32_t sched_priority;
+-    uint64_t sched_runtime;
+-    uint64_t sched_deadline;
+-    uint64_t sched_period;
+-    uint32_t sched_util_min;
+-    uint32_t sched_util_max;
+-};
++/* Use kernel-provided struct sched_attr */
++// struct sched_attr {
++//     uint32_t size;
++//     uint32_t sched_policy;
++//     uint64_t sched_flags;
++//     int32_t sched_nice;
++//     uint32_t sched_priority;
++//     uint64_t sched_runtime;
++//     uint64_t sched_deadline;
++//     uint64_t sched_period;
++//     uint32_t sched_util_min;
++//     uint32_t sched_util_max;
++// };
+ #define __NR_sys_sched_getattr __NR_sched_getattr
+ _syscall4(int, sys_sched_getattr, pid_t, pid, struct sched_attr *, attr,
+           unsigned int, size, unsigned int, flags);
+```
+
+```diff showLineNumbers=false
+diff --git a/linux-user/signal-common.h b/linux-user/signal-common.h
+index 3e2dc604c..3f59ffe82 100644
+--- a/linux-user/signal-common.h
++++ b/linux-user/signal-common.h
+@@ -113,7 +113,9 @@ int process_sigsuspend_mask(sigset_t **pset, target_ulong sigset,
+ static inline void finish_sigsuspend_mask(int ret)
+ {
+     if (ret != -QEMU_ERESTARTSYS) {
+-        TaskState *ts = (TaskState *)thread_cpu->opaque;
++        // TaskState *ts = (TaskState *)thread_cpu->opaque;
++        CPUState *cpu = current_cpu;
++        TaskState *ts = (TaskState *)cpu->opaque;
+         ts->in_sigsuspend = 1;
+     }
+ }
+```
+
+## Build
+
+然后进入项目根目录，执行以下指令来 build：
+
+```shellsession frame=none showLineNumbers=false
+mkdir build && cd build
+../configure --enable-plugins --enable-seccomp --enable-tcg-interpreter --target-list=x86_64-linux-user --disable-docs --disable-werror
+make -j`nproc`
+```
+
+Build 完插件会生成在 `./build/tests/plugin/libcet.so`。
+
+我们只需要创建一个软链接：
+
+```shellsession frame=none showLineNumbers=false
+ln -s ./build/qemu-x86_64 /path/to/qemu-x86_64-cet
+ln -s ./build/tests/plugin/libcet.so /path/to/plugin/libcet.so
+```
+
+然后使用下面任意指令来执行编译出来带 SHSTK 或者 IBT 的程序进行测试：
+
+```shellsession frame=none showLineNumbers=false
+# without the plugin logs
+/path/to/qemu-x86_64-cet -plugin /path/to/plugin/libcet.so,mode=user,ibt=on,ss=on,cpu_slots=128 ./test_cet
+
+# with the plugin logs
+/path/to/qemu-x86_64-cet -plugin /path/to/plugin/libcet.so,mode=user,ibt=on,ss=on,cpu_slots=128 -d plugin ./test_cet
+```
+
+# Challenge
+
+```c
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+void timedout(int) {
+  puts("timedout");
+  exit(0);
+}
+
+char g_buf[256];
+
+int main() {
+  char buf[16];
+  long long int arg1 = 0;
+  long long int arg2 = 0;
+  void (*func)(long long int, long long int, long long int) = NULL;
+
+  alarm(30);
+  signal(SIGALRM, timedout);
+
+  fgets(g_buf, 256, stdin); // My mercy
+  fgets(buf, 256, stdin);
+  if (func)
+    func(arg1, arg2, 0);
+}
+```
+
+题目代码如上，使用下面的脚本来编译：
+
+```shellsession frame=none showLineNumbers=false
+gcc chall.c -fno-stack-protector -fcf-protection=full -mshstk -fno-omit-frame-pointer -static -o chall
+```
+
+## Write-up
+
+TODO
+
+## Exploit
+
+TODO
