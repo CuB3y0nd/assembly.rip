@@ -88,6 +88,7 @@ const search = async (keyword: string, isDesktop: boolean): Promise<void> => {
 
 onMount(() => {
 	const initializeSearch = () => {
+		if (initialized) return;
 		initialized = true;
 		pagefindLoaded =
 			typeof window !== "undefined" &&
@@ -104,6 +105,12 @@ onMount(() => {
 		);
 		initializeSearch();
 	} else {
+		// Check if already loaded
+		if (typeof window !== "undefined" && window.pagefind) {
+			console.log("Pagefind already available on mount.");
+			initializeSearch();
+		}
+
 		document.addEventListener("pagefindready", () => {
 			console.log("Pagefind ready event received.");
 			initializeSearch();
