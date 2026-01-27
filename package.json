@@ -6,7 +6,7 @@
     "dev": "astro dev",
     "start": "astro dev",
     "check": "astro check",
-    "build": "astro build && pagefind --site dist && (cp -r dist/pagefind .vercel/output/static/ 2>/dev/null || true)",
+    "build": "astro build && pagefind --site .vercel/output/static",
     "preview": "astro preview",
     "astro": "astro",
     "type-check": "tsc --noEmit --isolatedDeclarations",
