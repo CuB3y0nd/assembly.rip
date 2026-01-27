@@ -29,3 +29,4 @@ yarn.lock
 # ide
 .idea
 *.iml
+.env*.local
