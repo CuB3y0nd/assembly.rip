@@ -3,7 +3,7 @@ title: "The Fuzzy Notebook"
 published: 2026-02-07
 updated: 2026-02-08
 description: "AFL++ learning notes."
-image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.lw906fscu.avif"
+image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.mldvs2ca.avif"
 tags: ["Fuzz", "Notes"]
 category: "Notes"
 draft: false
