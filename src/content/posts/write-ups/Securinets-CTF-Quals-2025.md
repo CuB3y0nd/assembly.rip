@@ -302,25 +302,25 @@ services:
 那我们只要想办法弄到 `\x0f` 和 `\x05` 就成功了一半。观察内存，发现有一个现成的 `\x05`：
 
 <center>
-  <img src="https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.2rvmves3vy.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2rvmves3vy.avif" alt="" />
 </center>
 
 虽然也有现成的 `\x0f`，但是它行吗？我们可以做一个简单的测试，直接找一片空内存改，然后看看解析出来是什么指令：
 
 <center>
-  <img src="https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.32igoksjy3.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.32igoksjy3.avif" alt="" />
 </center>
 
 并不是我们期望的 `syscall`，很简单，因为 `amd64` 是小端序的，所以我们不能写 `\x0f`，而是应该写 `0x0f00000000000000`。
 
 <center>
-  <img src="https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.99tuor2zt2.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.99tuor2zt2.avif" alt="" />
 </center>
 
 至于为啥必须这样？因为我的想法是找一个带 `\x0f` 的 `push` or `pop` 指令放在最后，然后用一堆单字节的 `push` or `pop` 将 `\x0f` 卡到第八个字节的位置，最后将事先获取到的 `\x05` 通过 `push` 覆盖掉前面被挤出来的字节，就有了一个 `syscall`。
 
 <center>
-  <img src="https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.5triwpchiq.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.5triwpchiq.avif" alt="" />
 </center>
 
 但是我们怎么保证，这样弄到了 `syscall`，它就一定会执行呢？因为我们不可能跳回到前面 `syscall` 的地方去执行。这就得益于来自上一题的灵感了，因为如果是非法指令的话，CPU 会卡在那里不往下走，但是一旦我们将非法指令替换成了合法指令，它就又能继续往下跑了～
@@ -328,13 +328,13 @@ services:
 这里选的指令是 `pop fs`，实测 `push fs` 不行。
 
 <center>
-  <img src="https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.7lkhrm6jvb.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7lkhrm6jvb.avif" alt="" />
 </center>
 
 所以我的 exp 就不难理解了，一开始的 `0x4d` 个 `pop r15` 是为了弄到 `\x05`，保存在 `r15` 里：
 
 <center>
-  <img src="https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.6f16izwiop.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6f16izwiop.avif" alt="" />
 </center>
 
 然后设置了调用 `read` 用到的几个寄存器，`rax` 不用管，本来就是 `0`，用它设置一下 `rdi`，然后利用内存中的残留值设置 `rdx`，`rsi` 可以最后栈迁移到 shellcode 的时候设置。
@@ -507,7 +507,7 @@ int __fastcall main(int argc, const char **argv, const char **envp)
 先看一下最终的调用链：
 
 <center>
-  <img src="https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.1zirgqfcjo.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1zirgqfcjo.avif" alt="" />
 </center>
 
 熟悉程序生命周期的话，应该知道 `main` 函数返回其实会自动调用 `exit`，由于我们也干不了别的事了，那估计多半就是要去分析 `exit` 的流程找利用点了（有种被引导的感觉）。
@@ -943,7 +943,7 @@ __libio_codecvt_out (struct _IO_codecvt *codecvt, __mbstate_t *statep,
 那现在问题就变成了，如何控制 `rcx` 指向 `system`？调试发现，`rcx` 的计算过程是可逆的，并且可以控制为任意值。具体流程，需要从 `jmp rcx` 开始反向溯源，看它是怎么得来的。最终发现，源头来自执行 [\_IO_wdo_write](https://sourcegraph.com/github.com/bminor/glibc@fb4db64a04ad6c96cd1fbb7e02eb59323b1f2ac2/-/blob/libio/libioP.h?L566) 时的 `lea rcx, [r12 + r13*4]`，`rcx` 从这里被设置后直到执行 `__fct` 都没有被修改过。
 
 <center>
-  <img src="https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.7axo1vqy3o.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7axo1vqy3o.avif" alt="" />
 </center>
 
 观察这条指令，我们不难想到，控制 `rcx` 要么就是令 `r12 = system, r13 = 0`，要么就是令 `r12 = 0, r13 = system // 4`。继续溯源 `r12` 发现，它是 `rsi`，即 `(_f)->_wide_data->_IO_write_base`。由于后面 overlapping 结构体的时候我用到了这个字段，所以我选择了令 `r13 = system // 4`，而 `r13` 也是可控的，为 `rdx`，即 `(_f)->_wide_data->_IO_write_ptr - (_f)->_wide_data->_IO_write_base`。
@@ -951,7 +951,7 @@ __libio_codecvt_out (struct _IO_codecvt *codecvt, __mbstate_t *statep,
 但是直接这样设置发现，并没有得到 `system`，于是我们继续往上溯源，看一下 `rsi` 和 `rdx` 到底是怎么传入的，发现，`rdx` 其实是被动过手脚的……
 
 <center>
-  <img src="https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.32igs2x3uo.avif" alt="" />
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.32igs2x3uo.avif" alt="" />
 </center>
 
 但很显然这是一个可逆计算，YAAAY～

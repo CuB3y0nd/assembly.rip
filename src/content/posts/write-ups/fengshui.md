@@ -3,7 +3,7 @@ title: "此地不宜调试"
 published: 2026-01-19
 updated: 2026-01-20
 description: "有些题，只是今天不宜利用。"
-image: "https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.mkl8eyot.avif"
+image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.mkl8eyot.avif"
 tags: ["Pwn", "Write-ups", "Fengshui"]
 category: "Write-ups"
 draft: false

@@ -3,7 +3,7 @@ title: "Write-ups: Pwnable.tw"
 published: 2026-02-06
 updated: 2026-02-06
 description: "Write-ups for pwnable.tw binary exploitation series."
-image: "https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.7w7c85mlwe.avif"
+image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7w7c85mlwe.avif"
 tags: ["Pwn", "Write-ups"]
 category: "Write-ups"
 draft: false

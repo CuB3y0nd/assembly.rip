@@ -3,7 +3,7 @@ title: "Intel Control-flow Enforcement Technology Bypass"
 published: 2026-01-26
 updated: 2026-01-26
 description: "硬件防护并不终结利用，只是改变了路径。"
-image: "https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.mkv52oht.avif"
+image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.mkv52oht.avif"
 tags: ["Pwn", "Intel CET", "Notes"]
 category: "Notes"
 draft: false
