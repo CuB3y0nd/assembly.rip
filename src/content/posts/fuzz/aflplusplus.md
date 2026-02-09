@@ -1,7 +1,7 @@
 ---
 title: "The Fuzzy Notebook"
 published: 2026-02-07
-updated: 2026-02-08
+updated: 2026-02-09
 description: "AFL++ learning notes."
 image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.mldvs2ca.avif"
 tags: ["Fuzz", "Notes"]
@@ -242,7 +242,7 @@ for i in {0..4}; do
 done
 ```
 
-然后跑 `afl-fuzz -i seeds -o out/ -m none -d -- ./build/simple_crash`，刚跑一秒就把三个 crash 都找到了：
+然后跑 `afl-fuzz -i seeds -o out/ -m 0 -- ./build/simple_crash`，刚跑一秒就把三个 crash 都找到了：
 
 <center>
   <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.et14gm2kg.avif" alt="" />
@@ -251,7 +251,7 @@ done
 可以看到第一个对上了 Case 2，第二个对上了 Case 1，第三个对上了 Case 3。
 
 :::important
-第四个 Case 找不到，那时因为当触发的 crash 是由 Undefined Behaviour 导致时，AFL++ 会自动把它剔除掉。因为这些 UB 可能在不同编译 / 优化 / 运行中表现各不相同，从而不能产生一种稳定可复现的 crash 。
+第四个 Case 找不到，那时因为当触发的 crash 是由 Undefined Behaviour 导致时，AFL++ 会认为它比较 flaky，自动把它剔除掉。因为 UB 一类的，可能在不同编译 / 优化 / 运行中表现各不相同，从而不能产生一种稳定可复现的 crash 。
 
 既然如此，我们只要增强它的 crash 表现，使其更加可确定即可，比如：
 
@@ -260,4 +260,44 @@ if (str.length() == 0)
   abort();
 ```
 
+亦或者，我们打开 Sanitizer，这样就可以将语言层面的未定义行为变成 fuzzer 能稳定识别的崩溃信号了。
+
+```bash showLineNumbers=false
+#!/usr/bin/env bash
+
+cmake -S . -B build \
+  -DCMAKE_C_COMPILER=afl-clang-lto \
+  -DCMAKE_CXX_COMPILER=afl-clang-lto++ \
+  -DCMAKE_C_FLAGS="-O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined" \
+  -DCMAKE_CXX_FLAGS="-O1 -g -fno-omit-frame-pointer -fsanitize=address,undefined"
+```
+
+通过上面的指令生成编译配置，开启 **AddressSanitizer (ASan)** 和 **UndefinedBehaviorSanitizer (UBSan)**，然后跑 fuzz 前设置一下这两个环境变量：
+
+```shellsession
+export ASAN_OPTIONS=abort_on_error=1:symbolize=0:detect_leaks=0
+export UBSAN_OPTIONS=abort_on_error=1:print_stacktrace=1
+```
+
 :::
+
+## Exercise 2
+
+没啥崩溃点，只有这一个 abort, 输入 `ffl` 即可触发。
+
+```cpp
+} else if (input[i] == 'l') {
+    if (crew.num == 0) {
+        abort();
+    }
+    land();
+}
+```
+
+我使用的 input 是随机生成的 200 字节长 De Bruijn Sequence，实际上沿用 Exercise 1 的 seeds 应该也可以。
+
+<center>
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.58hw1s7oeh.avif" alt="" />
+</center>
+
+观察跑出来的几个 crashes, 发现全都符合 `ffl` 的行为，多的 `f` 被 `h` 抵消。
