@@ -276,6 +276,13 @@ cmake -S . -B build \
 
 ```shellsession
 export ASAN_OPTIONS=abort_on_error=1:symbolize=0:detect_leaks=0
+export UBSAN_OPTIONS=abort_on_error=1
+```
+
+debug 时使用：
+
+```shellsession
+export ASAN_OPTIONS=abort_on_error=1:symbolize=1:detect_leaks=0
 export UBSAN_OPTIONS=abort_on_error=1:print_stacktrace=1
 ```
 
@@ -301,3 +308,112 @@ export UBSAN_OPTIONS=abort_on_error=1:print_stacktrace=1
 </center>
 
 观察跑出来的几个 crashes, 发现全都符合 `ffl` 的行为，多的 `f` 被 `h` 抵消。
+
+## Exercise 3
+
+代码太多就不放了，简单罗列一下 abort points:
+
+- `choose_color`: 输入纯数字
+- `min_alt`: 输入小于 0
+- `min_airspeed`: 输入小于 0
+- `fuel_cap`: 输入小于 0
+- `check_alt`: 传入 `alt` 小于 0
+- `check_fuel`: 传入 `fuel` 小于 0
+- `check_speed`: 传入 `speed` 小于 0
+
+这里的话，我遵循提示，在 `cmake` 创建配置文件的时候多加了一个 `-DCMAKE_EXPORT_COMPILE_COMMANDS=1` 参数，用于生成编译命令到 `compile_commands.json`，并尝试使用 [Sourcetrail](https://github.com/CoatiSoftware/Sourcetrail) 来阅读源码。但是发现用这个工具还不如我直接在 nvim 里面看代码来得快……或许以后分析很大的项目时可以再试试。
+
+这节练习给了这么一个 template：
+
+```cpp
+/*
+ * This file isolates the Specs class and tests out the
+ * choose_color function specifically.
+ */
+
+#include "specs.h"
+
+int main(int argc, char **argv) {
+  // In order to call any functions in the Specs class, a Specs
+  // object is necessary. This is using one of the constructors
+  // found in the Specs class.
+  Specs spec(505, 110, 50);
+// By looking at all the code in our project, this is all the
+// necessary setup required. Most projects will have much more
+// that is needed to be done in order to properly setup objects.
+
+// This section should be in your code that you write after all the
+// necessary setup is done. It allows AFL++ to start from here in
+// your main() to save time and just throw new input at the target.
+#ifdef __AFL_HAVE_MANUAL_CONTROL
+  __AFL_INIT();
+#endif
+
+  spec.choose_color();
+  // spec.min_alt();
+
+  return 0;
+}
+```
+
+我们可以通过定义 `__AFL_HAVE_MANUAL_CONTROL` 来设置 fuzz 入口。
+
+先测试 `choose_color`，如果输入纯数字就会崩：
+
+<center>
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4qrudewa3s.avif" alt="" />
+</center>
+
+但这里多了一个 `\x20`，即空格导致的崩溃，是我没想到的，研究研究。
+
+```cpp
+std::cin >> color;
+if (isNumber(color))
+  abort();
+
+bool Specs::isNumber(std::string str) {
+  for (int i = 0; i < str.length(); i++) {
+    if (isdigit(str[i]) == 0)
+      return false;
+  }
+  return true;
+}
+```
+
+`choose_color` 是用 `cin >>` 读取的输入，由于 `>>` 的逻辑是先跳过所有 spaces，然后从第一个非空字符读取到下一个 space 停止，所以输入 `\x20` 的话，什么都不会读到，导致 `color = ""`，for 循环根本不会进入，返回 true 导致崩溃。
+
+其它的没啥好说的，但是在 slice fuzz `min_airspeed` 的时候发现 `exec speed: 55.54/sec`，简直是在拿显微镜扫地 o_O
+
+究其原因的话，可能是因为 fuzzer 计算 exec 是按处理完一整轮来算的，可是现在这个情况内部有一个循环，可能触发多次输入，所以如果输入样本很大的话，就会处理很久。
+
+```cpp
+void Specs::min_airspeed() {
+  bool out_of_bounds = true;
+  std::cout << "enter aircraft minimum airspeed: ";
+  std::cin >> speed;
+  do {
+    out_of_bounds = false;
+    if (speed < 0)
+      abort();
+    if (speed < 100) {
+      std::cout << "too low. please re-enter: ";
+      std::cin >> speed;
+      out_of_bounds = true;
+    } else if (speed > 200) {
+      std::cout << "too high. please re-enter: ";
+      std::cin >> speed;
+      out_of_bounds = true;
+    }
+  } while (out_of_bounds);
+}
+```
+
+这里发现第二个 crash 有点奇怪：
+
+<center>
+  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8vnfprhcx0.avif" alt="" />
+</center>
+
+这是因为 `>>` 在读取数字的时候也有特殊的规则，它会自动拆分数字。即 `1-3113\x09` 被拆分为 `1` 和 `-3113` 两部分，被拆开的那部分会留在输入缓冲区等待下一次读取的时候发出去，所以这里触发的逻辑是先判断 `speed < 100` 重新读取，然后发送负数触发 abort 。
+
+最后还剩下三个 check 函数我没测，因为它们相对前面几个来说更吃运气一点，感觉有点浪费时间，就且先跳过了。
