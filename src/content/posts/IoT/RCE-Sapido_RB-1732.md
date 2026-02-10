@@ -4,7 +4,7 @@ published: 2025-11-15
 updated: 2025-11-15
 description: "CVE-2021-4242: Sapido RB-1732 路由器 RCE 漏洞复现。"
 image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7ppukt57t.avif"
-tags: ["Pwn", "IoT"]
+tags: ["CVE", "IoT"]
 category: "IoT"
 draft: false
 ---
