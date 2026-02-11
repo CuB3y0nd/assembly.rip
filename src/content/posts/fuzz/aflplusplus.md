@@ -417,3 +417,9 @@ void Specs::min_airspeed() {
 这是因为 `>>` 在读取数字的时候也有特殊的规则，它会自动拆分数字。即 `1-3113\x09` 被拆分为 `1` 和 `-3113` 两部分，被拆开的那部分会留在输入缓冲区等待下一次读取的时候发出去，所以这里触发的逻辑是先判断 `speed < 100` 重新读取，然后发送负数触发 abort 。
 
 最后还剩下三个 check 函数我没测，因为它们相对前面几个来说更吃运气一点，感觉有点浪费时间，就且先跳过了。
+
+# Fuzzing101
+
+下面是我做过的 [Fuzzing101](https://github.com/antonio-morales/Fuzzing101) Exercises 导航列表：
+
+- [Exercise 1 - CVE-2019-13288: Xpdf](/posts/fuzz/xpdf-cve-2019-13288/)
