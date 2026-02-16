@@ -13,3 +13,4 @@
 | <a target='_blank' rel='noopener noreferrer' href='https://shulkwisec.github.io/'>shulkwisec</a> | Friend from W4llz                  |
 | <a target='_blank' rel='noopener noreferrer' href='https://wgggggggg.github.io'>wgg</a>          | pwner                              |
 | <a target='_blank' rel='noopener noreferrer' href='https://h1m-redqueen.github.io/'>H1m</a>      | 西北 Pwn 王                        |
+| <a target='_blank' rel='noopener noreferrer' href='https://www.mduo.cloud/'>Duo</a>      | MathForest 官方 - 程序及数学可视化 - 屑魔女游世界                        |
