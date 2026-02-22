@@ -5,6 +5,7 @@ title: About
 import TimelineProgress from "@/components/misc/TimelineProgress.svelte";
 import SpotifyNowPlaying from "@components/misc/SpotifyNowPlaying.svelte";
 import DiscordStatus from "@components/misc/DiscordStatus.svelte";
+import CveCard from "@components/misc/CveCard.svelte";
 
 # About
 
@@ -14,7 +15,7 @@ import DiscordStatus from "@components/misc/DiscordStatus.svelte";
 
 I'm a cybersecurity enthusiast, IoT security researcher and idealist who loves nature and enjoys the simple joys of life.
 
-- ROAL: PWNER
+- Roal: Pwner
 - Personality: INTJ-A 5w4 Tritype 513
 - E-Mail: `root -at- cubeyond -dot- net`
 - Discord: <code><DiscordStatus client:load />CuB3y0nd#6307</code>
@@ -23,8 +24,13 @@ I'm a cybersecurity enthusiast, IoT security researcher and idealist who loves n
 
 ## CVEs
 
-- [CVE-2024-25817](https://www.cve.org/CVERecord?id=CVE-2024-25817): Buffer Overflow vulnerability in eza before version 0.18.2, allows local attackers to execute arbitrary code via the .git/HEAD, .git/refs, and .git/objects components.
-- [CVE-2025-60939](https://www.cve.org/CVERecord?id=CVE-2025-60939): Spotify Client Denial of Service vulnerability.
+<CveCard id="CVE-2024-25817" client:load />
+
+<CveCard
+  id="CVE-2025-60939"
+  desc="Spotify Client Denial of Service vulnerability via a crafted network packet."
+  client:load
+/>
 
 ## Projects
 

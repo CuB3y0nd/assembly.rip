@@ -9,6 +9,8 @@ category: "IoT"
 draft: false
 ---
 
+import CveCard from "@components/misc/CveCard.svelte";
+
 # 前言
 
 所以，这是我入门 IoT 复现的第一个漏洞 \:D
@@ -23,7 +25,7 @@ draft: false
 
 对于这个洞的描述是：
 
-> A vulnerability was found in Sapido BR270n, BRC76n, GR297 and RB1732 and classified as critical. Affected by this issue is some unknown functionality of the file ip/syscmd.htm. The manipulation leads to os command injection. The attack may be launched remotely. The exploit has been disclosed to the public and may be used. The identifier of this vulnerability is VDB-214592.
+<CveCard id="CVE-2021-4242" client:load />
 
 说白了就是一个没有过滤后门页面的访问的问题，虽然洞很简单，但这里主要是为了学习，体会实战中如何寻找漏洞的一个思路，而不是为了复现而复现。
 
