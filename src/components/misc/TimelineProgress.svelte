@@ -31,7 +31,14 @@
     const centuryProg =
       ((now.getTime() - centuryStart) / (centuryEnd - centuryStart)) * 100;
 
-    return { yProg, dProg, dayOfYear, curYear, centuryProg, now };
+    const BLOG_START_DATE = new Date("2025-10-01T00:00:00");
+    const BLOG_END_DATE = new Date("2035-10-01T00:00:00");
+
+    const blogTotal = BLOG_END_DATE.getTime() - BLOG_START_DATE.getTime();
+    const blogElapsed = now.getTime() - BLOG_START_DATE.getTime();
+    const blogProgVal = Math.max(0, (blogElapsed / blogTotal) * 100);
+
+    return { yProg, dProg, dayOfYear, curYear, centuryProg, now, blogProgVal };
   }
 
   function formatPercent(v) {
@@ -64,6 +71,10 @@
     duration: ANIMATION_DURATION,
     easing: cubicOut,
   });
+  const blogProg = new Tween(0, {
+    duration: ANIMATION_DURATION,
+    easing: cubicOut,
+  });
 
   onMount(() => {
     const initial = calculateProgress();
@@ -80,6 +91,8 @@
       loveDays.set(loveDaysVal);
     }
 
+    blogProg.set(initial.blogProgVal);
+
     const interval = setInterval(() => {
       const current = calculateProgress();
       const options = { duration: 0 };
@@ -95,6 +108,8 @@
           (current.now.getTime() - loveStartDate.getTime()) / MS_PER_DAY;
         loveDays.set(newLoveDays, options);
       }
+
+      blogProg.set(current.blogProgVal, options);
     }, UPDATE_INTERVAL);
 
     return () => clearInterval(interval);
@@ -123,6 +138,10 @@
   </li>
   <hr />
   <center>
+    <div style="margin-bottom: 0.5rem;">
+      <a href="https://www.foreverblog.cn/blog/7063.html">「十年之约」</a>已履行
+      <span class="time-number">{formatPercent(blogProg.current)}</span>
+    </div>
     {#if loveStartDate}
       <span class="time-number">{Math.floor(loveDays.current)}</span> days painted
       softly on the canvas of 「时光」🎨
