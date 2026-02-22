@@ -96,13 +96,20 @@ const getTypeLabel = (type: string) => {
 };
 
 const creatorList = data.creators?.map((c) => c.name || `${c.lastName}${c.firstName ? `, ${c.firstName}` : ""}`) || [];
+
+const isPaper = ["journalArticle", "conferencePaper", "preprint", "standard", "report", "thesis"].includes(data.itemType);
+const href = isPaper ? (data.url || item.links.alternate.href) : undefined;
+const Container = href ? "a" : "div";
 ---
 
-<a
-  href={item.links.alternate.href}
-  target="_blank"
-  rel="noopener noreferrer nofollow"
-  class="group relative h-full flex flex-col p-[1px] rounded-2xl transition-all duration-500 hover:scale-[1.01] min-h-[260px] sm:min-h-[240px]"
+<Container
+  href={href}
+  target={href ? "_blank" : undefined}
+  rel={href ? "noopener noreferrer nofollow" : undefined}
+  class:list={[
+    "group relative h-full flex flex-col p-[1px] rounded-2xl transition-all duration-500 min-h-[260px] sm:min-h-[240px]",
+    href ? "hover:scale-[1.01] cursor-pointer" : "cursor-default"
+  ]}
 >
   <!-- 中性阴影 (纯黑，无 Hue) -->
   <div class="absolute inset-0 bg-black/10 dark:bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl blur-xl"></div>
@@ -189,7 +196,7 @@ const creatorList = data.creators?.map((c) => c.name || `${c.lastName}${c.firstN
       </div>
     </div>
   </div>
-</a>
+</Container>
 
 <style>
   .no-scrollbar::-webkit-scrollbar { display: none; }
