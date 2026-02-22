@@ -11,23 +11,35 @@ const subject_base_url = "https://bgm.tv/subject/";
 
 const getStatusColor = (type: number) => {
 	switch (type) {
-		case 1: return "bg-blue-500";
-		case 2: return "bg-green-500";
-		case 3: return "bg-yellow-500";
-		case 4: return "bg-orange-500";
-		case 5: return "bg-red-500";
-		default: return "bg-gray-500";
+		case 1:
+			return "bg-blue-500";
+		case 2:
+			return "bg-green-500";
+		case 3:
+			return "bg-yellow-500";
+		case 4:
+			return "bg-orange-500";
+		case 5:
+			return "bg-red-500";
+		default:
+			return "bg-gray-500";
 	}
 };
 
 const getStatusText = (type: number) => {
 	switch (type) {
-		case 1: return "想看";
-		case 2: return "看过";
-		case 3: return "在看";
-		case 4: return "搁置";
-		case 5: return "抛弃";
-		default: return "未知";
+		case 1:
+			return "想看";
+		case 2:
+			return "看过";
+		case 3:
+			return "在看";
+		case 4:
+			return "搁置";
+		case 5:
+			return "抛弃";
+		default:
+			return "未知";
 	}
 };
 

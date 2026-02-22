@@ -1,6 +1,6 @@
 ---
-import type { ZoteroItem } from "@/types/zotero";
 import { Icon } from "astro-icon/components";
+import type { ZoteroItem } from "@/types/zotero";
 
 interface Props {
 	item: ZoteroItem;
@@ -95,10 +95,20 @@ const getTypeLabel = (type: string) => {
 	return labelMap[type] || "Item";
 };
 
-const creatorList = data.creators?.map((c) => c.name || `${c.lastName}${c.firstName ? `, ${c.firstName}` : ""}`) || [];
+const creatorList =
+	data.creators?.map(
+		(c) => c.name || `${c.lastName}${c.firstName ? `, ${c.firstName}` : ""}`,
+	) || [];
 
-const isPaper = ["journalArticle", "conferencePaper", "preprint", "standard", "report", "thesis"].includes(data.itemType);
-const href = isPaper ? (data.url || item.links.alternate.href) : undefined;
+const isPaper = [
+	"journalArticle",
+	"conferencePaper",
+	"preprint",
+	"standard",
+	"report",
+	"thesis",
+].includes(data.itemType);
+const href = isPaper ? data.url || item.links.alternate.href : undefined;
 const Container = href ? "a" : "div";
 ---
 

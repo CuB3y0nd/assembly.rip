@@ -15,7 +15,7 @@ const zoteroUserID = process.env.ZOTERO_USER_ID;
 const zoteroKey = process.env.ZOTERO_KEY;
 
 const bangumiConfig = {
-  username: `${bangumiUsername}`,
+	username: `${bangumiUsername}`,
 	apiUrl: "https://api.bgm.tv",
 	categories: {
 		book: false,
@@ -32,8 +32,8 @@ const bangumiConfig = {
 };
 
 const zoteroConfig = {
-  userId: `${zoteroUserID}`,
-  apiKey: `${zoteroKey}`,
+	userId: `${zoteroUserID}`,
+	apiKey: `${zoteroKey}`,
 	limit: 100,
 };
 
@@ -114,7 +114,7 @@ async function fetchBangumiData(username: string, subjectType: number) {
 				allData = allData.concat(currentBatch);
 				offset += limit;
 
-        // 如果本次获取的数据少于 limit, 说明已经是最后一页
+				// 如果本次获取的数据少于 limit, 说明已经是最后一页
 				if (currentBatch.length < limit) {
 					hasMore = false;
 				}
@@ -139,7 +139,12 @@ async function fetchBangumiData(username: string, subjectType: number) {
 // 获取所有启用分类的数据
 const bangumiData: Record<string, UserSubjectCollection[]> = {};
 let zoteroData: ZoteroItem[] = [];
-const tabs: Array<{ id: string; name: string; count: number; type: "bangumi" | "zotero" }> = [];
+const tabs: Array<{
+	id: string;
+	name: string;
+	count: number;
+	type: "bangumi" | "zotero";
+}> = [];
 
 console.log("[Collections] 开始获取所有数据");
 
