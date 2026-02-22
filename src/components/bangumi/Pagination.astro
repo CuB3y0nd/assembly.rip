@@ -11,413 +11,192 @@ interface Props {
 const { totalItems, itemsPerPage, currentPage, sectionId } = Astro.props;
 const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-// 生成智能分页页码数组
+const HIDDEN = -1;
+
 function generatePageNumbers(current: number, total: number) {
-	const delta = 2; // 当前页左右显示的页码数量
-	const range = [];
-	const rangeWithDots = [];
+	const ADJ_DIST = 2;
+	const VISIBLE = ADJ_DIST * 2 + 1;
+	let count = 1;
+	let l = current;
+	let r = current;
 
-	// 如果总页数小于等于7，显示所有页码
-	if (total <= 7) {
-		for (let i = 1; i <= total; i++) {
-			range.push(i);
-		}
-		return range;
+	while (0 < l - 1 && r + 1 <= total && count + 2 <= VISIBLE) {
+		count += 2;
+		l--;
+		r++;
+	}
+	while (0 < l - 1 && count < VISIBLE) {
+		count++;
+		l--;
+	}
+	while (r + 1 <= total && count < VISIBLE) {
+		count++;
+		r++;
 	}
 
-	// 计算显示范围
-	const left = Math.max(2, current - delta);
-	const right = Math.min(total - 1, current + delta);
+	const pages: (number | typeof HIDDEN)[] = [];
+	if (l > 1) pages.push(1);
+	if (l === 3) pages.push(2);
+	if (l > 3) pages.push(HIDDEN);
+	for (let i = l; i <= r; i++) pages.push(i);
+	if (r < total - 2) pages.push(HIDDEN);
+	if (r === total - 2) pages.push(total - 1);
+	if (r < total) pages.push(total);
 
-	// 始终显示第一页
-	rangeWithDots.push(1);
-
-	// 如果左边界大于2，添加省略号
-	if (left > 2) {
-		rangeWithDots.push("...");
-	}
-
-	// 添加中间页码
-	for (let i = left; i <= right; i++) {
-		rangeWithDots.push(i);
-	}
-
-	// 如果右边界小于最后一页-1，添加省略号
-	if (right < total - 1) {
-		rangeWithDots.push("...");
-	}
-
-	// 始终显示最后一页（如果总页数大于1）
-	if (total > 1) {
-		rangeWithDots.push(total);
-	}
-
-	return rangeWithDots;
+	return pages;
 }
 
 const pageNumbers = generatePageNumbers(currentPage, totalPages);
 ---
 
 {totalPages > 1 && (
-	<div class="responsive-pagination flex justify-center items-center mt-8" data-pagination-section={sectionId}>
-		<div class="mobile-pagination flex items-center space-x-2">
-			<button
-				type="button"
-				class="p-1.5 rounded-lg bg-[var(--card-bg)] text-[var(--primary)] hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-gray-700 transition-colors duration-200 w-11 h-11 flex justify-center items-center"
-				data-page="prev"
-				data-section={sectionId}
-				disabled={currentPage === 1}
-				aria-label="上一页"
-			>
-				<Icon name="material-symbols:chevron-left-rounded" class="text-xl" />
-			</button>
+	<div class="flex flex-row gap-3 justify-center collections-pagination" data-pagination-section={sectionId}>
+		<!-- 上一页 -->
+		<button
+			type="button"
+			class:list={["btn-card overflow-hidden rounded-lg text-[var(--primary)] w-11 h-11 transition-all active:scale-90",
+				{"disabled opacity-50 cursor-not-allowed pointer-events-none": currentPage === 1}
+			]}
+			data-page-btn="prev"
+			aria-label="Previous Page"
+		>
+			<Icon name="material-symbols:chevron-left-rounded" class="text-[1.75rem] pointer-events-none" />
+		</button>
 
-			<div class="flex items-center space-x-1">
-				<span class="text-sm text-gray-600 dark:text-gray-400">第</span>
-				<span class="mobile-current-page px-2 py-1 text-sm font-bold bg-[var(--primary)] text-white rounded-lg">{currentPage}</span>
-				<span class="text-sm text-gray-600 dark:text-gray-400">页，共</span>
-				<span class="mobile-total-pages text-sm font-bold text-gray-700 dark:text-gray-300">{totalPages}</span>
-				<span class="text-sm text-gray-600 dark:text-gray-400">页</span>
-			</div>
-
-			<button
-				type="button"
-				class="p-1.5 rounded-lg bg-[var(--card-bg)] text-[var(--primary)] hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-gray-700 transition-colors duration-200 w-11 h-11 flex justify-center items-center"
-				data-page="next"
-				data-section={sectionId}
-				disabled={currentPage === totalPages}
-				aria-label="下一页"
-			>
-				<Icon name="material-symbols:chevron-right-rounded" class="text-xl" />
-			</button>
-		</div>
-
-		<div class="desktop-pagination flex flex-row gap-3 items-center">
-			<button
-				type="button"
-				class:list={["overflow-hidden rounded-lg text-[var(--primary)] w-11 h-11 flex justify-center items-center bg-[var(--card-bg)] hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200",
-					{"opacity-50 cursor-not-allowed": currentPage === 1}
-				]}
-				data-page="prev"
-				data-section={sectionId}
-				disabled={currentPage === 1}
-				aria-label="上一页"
-			>
-				<Icon name="material-symbols:chevron-left-rounded" class="text-[1.75rem]" />
-			</button>
-
-			<div class="bg-[var(--card-bg)] flex flex-row rounded-lg items-center text-neutral-700 dark:text-neutral-300 font-bold" data-page-numbers={sectionId}>
-				{pageNumbers.map((pageItem) => (
-					pageItem === '...' ? (
-						<Icon name="material-symbols:more-horiz" class="mx-1 text-base text-gray-500 dark:text-gray-400" />
-					) : pageItem === currentPage ? (
-						<div class="h-11 w-11 rounded-lg bg-[var(--primary)] flex items-center justify-center font-bold text-white dark:text-black/70">
-							{pageItem}
+		<!-- 页码容器 -->
+		<div class="bg-[var(--card-bg)] flex flex-row rounded-lg items-center text-neutral-700 dark:text-neutral-300 font-bold" data-page-numbers-container>
+			{pageNumbers.map((p) => {
+				if (p === HIDDEN)
+					return <Icon name="material-symbols:more-horiz" class="mx-1 text-gray-500 dark:text-gray-400" />;
+				if (p === currentPage)
+					return (
+						<div class="h-11 w-11 rounded-lg bg-[var(--primary)] flex items-center justify-center font-bold text-white dark:text-black/70 shadow-sm">
+							{p}
 						</div>
-					) : (
-						<button
-							type="button"
-							class="w-11 h-11 rounded-lg overflow-hidden flex items-center justify-center active:scale-[0.85] transition-transform duration-100 hover:bg-gray-100 dark:hover:bg-gray-700"
-							data-page={pageItem}
-							data-section={sectionId}
-							aria-label={`第${pageItem}页`}
-							aria-current={pageItem === currentPage ? "page" : undefined}
-						>
-							{pageItem}
-						</button>
-					)
-				))}
-			</div>
-
-			<button
-				type="button"
-				class:list={["overflow-hidden rounded-lg text-[var(--primary)] w-11 h-11 flex justify-center items-center bg-[var(--card-bg)] hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200",
-					{"opacity-50 cursor-not-allowed": currentPage === totalPages}
-				]}
-				data-page="next"
-				data-section={sectionId}
-				disabled={currentPage === totalPages}
-				aria-label="下一页"
-			>
-				<Icon name="material-symbols:chevron-right-rounded" class="text-[1.75rem]" />
-			</button>
+					);
+				return (
+					<button
+						type="button"
+						class="btn-card w-11 h-11 rounded-lg overflow-hidden active:scale-90 transition-all flex items-center justify-center"
+						data-page-btn={p}
+						aria-label={`Page ${p}`}
+					>
+						{p}
+					</button>
+				);
+			})}
 		</div>
+
+		<!-- 下一页 -->
+		<button
+			type="button"
+			class:list={["btn-card overflow-hidden rounded-lg text-[var(--primary)] w-11 h-11 transition-all active:scale-90",
+				{"disabled opacity-50 cursor-not-allowed pointer-events-none": currentPage === totalPages}
+			]}
+			data-page-btn="next"
+			aria-label="Next Page"
+		>
+			<Icon name="material-symbols:chevron-right-rounded" class="text-[1.75rem] pointer-events-none" />
+		</button>
 	</div>
 )}
 
-<script define:vars={{ itemsPerPage, sectionId }}>
-	function initPagination() {
-		let currentPage = 1;
-
-		const pagination = document.querySelector(`[data-pagination-section="${sectionId}"]`);
+<script define:vars={{ itemsPerPage, sectionId, HIDDEN }}>
+	(function() {
+		const pagination = document.querySelector(`.collections-pagination[data-pagination-section="${sectionId}"]`);
 		if (!pagination) return;
 
-		// 更新移动端页码显示
-		function updateMobileDisplay() {
-			const mobileCurrentPage = pagination.querySelector('.mobile-current-page');
-			if (mobileCurrentPage) {
-				mobileCurrentPage.textContent = currentPage.toString();
-			}
-			// 更新移动端总页数（如果项目数量变了）
+		let currentPage = 1;
+
+		// 事件委托：处理所有分页按钮点击
+		pagination.addEventListener('click', (e) => {
+			const btn = e.target.closest('[data-page-btn]');
+			if (!btn) return;
+
+			const action = btn.dataset.pageBtn;
 			const items = document.querySelectorAll(`[data-item-section="${sectionId}"]:not(.hidden)`);
 			const totalPages = Math.ceil(items.length / itemsPerPage);
-			const mobileTotalPages = pagination.querySelector('.mobile-total-pages');
-			if (mobileTotalPages) {
-				mobileTotalPages.textContent = totalPages.toString();
+
+			if (action === 'prev') {
+				if (currentPage > 1) currentPage--;
+			} else if (action === 'next') {
+				if (currentPage < totalPages) currentPage++;
+			} else {
+				currentPage = parseInt(action);
 			}
-		}
 
-		// 监听所有分页按钮
-		const pageButtons = pagination.querySelectorAll('[data-page]');
-
-		pageButtons.forEach(button => {
-			button.addEventListener('click', function() {
-				const page = this.dataset.page;
-
-				if (page === 'prev') {
-					currentPage = Math.max(1, currentPage - 1);
-				} else if (page === 'next') {
-					const items = document.querySelectorAll(`[data-item-section="${sectionId}"]:not(.hidden)`);
-					const totalPages = Math.ceil(items.length / itemsPerPage);
-					currentPage = Math.min(totalPages, currentPage + 1);
-				} else {
-					currentPage = parseInt(page);
-				}
-
-				updatePage();
-				updateMobileDisplay();
-			});
+			updateUI(totalPages);
 		});
 
-		// Listen for filter updates (用于外部过滤/搜索触发重置分页到第一页)
-		if (pagination) {
-			pagination.addEventListener('updatePagination', function(event) {
-				currentPage = 1;
-				updatePage();
-				updateMobileDisplay();
-			});
-		}
-
-		function updatePage() {
+		// 监听来自 FilterControls 的更新事件
+		pagination.addEventListener('updatePagination', () => {
+			currentPage = 1;
 			const items = document.querySelectorAll(`[data-item-section="${sectionId}"]:not(.hidden)`);
-			const totalPages = Math.ceil(items.length / itemsPerPage);
+			updateUI(Math.ceil(items.length / itemsPerPage));
+		});
 
-			// Hide all items first
-			for (const item of items) {
-				item.style.display = 'none';
-			}
+		function updateUI(totalPages) {
+			const items = document.querySelectorAll(`[data-item-section="${sectionId}"]:not(.hidden)`);
+			const allItemsInSection = document.querySelectorAll(`[data-item-section="${sectionId}"]`);
 
-			// Show items for current page
-			const startIndex = (currentPage - 1) * itemsPerPage;
-			const endIndex = startIndex + itemsPerPage;
-			for (let i = startIndex; i < endIndex && i < items.length; i++) {
+			// 1. 切换项目的显示状态
+			allItemsInSection.forEach(item => item.style.display = 'none');
+			const start = (currentPage - 1) * itemsPerPage;
+			const end = start + itemsPerPage;
+			for (let i = start; i < end && i < items.length; i++) {
 				items[i].style.display = 'block';
 			}
 
-			// Update pagination buttons
-			updatePaginationButtons(totalPages);
-		}
+			// 2. 更新前后翻页按钮的状态
+			const prevBtn = pagination.querySelector('[data-page-btn="prev"]');
+			const nextBtn = pagination.querySelector('[data-page-btn="next"]');
 
-		// 生成智能分页页码数组的JavaScript版本 (保持不变)
-		function generatePageNumbers(current, total) {
-			const delta = 2; // 当前页左右显示的页码数量
-			const rangeWithDots = [];
-
-			// 如果总页数小于等于7，显示所有页码
-			if (total <= 7) {
-				for (let i = 1; i <= total; i++) {
-					rangeWithDots.push(i);
-				}
-				return rangeWithDots;
+			if (prevBtn) {
+				const isFirst = currentPage === 1;
+				prevBtn.classList.toggle('opacity-50', isFirst);
+				prevBtn.classList.toggle('pointer-events-none', isFirst);
+				prevBtn.classList.toggle('disabled', isFirst);
 			}
 
-			// 计算显示范围
-			const left = Math.max(2, current - delta);
-			const right = Math.min(total - 1, current + delta);
-
-			// 始终显示第一页
-			rangeWithDots.push(1);
-
-			// 如果左边界大于2，添加省略号
-			if (left > 2) {
-				rangeWithDots.push('...');
+			if (nextBtn) {
+				const isLast = currentPage === totalPages || totalPages === 0;
+				nextBtn.classList.toggle('opacity-50', isLast);
+				nextBtn.classList.toggle('pointer-events-none', isLast);
+				nextBtn.classList.toggle('disabled', isLast);
 			}
 
-			// 添加中间页码
-			for (let i = left; i <= right; i++) {
-				rangeWithDots.push(i);
-			}
-
-			// 如果右边界小于最后一页-1，添加省略号
-			if (right < total - 1) {
-				rangeWithDots.push('...');
-			}
-
-			// 始终显示最后一页（如果总页数大于1）
-			if (total > 1) {
-				rangeWithDots.push(total);
-			}
-
-			return rangeWithDots;
-		}
-
-		// 更新分页按钮 (使用新的样式)
-		function updatePaginationButtons(totalPages) {
-			const desktopPrevButton = pagination.querySelector('.desktop-pagination [data-page="prev"]');
-			const desktopNextButton = pagination.querySelector('.desktop-pagination [data-page="next"]');
-			const pageNumbersContainer = pagination.querySelector(`[data-page-numbers="${sectionId}"]`);
-
-			const mobilePrevButton = pagination.querySelector('.mobile-pagination [data-page="prev"]');
-			const mobileNextButton = pagination.querySelector('.mobile-pagination [data-page="next"]');
-
-			// 桌面端前后按钮状态更新
-			if (desktopPrevButton) {
-				desktopPrevButton.disabled = currentPage === 1;
-				desktopPrevButton.classList.toggle('opacity-50', currentPage === 1);
-				desktopPrevButton.classList.toggle('cursor-not-allowed', currentPage === 1);
-			}
-
-			if (desktopNextButton) {
-				desktopNextButton.disabled = currentPage === totalPages;
-				desktopNextButton.classList.toggle('opacity-50', currentPage === totalPages);
-				desktopNextButton.classList.toggle('cursor-not-allowed', currentPage === totalPages);
-			}
-
-			// 移动端前后按钮状态更新
-			if (mobilePrevButton) mobilePrevButton.disabled = currentPage === 1;
-			if (mobileNextButton) mobileNextButton.disabled = currentPage === totalPages;
-
-			if (pageNumbersContainer) {
-				pageNumbersContainer.innerHTML = '';
-				const pageNumbers = generatePageNumbers(currentPage, totalPages);
-
-				pageNumbers.forEach(pageItem => {
-					if (pageItem === '...') {
-						// 使用 Icon 模拟省略号样式 (这里使用 SVG 代码来避免在 JS 中导入 Astro Icon)
-						// 这是一个近似 'material-symbols:more-horiz' 的通用 SVG
-						const span = document.createElement('span');
-						span.className = 'flex items-center justify-center mx-1';
-						span.innerHTML = '<svg class="text-base text-gray-500 dark:text-gray-400" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M6 12c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm8 0c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm8 0c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2z"></path></svg>';
-						pageNumbersContainer.appendChild(span);
-					} else if (pageItem === currentPage) {
-						// 当前页 - 使用固定的样式
-						const div = document.createElement('div');
-						div.className = 'h-11 w-11 rounded-lg bg-[var(--primary)] flex items-center justify-center font-bold text-white dark:text-black/70';
-						div.textContent = pageItem.toString();
-						pageNumbersContainer.appendChild(div);
-					} else {
-						// 普通页码按钮 - 使用固定的样式
-						const button = document.createElement('button');
-						button.className = 'w-11 h-11 rounded-lg overflow-hidden flex items-center justify-center active:scale-[0.85] transition-transform duration-100 hover:bg-gray-100 dark:hover:bg-gray-700';
-						button.dataset.page = pageItem.toString();
-						button.dataset.section = sectionId;
-						button.textContent = pageItem.toString();
-
-						// 重新添加点击事件
-						button.addEventListener('click', function() {
-							currentPage = pageItem;
-							updatePage();
-							updateMobileDisplay();
-						});
-
-						pageNumbersContainer.appendChild(button);
-					}
-				});
+			// 3. 动态重新渲染中间的页码 (保持主题样式)
+			const container = pagination.querySelector('[data-page-numbers-container]');
+			if (container) {
+				const pages = generatePageNumbersJS(currentPage, totalPages);
+				container.innerHTML = pages.map(p => {
+					if (p === HIDDEN) return `<div class="mx-1 flex items-center justify-center"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-gray-500 opacity-50"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></div>`;
+					if (p === currentPage) return `<div class="h-11 w-11 rounded-lg bg-[var(--primary)] flex items-center justify-center font-bold text-white dark:text-black/70 shadow-sm transition-all">${p}</div>`;
+					return `<button type="button" class="btn-card w-11 h-11 rounded-lg overflow-hidden active:scale-90 transition-all flex items-center justify-center" data-page-btn="${p}">${p}</button>`;
+				}).join('');
 			}
 		}
 
-		// Initial page setup
-		updatePage();
-		updateMobileDisplay(); // 确保初次加载时移动端页码正确
-	}
+		// JS 端页码逻辑：与 Astro 端完全同步
+		function generatePageNumbersJS(current, total) {
+			const ADJ_DIST = 2; const VISIBLE = ADJ_DIST * 2 + 1;
+			let count = 1; let l = current; let r = current;
+			while (0 < l - 1 && r + 1 <= total && count + 2 <= VISIBLE) { count += 2; l--; r++; }
+			while (0 < l - 1 && count < VISIBLE) { count++; l--; }
+			while (r + 1 <= total && count < VISIBLE) { count++; r++; }
+			const pages = [];
+			if (l > 1) pages.push(1);
+			if (l === 3) pages.push(2);
+			if (l > 3) pages.push(HIDDEN);
+			for (let i = l; i <= r; i++) pages.push(i);
+			if (r < total - 2) pages.push(HIDDEN);
+			if (r === total - 2) pages.push(total - 1);
+			if (r < total) pages.push(total);
+			return pages;
+		}
 
-	// Initialize when DOM is ready
-	if (document.readyState === 'loading') {
-		document.addEventListener('DOMContentLoaded', initPagination);
-	} else {
-		initPagination();
-	}
+		// 初始调用一次以确保状态正确
+		const initialItems = document.querySelectorAll(`[data-item-section="${sectionId}"]:not(.hidden)`);
+		updateUI(Math.ceil(initialItems.length / itemsPerPage));
+	})();
 </script>
-
-<style>
-	/* 警告: 确保在您的全局 CSS 或 Tailwind 配置中定义了 --primary 和 --card-bg 变量！ */
-	/* 示例:
-	:root {
-	  --primary: #1e70bf; // 蓝色
-	  --card-bg: #ffffff; // 白色/浅灰色
-	}
-	.dark {
-	  --card-bg: #1f2937; // 深色背景
-	}
-	*/
-
-	.responsive-pagination {
-		/* 确保在所有设备上都能正确显示 */
-		max-width: 100%;
-		overflow-x: auto;
-		-webkit-overflow-scrolling: touch;
-	}
-
-	/* 移动端样式 (< 768px) */
-	.mobile-pagination {
-		display: flex;
-		padding: 0 1rem;
-	}
-
-	.desktop-pagination {
-		display: none;
-	}
-
-	/* 桌面端样式 (>= 768px) */
-	@media (min-width: 768px) {
-		.mobile-pagination {
-			display: none;
-		}
-
-		.desktop-pagination {
-			display: flex;
-		}
-	}
-
-	/* 小屏手机优化 */
-	@media (max-width: 640px) {
-		.mobile-pagination {
-			padding: 0 0.5rem;
-		}
-	}
-
-	/* 超小屏优化 */
-	@media (max-width: 480px) {
-		.mobile-pagination {
-			padding: 0 0.25rem;
-		}
-		.mobile-pagination .space-x-1 > * + * {
-			margin-left: 0.125rem;
-		}
-	}
-
-	/* 平滑过渡效果 */
-	.responsive-pagination button {
-		transition: all 0.2s ease-in-out;
-	}
-
-	/* 禁用状态的样式覆盖（Tailwind disabled:opacity-50 足够了，这里作为补充） */
-	.responsive-pagination button[disabled] {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-	/* 高对比度模式支持 */
-	@media (prefers-contrast: high) {
-		.responsive-pagination button {
-			border: 1px solid currentColor;
-		}
-	}
-
-	/* 减少动画偏好支持 */
-	@media (prefers-reduced-motion: reduce) {
-		.responsive-pagination button {
-			transition: none;
-		}
-	}
-</style>

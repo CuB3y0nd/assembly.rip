@@ -42,20 +42,22 @@ const getStatusText = (type: number) => {
 			return "未知";
 	}
 };
+
+const title = item.subject.name || item.subject.name_cn;
 ---
 
 <a
   href={`${subject_base_url}${item.subject.id}`}
   target="_blank"
   rel="noopener noreferrer nofollow"
-  class="group relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-2xl transition-all duration-200 hover:scale-105 block"
+  class="group relative overflow-hidden rounded-xl bg-white dark:bg-gray-800 shadow-lg hover:shadow-2xl transition-all duration-300 hover:scale-[1.02] block"
 >
   <div class="aspect-[2/3] relative overflow-hidden" >
     {item.subject?.images?.medium ? (
       <img
         src={item.subject.images.medium}
-        alt={item.subject.name || item.subject.name_cn}
-        class="w-full h-full object-cover pointer-events-none"
+        alt={title}
+        class="w-full h-full object-cover pointer-events-none transition-transform duration-500 group-hover:scale-110"
         loading="lazy"
       />
     ) : (
@@ -65,35 +67,61 @@ const getStatusText = (type: number) => {
     )}
 
     <!-- Status badge -->
-    <div class={`absolute top-2 left-2 px-2 py-1 rounded-full text-xs text-white font-medium ${getStatusColor(item.type)}`}>
+    <div class={`absolute top-2 left-2 z-10 px-2 py-1 rounded-full text-[10px] text-white font-bold uppercase tracking-wider ${getStatusColor(item.type)} shadow-sm`}>
       {getStatusText(item.type)}
     </div>
-  </div>
 
-  <!-- Info overlay on hover -->
-  <div class="absolute inset-x-0 bottom-0 bg-black/80 text-white p-4 transform translate-y-full group-hover:translate-y-0 transition-transform duration-200">
-    <h3 class="font-bold text-sm mb-1 line-clamp-2">
-      {item.subject.name || item.subject.name_cn}
-    </h3>
+    <!-- 背景淡入，内容缩放 -->
+    <div class="absolute inset-0 z-20 bg-white dark:bg-gray-900 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-300 ease-out flex flex-col shadow-2xl">
+      <div class="flex-1 p-6 flex flex-col justify-center text-center scale-90 group-hover:scale-100 transition-transform duration-300 ease-out origin-center">
+        <h3 class="font-bold text-lg mb-4 text-gray-900 dark:text-gray-100 line-clamp-2">
+          {title}
+        </h3>
 
-    {(item.rate || item.comment) && (
-      <div class="flex items-center justify-between mb-2">
-        {item.rate && (
-          <div class="flex items-center gap-1">
-            <div class="text-yellow-400">⭐</div>
-            <span class="text-sm">{item.rate}</span>
-          </div>
-        )}
-
-        {item.comment && (
-          <div class="relative group/comment">
-            <div class="text-sm text-gray-300 cursor-help">💬</div>
-            <div class="absolute bottom-full right-0 mb-2 px-3 py-2 bg-gray-900 text-white text-xs rounded-lg opacity-0 group-hover/comment:opacity-100 transition-opacity duration-150 w-32 sm:w-44 xl:w-52 z-10 pointer-events-none">
-              {item.comment}
+        <div class="flex items-center justify-center mb-4">
+          {item.rate && item.rate > 0 ? (
+            <div class="flex items-center gap-1">
+              <div class="text-yellow-400 text-lg">⭐</div>
+              <span class="font-bold text-gray-700 dark:text-gray-300 text-base">
+                {item.rate}
+              </span>
             </div>
-          </div>
-        )}
+          ) : (
+            <span class="text-sm italic text-gray-400 dark:text-gray-500">
+              Unrated
+            </span>
+          )}
+        </div>
+
+        <div class="flex-1 overflow-y-auto no-scrollbar overscroll-contain" style="transform: translateZ(0);">
+          {item.comment ? (
+            <div class="relative py-2">
+              <div class="text-primary text-[10px] font-black mb-3 uppercase tracking-[0.2em] opacity-70">My Comment</div>
+              <p class="text-sm italic text-gray-600 dark:text-gray-400 leading-relaxed px-2 font-serif">
+                “{item.comment}”
+              </p>
+            </div>
+          ) : (
+            <div class="h-full flex flex-col items-center justify-center opacity-40">
+              <p class="text-[10px] text-gray-400 uppercase tracking-widest font-bold italic">No comments</p>
+            </div>
+          )}
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 shrink-0">
+          <span class="text-[9px] text-gray-400 uppercase tracking-[0.2em] font-bold font-mono">View on Bangumi</span>
+        </div>
       </div>
-    )}
+    </div>
   </div>
 </a>
+
+<style>
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+</style>

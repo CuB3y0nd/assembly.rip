@@ -2,7 +2,6 @@
 import type { UserSubjectCollection } from "@/types/bangumi";
 import Card from "./Card.astro";
 import FilterControls from "./FilterControls.astro";
-import Pagination from "./Pagination.astro";
 
 interface Props {
 	sectionId: string;
@@ -53,23 +52,17 @@ const defaultFilter = "all"; // 默认显示全部，用户可以通过筛选器
       />
 
       <div class="grid grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
-        {items.map((item) => (
+        {items.map((item, index) => (
           <div
             class="bangumi-item"
             data-item-section={sectionId}
             data-item-status={statusMap[item.type as keyof typeof statusMap] || "unknown"}
+            style={index >= itemsPerPage ? "display: none;" : ""}
           >
             <Card item={item} />
           </div>
         ))}
       </div>
-
-      <Pagination
-        totalItems={items.length}
-        itemsPerPage={itemsPerPage}
-        currentPage={1}
-        sectionId={sectionId}
-      />
     </>
   ) : (
     <div class="text-center py-12">

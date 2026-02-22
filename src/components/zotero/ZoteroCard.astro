@@ -1,0 +1,205 @@
+---
+import type { ZoteroItem } from "@/types/zotero";
+import { Icon } from "astro-icon/components";
+
+interface Props {
+	item: ZoteroItem;
+}
+
+const { item } = Astro.props;
+const { data, meta } = item;
+
+const getIconName = (type: string) => {
+	const iconMap: Record<string, string> = {
+		book: "tabler:book",
+		bookSection: "tabler:book-2",
+		journalArticle: "tabler:file-text",
+		magazineArticle: "tabler:article",
+		newspaperArticle: "tabler:news",
+		thesis: "tabler:school",
+		letter: "tabler:mail",
+		manuscript: "tabler:scroll",
+		interview: "tabler:microphone",
+		film: "tabler:movie",
+		tvBroadcast: "tabler:device-tv",
+		radioBroadcast: "tabler:radio",
+		podcast: "tabler:podcast",
+		videoRecording: "tabler:video",
+		audioRecording: "tabler:volume-2",
+		webpage: "tabler:world",
+		software: "tabler:terminal-2",
+		report: "tabler:report-analytics",
+		statute: "tabler:gavel",
+		bill: "tabler:file-description",
+		case: "tabler:building-bank",
+		hearing: "tabler:ear",
+		patent: "tabler:bulb",
+		map: "tabler:map-2",
+		artwork: "tabler:palette",
+		presentation: "tabler:presentation",
+		instantMessage: "tabler:messages",
+		forumPost: "tabler:message-circle",
+		blogPost: "tabler:edit",
+		email: "tabler:at",
+		computerProgram: "tabler:code",
+		conferencePaper: "tabler:users-group",
+		dictionaryEntry: "tabler:vocabulary",
+		encyclopediaArticle: "tabler:books",
+		preprint: "tabler:microscope",
+		standard: "tabler:certificate",
+		document: "tabler:file",
+	};
+	return iconMap[type] || "tabler:bookmark";
+};
+
+const getTypeLabel = (type: string) => {
+	const labelMap: Record<string, string> = {
+		book: "Book",
+		bookSection: "Section",
+		journalArticle: "Journal",
+		magazineArticle: "Magazine",
+		newspaperArticle: "Newspaper",
+		thesis: "Thesis",
+		letter: "Letter",
+		manuscript: "Manuscript",
+		interview: "Interview",
+		film: "Film",
+		tvBroadcast: "TV",
+		radioBroadcast: "Radio",
+		podcast: "Podcast",
+		videoRecording: "Video",
+		audioRecording: "Audio",
+		webpage: "Web",
+		software: "Software",
+		report: "Report",
+		statute: "Statute",
+		bill: "Bill",
+		case: "Case",
+		hearing: "Hearing",
+		patent: "Patent",
+		map: "Map",
+		artwork: "Artwork",
+		presentation: "Presentation",
+		instantMessage: "Chat",
+		forumPost: "Forum",
+		blogPost: "Blog",
+		email: "Email",
+		computerProgram: "Program",
+		conferencePaper: "Conference",
+		dictionaryEntry: "Dictionary",
+		encyclopediaArticle: "Encyclopedia",
+		preprint: "Preprint",
+		standard: "Standard",
+		document: "Document",
+	};
+	return labelMap[type] || "Item";
+};
+
+const creatorList = data.creators?.map((c) => c.name || `${c.lastName}${c.firstName ? `, ${c.firstName}` : ""}`) || [];
+---
+
+<a
+  href={item.links.alternate.href}
+  target="_blank"
+  rel="noopener noreferrer nofollow"
+  class="group relative h-full flex flex-col p-[1px] rounded-2xl transition-all duration-500 hover:scale-[1.01] min-h-[240px]"
+>
+  <!-- Glow Effect Background -->
+  <div class="absolute inset-0 bg-gradient-to-br from-primary/20 via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl blur-xl"></div>
+
+  <!-- Main Card Container -->
+  <div class="relative flex-1 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700/50 rounded-2xl overflow-hidden flex flex-col p-5 shadow-sm group-hover:shadow-xl transition-all duration-500">
+    
+    <!-- Watermark Background -->
+    <div class="absolute right-3 bottom-1 text-4xl font-black text-gray-200/30 dark:text-white/5 pointer-events-none select-none italic tracking-tighter transition-all duration-700 group-hover:scale-110 group-hover:-translate-x-2 group-hover:-translate-y-1 uppercase whitespace-nowrap overflow-hidden text-right max-w-[80%]">
+      {getTypeLabel(data.itemType)}
+    </div>
+
+    <!-- Top Row: Icon & Date -->
+    <div class="flex items-center justify-between mb-4">
+      <div class="p-2 rounded-lg bg-primary/10 dark:bg-primary/20 text-primary transition-all duration-500 group-hover:-translate-y-1 group-hover:scale-110 shadow-sm group-hover:shadow-md">
+        <Icon name={getIconName(data.itemType)} class="text-2xl" />
+      </div>
+      {data.date && (
+        <span class="text-[10px] font-mono font-bold tracking-widest text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900/50 px-2 py-1 rounded border border-gray-100 dark:border-gray-700/30">
+          {data.date}
+        </span>
+      )}
+    </div>
+
+    <!-- Title Body -->
+    <h3 class="text-base font-bold text-gray-800 dark:text-gray-100 mb-4 line-clamp-3 leading-snug group-hover:text-primary transition-colors duration-300">
+      {data.title}
+    </h3>
+
+    <!-- Metadata: Creators -->
+    <div class="mt-auto relative z-10">
+      <div class="flex flex-wrap gap-2 mb-3">
+        {creatorList.slice(0, 3).map((name) => (
+          <span class="text-xs font-medium px-2.5 py-1 rounded-lg bg-gray-100/70 dark:bg-gray-700/70 text-gray-600 dark:text-gray-300 border border-gray-200/50 dark:border-gray-600/30 transition-colors group-hover:border-primary/30">
+            {name}
+          </span>
+        ))}
+        {creatorList.length > 3 && (
+          <span class="text-xs font-bold px-2 py-1 rounded-lg bg-primary/5 text-primary border border-primary/10">
+            +{creatorList.length - 3}
+          </span>
+        )}
+      </div>
+
+      <!-- Publication Info -->
+      {(data.publisher || data.publicationTitle) && (
+        <div class="flex items-center gap-1.5 text-[10px] font-mono text-gray-400 dark:text-gray-500">
+          <Icon name="tabler:building" class="text-sm opacity-50" />
+          <span class="truncate italic">{data.publisher || data.publicationTitle}</span>
+        </div>
+      )}
+    </div>
+
+    <!-- Abstract Overlay -->
+    <div class="absolute inset-0 z-30 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-300 ease-out flex flex-col overflow-hidden bg-white dark:bg-gray-900 shadow-2xl">
+      <div class="flex-1 flex flex-col overflow-hidden scale-90 group-hover:scale-100 transition-transform duration-300 ease-out origin-center">
+        <!-- 头部装饰区域 -->
+        <div class="px-6 pt-6 pb-2 shrink-0">
+          <div class="flex items-center gap-3 mb-3">
+            <span class="text-xs font-black uppercase tracking-[0.3em] text-primary">Abstract</span>
+            <div class="flex-1 h-[1px] bg-gradient-to-r from-primary/30 to-transparent"></div>
+          </div>
+          <div class="h-[1px] w-full bg-gray-100 dark:bg-gray-800"></div>
+        </div>
+        
+        <!-- 内容区域 -->
+        <div class="flex-1 p-6 pt-2 overflow-y-auto no-scrollbar overscroll-contain isolation-auto" style="will-change: transform, opacity; transform: translateZ(0);">
+          {data.abstractNote ? (
+            <p class="text-[13px] leading-relaxed text-gray-700 dark:text-gray-300 italic font-serif" style="backface-visibility: hidden;">
+              {data.abstractNote}
+            </p>
+          ) : (
+            <div class="h-full min-h-[100px] flex flex-col items-center justify-center text-gray-400 dark:text-gray-600 opacity-60">
+              <Icon name="tabler:note-off" class="text-3xl mb-2 shrink-0" />
+              <p class="text-[11px] font-mono uppercase tracking-widest text-center">No abstract available</p>
+            </div>
+          )}
+        </div>
+        
+        <!-- 底部元数据 -->
+        <div class="px-6 pb-6 pt-2 shrink-0">
+          <div class="mt-2 pt-4 border-t border-gray-100 dark:border-gray-800 flex justify-between items-center text-[9px] font-mono text-gray-400 uppercase tracking-widest">
+            <span>{getTypeLabel(data.itemType)} Data</span>
+            <span>Ref: {item.key}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</a>
+
+<style>
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+</style>

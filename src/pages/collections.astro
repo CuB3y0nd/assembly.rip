@@ -1,14 +1,21 @@
 ---
 import BangumiSection from "@/components/bangumi/BangumiSection.astro";
+import Pagination from "@/components/bangumi/Pagination.astro";
 import TabNav from "@/components/bangumi/TabNav.astro";
+import ZoteroSection from "@/components/zotero/ZoteroSection.astro";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
 import type {
 	UserSubjectCollection,
 	UserSubjectCollectionResponse,
 } from "@/types/bangumi";
+import type { ZoteroItem } from "@/types/zotero";
+
+const bangumiUsername = process.env.BANGUMI_USERNAME;
+const zoteroUserID = process.env.ZOTERO_USER_ID;
+const zoteroKey = process.env.ZOTERO_KEY;
 
 const bangumiConfig = {
-	username: "cub3y0nd",
+  username: `${bangumiUsername}`,
 	apiUrl: "https://api.bgm.tv",
 	categories: {
 		book: false,
@@ -24,6 +31,12 @@ const bangumiConfig = {
 	},
 };
 
+const zoteroConfig = {
+  userId: `${zoteroUserID}`,
+  apiKey: `${zoteroKey}`,
+	limit: 100,
+};
+
 const categoryMap = {
 	book: { id: "book", name: "书籍", subjectType: 1 },
 	anime: { id: "anime", name: "追番", subjectType: 2 },
@@ -32,7 +45,31 @@ const categoryMap = {
 	real: { id: "real", name: "追剧", subjectType: 6 },
 };
 
-// 获取Bangumi数据的函数 - 支持分页获取所有数据
+async function fetchZoteroData() {
+	try {
+		console.log("[Zotero] 开始获取数据...");
+		const url = `https://api.zotero.org/users/${zoteroConfig.userId}/items?format=json&limit=${zoteroConfig.limit}&itemType=-attachment`;
+		const response = await fetch(url, {
+			headers: {
+				"Zotero-API-Key": zoteroConfig.apiKey,
+				"Zotero-API-Version": "3",
+			},
+		});
+
+		if (!response.ok) {
+			console.warn(`[Zotero] 无法获取数据 (状态码: ${response.status})`);
+			return [];
+		}
+
+		const data = (await response.json()) as ZoteroItem[];
+		console.log(`[Zotero] 总共获取到 ${data.length} 条数据`);
+		return data;
+	} catch (error) {
+		console.error("[Zotero] 获取数据时出错:", error);
+		return [];
+	}
+}
+
 async function fetchBangumiData(username: string, subjectType: number) {
 	try {
 		const { limit, delay, maxTotal } = bangumiConfig.pagination;
@@ -77,7 +114,7 @@ async function fetchBangumiData(username: string, subjectType: number) {
 				allData = allData.concat(currentBatch);
 				offset += limit;
 
-				// 如果本次获取的数据少于limit，说明已经是最后一页
+        // 如果本次获取的数据少于 limit, 说明已经是最后一页
 				if (currentBatch.length < limit) {
 					hasMore = false;
 				}
@@ -101,9 +138,25 @@ async function fetchBangumiData(username: string, subjectType: number) {
 
 // 获取所有启用分类的数据
 const bangumiData: Record<string, UserSubjectCollection[]> = {};
-const tabs: Array<{ id: string; name: string; count: number }> = [];
+let zoteroData: ZoteroItem[] = [];
+const tabs: Array<{ id: string; name: string; count: number; type: "bangumi" | "zotero" }> = [];
 
-console.log("[Bangumi] 从 API 获取数据");
+console.log("[Collections] 开始获取所有数据");
+
+// 获取 Zotero 数据并添加到标签页
+try {
+	zoteroData = await fetchZoteroData();
+	if (zoteroData.length > 0) {
+		tabs.push({
+			id: "zotero",
+			name: "文献",
+			count: zoteroData.length,
+			type: "zotero",
+		});
+	}
+} catch (error) {
+	console.error("[Zotero] 初始化失败:", error);
+}
 
 for (const [categoryKey, enabled] of Object.entries(bangumiConfig.categories)) {
 	if (enabled && categoryMap[categoryKey as keyof typeof categoryMap]) {
@@ -118,6 +171,7 @@ for (const [categoryKey, enabled] of Object.entries(bangumiConfig.categories)) {
 				id: categoryKey,
 				name: categoryInfo.name,
 				count: data.length,
+				type: "bangumi",
 			});
 		} catch (error) {
 			console.error(`[Bangumi] 获取 ${categoryInfo.name} 数据失败:`, error);
@@ -126,55 +180,77 @@ for (const [categoryKey, enabled] of Object.entries(bangumiConfig.categories)) {
 				id: categoryKey,
 				name: categoryInfo.name,
 				count: 0,
+				type: "bangumi",
 			});
 		}
 	}
 }
 
-const activeTab = tabs[0]?.id || "anime";
+const activeTab = tabs[0]?.id || "zotero";
 ---
 
-<MainGridLayout title={"Collections"} description={"Bangumi Collections"}>
-  <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
-    <div class="card-base z-10 px-9 py-6 relative w-full">
-      <!-- Tab 导航和内容 -->
-      {tabs.length > 0 ? (
-        <>
-          <TabNav tabs={tabs} activeTab={activeTab} />
+<MainGridLayout title={"Collections"} description={"My Collections from Bangumi and Zotero"}>
+  <div class="flex flex-col w-full gap-4">
+    <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
+      <div class="card-base z-10 px-9 py-6 relative w-full">
+        <!-- Tab 导航和内容 -->
+        {tabs.length > 0 ? (
+          <>
+            <TabNav tabs={tabs} activeTab={activeTab} />
 
-          <!-- 内容区域 -->
-          {tabs.map((tab) => (
-                      <BangumiSection
-            sectionId={tab.id}
-            items={bangumiData[tab.id] || []}
-            isActive={tab.id === activeTab}
-            itemsPerPage={6}
-          />
-          ))}
-        </>
-      ) : (
-        <div class="text-center py-12">
-          <h2 class="text-xl font-medium text-gray-600 dark:text-gray-400 mb-2">
-            暂无数据
-          </h2>
-          <p class="text-gray-500 dark:text-gray-400 mb-4">
-            可能的原因：用户名不存在、网络连接问题或API限制
-          </p>
-          <div class="text-sm text-gray-400 dark:text-gray-500 space-y-1">
-            <div>用户名: {bangumiConfig.username}</div>
-            <div>API: {bangumiConfig.apiUrl}</div>
-            <div class="mt-3 text-xs">
-              提示：请在页面配置中设置正确的Bangumi用户名
+            <!-- 内容区域 -->
+            {tabs.map((tab) => (
+              tab.type === "bangumi" ? (
+                <BangumiSection
+                  sectionId={tab.id}
+                  items={bangumiData[tab.id] || []}
+                  isActive={tab.id === activeTab}
+                  itemsPerPage={6}
+                />
+              ) : (
+                <ZoteroSection
+                  sectionId={tab.id}
+                  items={zoteroData}
+                  isActive={tab.id === activeTab}
+                  itemsPerPage={6}
+                />
+              )
+            ))}
+          </>
+        ) : (
+          <div class="text-center py-12">
+            <h2 class="text-xl font-medium text-gray-600 dark:text-gray-400 mb-2">
+              暂无数据
+            </h2>
+            <p class="text-gray-500 dark:text-gray-400 mb-4">
+              可能的原因：用户名不存在、网络连接问题或 API 限制
+            </p>
+            <div class="text-sm text-gray-400 dark:text-gray-500 space-y-1">
+              <div>用户名: {bangumiConfig.username}</div>
+              <div>API: {bangumiConfig.apiUrl}</div>
+              <div class="mt-3 text-xs">
+                提示：请在页面配置中设置正确的 Bangumi 用户名
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
+
+    {tabs.map((tab) => (
+      <div class:list={[{ "hidden": tab.id !== activeTab }]} data-section={tab.id}>
+        <Pagination
+          totalItems={tab.type === "bangumi" ? (bangumiData[tab.id]?.length || 0) : zoteroData.length}
+          itemsPerPage={tab.type === "bangumi" ? 6 : 9}
+          currentPage={1}
+          sectionId={tab.id}
+        />
+      </div>
+    ))}
   </div>
 </MainGridLayout>
 
 <style>
-  /* 自定义样式 */
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;
