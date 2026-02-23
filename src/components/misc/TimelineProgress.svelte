@@ -138,15 +138,18 @@ onMount(() => {
   </li>
   <hr />
   <center>
-    <div style="margin-bottom: 0.5rem;">
+    <div style="margin-bottom: 0.5rem; font-size: 0.9rem;">
       <a href="https://www.foreverblog.cn/blog/7063.html">「十年之约」</a>已履行
       <span class="time-number">{formatPercent(blogProg.current)}</span>
     </div>
     {#if loveStartDate}
-      <span class="time-number">{Math.floor(loveDays.current)}</span> days painted
-      softly on the canvas of 「时光」🎨
+      <span class="time-number" style="font-size: 0.95rem;"
+        >{Math.floor(loveDays.current)}</span
+      > days painted softly on the canvas of 「时光」🎨
     {:else}
-      <span class="time-number">一场未曾落幕的梦，静待与君相逢 💫</span>
+      <span class="time-number" style="font-size: 0.95rem;"
+        >一场未曾落幕的梦，静待与君相逢 💫</span
+      >
     {/if}
   </center>
 </ul>

@@ -1,12 +1,12 @@
 <script lang="ts">
 import { onMount } from "svelte";
+import type { DiscordStatus } from "@/types/discord";
+import { fetchDiscordStatus } from "@/utils/discord";
 
-type Status = "online" | "idle" | "dnd" | "offline" | "loading";
-
-let status: Status = "loading";
+let status: DiscordStatus = "loading";
 let statusText = "Loading...";
 
-const statusColors: Record<Status, string> = {
+const statusColors: Record<DiscordStatus, string> = {
 	online: "35, 165, 90",
 	idle: "240, 178, 50",
 	dnd: "242, 63, 67",
@@ -14,29 +14,26 @@ const statusColors: Record<Status, string> = {
 	loading: "128, 132, 142",
 };
 
-async function fetchStatus() {
-	try {
-		const resp = await fetch("/api/discord.json");
-		const json = await resp.json();
-		if (json.success) {
-			status = json.data.discord_status;
-			const statusMap: Record<string, string> = {
-				online: "Online",
-				idle: "Idle",
-				dnd: "Do Not Disturb",
-				offline: "Offline",
-			};
-			statusText = statusMap[status] || "Offline";
-		}
-	} catch (e) {
+async function loadStatus() {
+	const data = await fetchDiscordStatus();
+	if (data?.success) {
+		status = data.data.discord_status;
+		const statusMap: Record<string, string> = {
+			online: "Online",
+			idle: "Idle",
+			dnd: "Do Not Disturb",
+			offline: "Offline",
+		};
+		statusText = statusMap[status] || "Offline";
+	} else {
 		status = "offline";
 		statusText = "Offline";
 	}
 }
 
 onMount(() => {
-	fetchStatus();
-	const interval = setInterval(fetchStatus, 30000);
+	loadStatus();
+	const interval = setInterval(loadStatus, 30000);
 	return () => clearInterval(interval);
 });
 </script>
@@ -68,7 +65,7 @@ onMount(() => {
     height: 16px;
   }
 
-  /* 核心点：半透明质感 */
+  /* 半透明质感 */
   .core {
     width: 6px;
     height: 6px;

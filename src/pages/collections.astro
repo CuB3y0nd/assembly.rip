@@ -4,34 +4,34 @@ import Pagination from "@/components/bangumi/Pagination.astro";
 import TabNav from "@/components/bangumi/TabNav.astro";
 import ZoteroSection from "@/components/zotero/ZoteroSection.astro";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
-import type {
-	UserSubjectCollection,
-	UserSubjectCollectionResponse,
-} from "@/types/bangumi";
+import type { UserSubjectCollection } from "@/types/bangumi";
 import type { ZoteroItem } from "@/types/zotero";
+import { type BangumiConfig, fetchBangumiData } from "@/utils/bangumi";
+import { fetchZoteroData, type ZoteroConfig } from "@/utils/zotero";
 
 const bangumiUsername = process.env.BANGUMI_USERNAME;
 const zoteroUserID = process.env.ZOTERO_USER_ID;
 const zoteroKey = process.env.ZOTERO_KEY;
 
-const bangumiConfig = {
+const bangumiConfig: BangumiConfig = {
 	username: `${bangumiUsername}`,
 	apiUrl: "https://api.bgm.tv",
-	categories: {
-		book: false,
-		anime: true,
-		music: false,
-		game: false,
-		real: true,
-	},
 	pagination: {
-		limit: 50, // 每页获取数量
-		delay: 50, // 请求间隔毫秒数，避免频率限制
-		maxTotal: 1000, // 最大获取总数，防止无限循环（0=无限制）
+		limit: 50,
+		delay: 50,
+		maxTotal: 1000,
 	},
 };
 
-const zoteroConfig = {
+const enabledBangumiCategories = {
+	book: false,
+	anime: true,
+	music: false,
+	game: false,
+	real: true,
+};
+
+const zoteroConfig: ZoteroConfig = {
 	userId: `${zoteroUserID}`,
 	apiKey: `${zoteroKey}`,
 	limit: 100,
@@ -44,97 +44,6 @@ const categoryMap = {
 	game: { id: "game", name: "游戏", subjectType: 4 },
 	real: { id: "real", name: "追剧", subjectType: 6 },
 };
-
-async function fetchZoteroData() {
-	try {
-		console.log("[Zotero] 开始获取数据...");
-		const url = `https://api.zotero.org/users/${zoteroConfig.userId}/items?format=json&limit=${zoteroConfig.limit}&itemType=-attachment`;
-		const response = await fetch(url, {
-			headers: {
-				"Zotero-API-Key": zoteroConfig.apiKey,
-				"Zotero-API-Version": "3",
-			},
-		});
-
-		if (!response.ok) {
-			console.warn(`[Zotero] 无法获取数据 (状态码: ${response.status})`);
-			return [];
-		}
-
-		const data = (await response.json()) as ZoteroItem[];
-		console.log(`[Zotero] 总共获取到 ${data.length} 条数据`);
-		return data;
-	} catch (error) {
-		console.error("[Zotero] 获取数据时出错:", error);
-		return [];
-	}
-}
-
-async function fetchBangumiData(username: string, subjectType: number) {
-	try {
-		const { limit, delay, maxTotal } = bangumiConfig.pagination;
-		let offset = 0;
-		let allData: UserSubjectCollection[] = [];
-		let hasMore = true;
-
-		console.log(
-			`[Bangumi] 开始获取用户 ${username} 的 subjectType ${subjectType} 数据...`,
-		);
-
-		while (hasMore) {
-			// 检查是否超过最大获取限制
-			if (maxTotal > 0 && allData.length >= maxTotal) {
-				console.log(`[Bangumi] 已达到最大获取限制 ${maxTotal}，停止获取`);
-				break;
-			}
-
-			const url = `${bangumiConfig.apiUrl}/v0/users/${username}/collections?subject_type=${subjectType}&limit=${limit}&offset=${offset}`;
-
-			console.log(`[Bangumi] 正在获取数据: ${url} (已获取: ${allData.length})`);
-
-			const response = await fetch(url, {
-				headers: {
-					"User-Agent": "CuB3y0nd/assembly.rip",
-					Accept: "application/json",
-				},
-			});
-
-			if (!response.ok) {
-				console.warn(
-					`[Bangumi] 无法获取数据 (状态码: ${response.status}):`,
-					url,
-				);
-				break;
-			}
-
-			const data = (await response.json()) as UserSubjectCollectionResponse;
-			const currentBatch = data.data || [];
-
-			if (currentBatch.length > 0) {
-				allData = allData.concat(currentBatch);
-				offset += limit;
-
-				// 如果本次获取的数据少于 limit, 说明已经是最后一页
-				if (currentBatch.length < limit) {
-					hasMore = false;
-				}
-			} else {
-				hasMore = false;
-			}
-
-			// 添加延迟避免请求过于频繁
-			if (hasMore) {
-				await new Promise((resolve) => setTimeout(resolve, delay));
-			}
-		}
-
-		console.log(`[Bangumi] 总共获取到 ${allData.length} 条数据`);
-		return allData;
-	} catch (error) {
-		console.error("[Bangumi] 获取数据时出错:", error);
-		return [];
-	}
-}
 
 // 获取所有启用分类的数据
 const bangumiData: Record<string, UserSubjectCollection[]> = {};
@@ -150,7 +59,7 @@ console.log("[Collections] 开始获取所有数据");
 
 // 获取 Zotero 数据并添加到标签页
 try {
-	zoteroData = await fetchZoteroData();
+	zoteroData = await fetchZoteroData(zoteroConfig);
 	if (zoteroData.length > 0) {
 		tabs.push({
 			id: "zotero",
@@ -163,12 +72,12 @@ try {
 	console.error("[Zotero] 初始化失败:", error);
 }
 
-for (const [categoryKey, enabled] of Object.entries(bangumiConfig.categories)) {
+for (const [categoryKey, enabled] of Object.entries(enabledBangumiCategories)) {
 	if (enabled && categoryMap[categoryKey as keyof typeof categoryMap]) {
 		const categoryInfo = categoryMap[categoryKey as keyof typeof categoryMap];
 		try {
 			const data = await fetchBangumiData(
-				bangumiConfig.username,
+				bangumiConfig,
 				categoryInfo.subjectType,
 			);
 			bangumiData[categoryKey] = data;
