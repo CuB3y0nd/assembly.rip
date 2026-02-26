@@ -1,0 +1,248 @@
+---
+title: "Fuzz two legacy CVEs in libexif"
+published: 2026-02-24
+updated: 2026-02-26
+description: "Find  & Patch two legacy CVEs in libexif library."
+image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1e956uogtx.avif"
+tags: ["Fuzz", "Notes"]
+category: "Notes"
+draft: false
+---
+
+import CveCard from "@components/misc/CveCard.svelte";
+
+# Target CVEs
+
+## Description
+
+<CveCard id="CVE-2009-3895" client:idle />
+
+<CveCard id="CVE-2012-2836" client:idle />
+
+# Compile
+
+## Download
+
+```shellsession
+git clone https://github.com/libexif/libexif.git
+cd libexif && git checkout libexif-0_6_14-release
+```
+
+## Build
+
+这里由于我在 make 的时候有关生成文档的地方报错了，所以我手动将文档部分 patch 掉：
+
+```diff title="Makefile.am"
+- SUBDIRS = m4m po libexif test doc binary
++ SUBDIRS = m4m po libexif test binary
+```
+
+```shellsession
+autoreconf -fvi
+CC=clang CXX=clang++ CFLAGS="-O0 -g -fno-inline -fno-builtin -fno-omit-frame-pointer" CXXFLAGS="$CFLAGS" ./configure --enable-shared=no --prefix="$PWD/../workshop/lib-debug/"
+make -j`nproc` && make install
+make clean
+
+CC=afl-clang-lto CXX=afl-clang-lto++ ./configure --enable-shared=no --prefix="$PWD/../workshop/lib-fuzz/"
+make -j`nproc` && make install
+```
+
+由于 libexif 只是一个库，所以我们要 fuzz 它需要自己找个前端，或者手写 harness 。方便起见，我直接使用 [exif](https://github.com/libexif/exif) 作为前端。
+
+```shellsession
+git clone https://github.com/libexif/exif.git
+cd exif && git checkout exif-0_6_15-release
+autoreconf -fvi
+CC=clang CXX=clang++ CFLAGS="-O0 -g -fno-inline -fno-builtin -fno-omit-frame-pointer" CXXFLAGS="$CFLAGS" PKG_CONFIG_PATH="$PWD/../workshop/lib-debug/lib/pkgconfig/" ./configure --enable-shared=no --prefix="$PWD/../workshop/exif-debug"
+make -j`nproc` && make install
+make clean
+
+CC=afl-clang-lto CXX=afl-clang-lto++ PKG_CONFIG_PATH="$PWD/../workshop/lib-fuzz/lib/pkgconfig/" ./configure --enable-shared=no --prefix="$PWD/../workshop/exif-fuzz"
+make -j`nproc` && make install
+```
+
+## Samples
+
+```python title="gen_corpus.py"
+#!/usr/bin/env python3
+
+import struct
+import os
+
+def pack_data(fmt, endian, *args):
+    return struct.pack(('<' if endian == 'LE' else '>') + fmt, *args)
+
+class ExifGenerator:
+    def __init__(self, endian='LE'):
+        self.endian = endian
+        self.entries = []
+        self.data_blobs = b''
+
+    def add_entry(self, tag, data_type, count, value):
+        self.entries.append({'tag': tag, 'type': data_type, 'count': count, 'value': value})
+
+    def build_ifd(self, start_offset, next_ifd_offset=0):
+        ifd_data = pack_data('H', self.endian, len(self.entries))
+        data_offset = start_offset + 2 + (len(self.entries) * 12) + 4
+
+        entry_bytes = b''
+        blob_bytes = b''
+
+        for e in self.entries:
+            val_bytes = b''
+            raw_blob = None
+
+            if e['type'] == 1: # BYTE
+                if isinstance(e['value'], int): raw_blob = pack_data('B', self.endian, e['value'])
+                else: raw_blob = e['value']
+            elif e['type'] == 2: # ASCII
+                raw_blob = e['value'].encode('ascii') + b'\x00'
+            elif e['type'] == 3: # SHORT
+                if e['count'] == 1: raw_blob = pack_data('H', self.endian, e['value'])
+                else: raw_blob = pack_data('H'*e['count'], self.endian, *e['value'])
+            elif e['type'] == 4: # LONG
+                if e['count'] == 1: raw_blob = pack_data('I', self.endian, e['value'])
+                else: raw_blob = pack_data('I'*e['count'], self.endian, *e['value'])
+            elif e['type'] == 5: # RATIONAL
+                raw_blob = pack_data('II', self.endian, e['value'][0], e['value'][1])
+            elif e['type'] == 7: # UNDEFINED
+                raw_blob = e['value']
+            elif e['type'] == 10: # SRATIONAL
+                raw_blob = pack_data('ii', self.endian, e['value'][0], e['value'][1])
+
+            if len(raw_blob) <= 4:
+                val_bytes = raw_blob.ljust(4, b'\x00')
+            else:
+                off = data_offset + len(blob_bytes)
+                val_bytes = pack_data('I', self.endian, off)
+                blob_bytes += raw_blob
+
+            entry_bytes += pack_data('HHII', self.endian, e['tag'], e['type'], e['count'], struct.unpack('<I' if self.endian == 'LE' else '>I', val_bytes)[0])
+
+        return ifd_data + entry_bytes + pack_data('I', self.endian, next_ifd_offset) + blob_bytes
+
+def create_complex_exif(endian='LE'):
+    # 1. Build Exif SubIFD
+    exif = ExifGenerator(endian)
+    exif.add_entry(0x9003, 2, 20, "2026:02:24 14:00:00")
+    exif.add_entry(0x829a, 5, 1, (1, 100))
+    exif.add_entry(0x829d, 5, 1, (28, 10))
+    exif.add_entry(0x9204, 10, 1, (-1, 3))
+    exif.add_entry(0x9286, 7, 8, b"USERCOM\x00")
+    exif_sub_data = exif.build_ifd(0) # Length check only first
+
+    # 2. Build GPS IFD
+    gps = ExifGenerator(endian)
+    gps.add_entry(0x0000, 1, 4, b'\x02\x02\x00\x00')
+    gps.add_entry(0x0002, 5, 3, (1, 1)) # This will actually need 3 rationals, but let's keep it simple
+    # Fix: GPS Latitude is 3 rationals
+    gps.entries[-1] = {'tag': 0x0002, 'type': 5, 'count': 3, 'value': (40, 1, 30, 1, 15, 1)}
+    gps_data = gps.build_ifd(0)
+
+    # 3. Build IFD0
+    ifd0 = ExifGenerator(endian)
+    ifd0.add_entry(0x010e, 2, 11, "Fuzz Test")
+    ifd0.add_entry(0x0110, 2, 11, "Gemini Cam")
+    ifd0.add_entry(0x8769, 4, 1, 0) # ExifOffset
+    ifd0.add_entry(0x8825, 4, 1, 0) # GPSInfo
+
+    # IFD0 fixed size: 2 + 4*12 + 4 = 54. Blobs: 11 + 11 = 22. Total = 76.
+    ifd0_total_len = 76
+    exif_offset = 8 + ifd0_total_len
+    gps_offset = exif_offset + len(exif_sub_data)
+
+    for e in ifd0.entries:
+        if e['tag'] == 0x8769: e['value'] = exif_offset
+        if e['tag'] == 0x8825: e['value'] = gps_offset
+
+    final_ifd0 = ifd0.build_ifd(8)
+    final_exif = exif.build_ifd(exif_offset)
+    final_gps = gps.build_ifd(gps_offset)
+
+    header = b'II\x2a\x00\x08\x00\x00\x00' if endian == 'LE' else b'MM\x00\x2a\x00\x00\x00\x08'
+    return header + final_ifd0 + final_exif + final_gps
+
+def save_corpus(name, data, add_exif_header=False):
+    os.makedirs('corpus/exif', exist_ok=True)
+    with open(os.path.join('corpus/exif', name), 'wb') as f:
+        if add_exif_header: f.write(b'Exif\x00\x00')
+        f.write(data)
+    print(f"Created {name}")
+
+if __name__ == "__main__":
+    save_corpus('rich_le.exif', create_complex_exif('LE'), True)
+    save_corpus('rich_be.exif', create_complex_exif('BE'), True)
+
+    SOI, APP1 = b'\xff\xd8', b'\xff\xe1'
+    exif_payload = b'Exif\x00\x00' + create_complex_exif('LE')
+    app1_data = APP1 + struct.pack('>H', len(exif_payload) + 2) + exif_payload
+    save_corpus('rich_jpeg.jpg', SOI + app1_data + b'\xff\xd9')
+    save_corpus('raw_tiff.exif', create_complex_exif('LE'), False)
+```
+
+# Fuzzing
+
+AFLplusplus go work: `afl-fuzz -i - -o out/ -s 1337 -- ./exif-fuzz/bin/exif @@`.
+
+这个 Gemini Cam 还挺滑稽的哈哈哈：
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8s3ud0wapg.avif"
+    alt=""
+  />
+</center>
+
+13 个 crashes，4 个 hangs，其中有这几种独立的 crash 情况：
+
+```plaintext showLineNumbers=false
+Program received signal SIGSEGV, Segmentation fault.
+0x00007ffff7e595c1 in memcpy () from /usr/lib64/libc.so.6
+#0  0x00007ffff7e595c1 in memcpy () from /usr/lib64/libc.so.6
+#1  0x0000555555565553 in exif_data_load_data_thumbnail (data=0x5555555931e0, d=0x555555595986 "II*", ds=256, offset=4294967168, size=232) at exif-data.c:292
+#2  0x0000555555563d05 in exif_data_load_data_content (data=0x5555555931e0, ifd=EXIF_IFD_EXIF, d=0x555555595986 "II*", ds=256, offset=86, recursion_depth=1) at exif-data.c:381
+#3  0x0000555555563b36 in exif_data_load_data_content (data=0x5555555931e0, ifd=EXIF_IFD_0, d=0x555555595986 "II*", ds=256, offset=10, recursion_depth=0) at exif-data.c:361
+#4  0x0000555555563621 in exif_data_load_data (data=0x5555555931e0, d_orig=0x555555595980 "Exif", ds_orig=262) at exif-data.c:813
+#5  0x000055555556cb9b in exif_loader_get_data (loader=0x555555593190) at exif-loader.c:387
+#6  0x000055555555f73e in main (argc=2, argv=0x7fffffffdca8) at main.c:438
+
+Program received signal SIGSEGV, Segmentation fault.
+0x000055555556e5bf in exif_get_slong (b=0x5555555b2000 <error: Cannot access memory at address 0x5555555b2000>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:137
+137                     return ((b[3] << 24) | (b[2] << 16) | (b[1] << 8) | b[0]);
+#0  0x000055555556e5bf in exif_get_slong (b=0x5555555b2000 <error: Cannot access memory at address 0x5555555b2000>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:137
+#1  0x000055555556e44f in exif_get_long (buf=0x5555555b2000 <error: Cannot access memory at address 0x5555555b2000>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:167
+#2  0x0000555555565fd6 in exif_entry_fix (e=0x555555593460) at exif-entry.c:193
+#3  0x0000555555562d4d in fix_func (e=0x555555593460, data=0x0) at exif-content.c:231
+#4  0x00005555555629f3 in exif_content_foreach_entry (content=0x555555593270, func=0x555555562d30 <fix_func>, data=0x0) at exif-content.c:200
+#5  0x0000555555562bbc in exif_content_fix (c=0x555555593270) at exif-content.c:247
+#6  0x0000555555565431 in fix_func (c=0x555555593270, data=0x0) at exif-data.c:1169
+#7  0x000055555556507a in exif_data_foreach_content (data=0x5555555931e0, func=0x555555565390 <fix_func>, user_data=0x0) at exif-data.c:1031
+#8  0x0000555555564384 in exif_data_fix (d=0x5555555931e0) at exif-data.c:1176
+#9  0x0000555555563866 in exif_data_load_data (data=0x5555555931e0, d_orig=0x555555595980 "", ds_orig=82) at exif-data.c:871
+#10 0x000055555556cb9b in exif_loader_get_data (loader=0x555555593190) at exif-loader.c:387
+#11 0x000055555555f73e in main (argc=2, argv=0x7fffffffdca8) at main.c:438
+
+Program received signal SIGSEGV, Segmentation fault.
+0x000055555556e382 in exif_get_sshort (buf=0x555655595985 <error: Cannot access memory at address 0x555655595985>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:94
+94                      return ((buf[1] << 8) | buf[0]);
+#0  0x000055555556e382 in exif_get_sshort (buf=0x555655595985 <error: Cannot access memory at address 0x555655595985>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:94
+#1  0x000055555556e2ef in exif_get_short (buf=0x555655595985 <error: Cannot access memory at address 0x555655595985>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:104
+#2  0x0000555555563651 in exif_data_load_data (data=0x5555555931e0, d_orig=0x555555595980 "Exif", ds_orig=61) at exif-data.c:819
+#3  0x000055555556cb9b in exif_loader_get_data (loader=0x555555593190) at exif-loader.c:387
+#4  0x000055555555f73e in main (argc=2, argv=0x7fffffffdca8) at main.c:438
+```
+
+hand 的情况比较唯一，全是卡在 `exif_loader_write` 这里：
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.39lpzh3w27.avif"
+    alt=""
+  />
+</center>
+
+# Analysis
+
+这个项目有 API 文档，不用自己猜函数功能了：[libexif Project Documentation](https://libexif.github.io/docs.html).
+
+好的，继续玩 MC，快开学了，谁学啊！？
