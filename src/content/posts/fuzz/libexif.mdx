@@ -1,7 +1,7 @@
 ---
 title: "Fuzz two legacy CVEs in libexif"
 published: 2026-02-24
-updated: 2026-02-26
+updated: 2026-02-27
 description: "Find  & Patch two legacy CVEs in libexif library."
 image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1e956uogtx.avif"
 tags: ["Fuzz", "Notes"]
@@ -232,7 +232,7 @@ Program received signal SIGSEGV, Segmentation fault.
 #4  0x000055555555f73e in main (argc=2, argv=0x7fffffffdca8) at main.c:438
 ```
 
-hand 的情况比较唯一，全是卡在 `exif_loader_write` 这里：
+hang 的情况比较唯一，全是卡在 `exif_loader_write` 这里：
 
 <center>
   <img
@@ -245,4 +245,215 @@ hand 的情况比较唯一，全是卡在 `exif_loader_write` 这里：
 
 这个项目有 API 文档，不用自己猜函数功能了：[libexif Project Documentation](https://libexif.github.io/docs.html).
 
-好的，继续玩 MC，快开学了，谁学啊！？
+~~好的，继续玩 MC，快开学了，谁学啊！？~~
+
+## CVE-2012-2836
+
+先分析一下这个样本，栈回溯如下：
+
+```plaintext showLineNumbers=false
+#0  0x00007ffff7e595c1 in memcpy () from /usr/lib64/libc.so.6
+#1  0x0000555555565553 in exif_data_load_data_thumbnail (data=0x5555555931e0, d=0x555555595986 "II*", ds=256, offset=4294967168, size=232) at exif-data.c:292
+#2  0x0000555555563d05 in exif_data_load_data_content (data=0x5555555931e0, ifd=EXIF_IFD_EXIF, d=0x555555595986 "II*", ds=256, offset=86, recursion_depth=1) at exif-data.c:381
+#3  0x0000555555563b36 in exif_data_load_data_content (data=0x5555555931e0, ifd=EXIF_IFD_0, d=0x555555595986 "II*", ds=256, offset=10, recursion_depth=0) at exif-data.c:361
+#4  0x0000555555563621 in exif_data_load_data (data=0x5555555931e0, d_orig=0x555555595980 "Exif", ds_orig=262) at exif-data.c:813
+#5  0x000055555556cb9b in exif_loader_get_data (loader=0x555555593190) at exif-loader.c:387
+#6  0x000055555555f73e in main (argc=2, argv=0x7fffffffdca8) at main.c:438
+```
+
+`exif_loader_get_data` 负责为 `ExifData` 结构体开辟空间，然后使用 `exif_data_load_data` 将内存中的 JPEG / EXIF _header_, _byte order_, _fixed value_ 等信息加载到 ExifData 结构体中，进行一些简单的校验，并初始化 _IFD 0_ 和 _IFD 1_。初始化 IFD 字段是通过调用 `exif_data_load_data_content` 实现的。
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.92qoah6kym.avif"
+    alt=""
+  />
+</center>
+
+根据这个 switch 就可以看出来，很显然，load data content 大致应该就是将 exif 图片的各个字段信息加载进去。
+
+继续调试，我们在 `EXIF_TAG_EXIF_IFD_POINTER` 这个 case 调用了 `exif_data_load_data_content`，此时传入的 ifd 为 `EXIF_IFD_EXIF`，而我们后续也是在这里面执行 `exif_data_load_data_thumbnail` 时崩溃的，所以要重点分析一下这部分。
+
+首先确定一下在第几次循环的时候崩溃，我们直接 `c` 让它崩，然后切换到对应栈帧查看 `i`，发现是第 13 次调用了 `exif_data_load_data_thumbnail`：
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.9kgpz2zpfk.avif"
+    alt=""
+  />
+</center>
+
+然后通过 `if i == 13` 下条件断点，定位到触发崩溃的循环索引继续分析。由于这里有两个调用 `exif_data_load_data_thumbnail` 的位置，而我们不知道具体会调用哪一个，因此如果我们下的那个断点不是实际的调用点，那就停不下来了。所以这里两个位置都需要下一个断点：
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8ok8jnphmq.avif"
+    alt=""
+  />
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.7w7d1x7eu9.avif"
+    alt=""
+  />
+</center>
+
+最后我们发现它执行的是 381 行处的代码，整洁起见，之前 374 行处的断点就可以删掉了。
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.32ii5su2d6.avif"
+    alt=""
+  />
+</center>
+
+步入继续，发现致使 `memcpy` 崩溃的原因是 `rsi` 无法解引用：
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6po1tbt9wu.avif"
+    alt=""
+  />
+</center>
+
+接下来重点看这个 `exif_data_load_data_thumbnail` 的逻辑：
+
+```c
+// ► 0x555555563d00 <exif_data_load_data_content+1168>    call   exif_data_load_data_thumbnail <exif_data_load_data_thumbnail>
+//        rdi: 0x555555593240 —▸ 0x5555555932d0 —▸ 0x5555555934a0 —▸ 0x555555593420 ◂— 0x200000110
+//        rsi: 0x555555595986 ◂— 0x8002a4949 /* 'II*' */
+//        rdx: 0x100
+//        rcx: 0xffffff80
+//        r8: 0xe8
+
+static void
+exif_data_load_data_thumbnail (ExifData *data, const unsigned char *d,
+          unsigned int ds, ExifLong offset, ExifLong size)
+{
+ if (ds < offset + size) {
+  exif_log (data->priv->log, EXIF_LOG_CODE_DEBUG, "ExifData",
+     "Bogus thumbnail offset and size: %i < %i + %i.",
+     (int) ds, (int) offset, (int) size);
+  return;
+ }
+ if (data->data)
+  exif_mem_free (data->priv->mem, data->data);
+ data->size = size;
+ data->data = exif_data_alloc (data, data->size);
+ if (!data->data)
+  return;
+ memcpy (data->data, d + offset, data->size);
+}
+```
+
+通过调试，我们可知它根本不会进入那三个 if branch，也就是说，这个函数只执行了如下三行代码：
+
+```c
+data->size = size;
+data->data = exif_data_alloc (data, data->size);
+memcpy (data->data, d + offset, data->size);
+```
+
+即将 _size_ 设置为 `r8`，将 _data_ 设置为 `exif_data_alloc` 分配出来的值，而 _src_ 则是 `d + offset` 的值，即 `rsi + 0xffffff80`：
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.icnt6cnbs.avif"
+    alt=""
+  />
+</center>
+
+显然，这个 `offset` 特别大，而经调试，我们的 rsi 其实是合法值，那么问题就处在 offset 上了。
+
+回溯发现，在给 `exif_data_load_data_thumbnail` 传参时，offset 的值就有问题了：
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6f18073lot.avif"
+    alt=""
+  />
+</center>
+
+通过查看二进制数据，我们很容易定位到一个类似的数据：
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.67y04sub0g.avif"
+    alt=""
+  />
+</center>
+
+尝试直接将其修改为 `0xCAFEBABE`，然后再调试一下。调试之前我们可以先使用 `save breakpoints bps` 将断点信息保存到 `bps` 文件，之后通过 `source bps` 加载。
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3yezlbj28h.avif"
+    alt=""
+  />
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4clfc6tir1.avif"
+    alt=""
+  />
+</center>
+
+可见，我们可以通过控制图片的内部数据信息来控制 `memcpy` 的行为，至于具体怎么利用，利用后有什么效果，我就不分析了。直接确定一下 CVE ID，发现这个 `CVE-2012-2836` 的描述比较符合我们的分析结果。
+
+<CveCard id="CVE-2012-2836" client:idle />
+
+# Fix
+
+## CVE-2012-2836
+
+调试发现，这个非法 offset 来自 `exif_get_long` 函数，我们深入分析一下它的逻辑。
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.5trkdyugrn.avif"
+    alt=""
+  />
+</center>
+
+首先调用入口是：
+
+```c
+  case EXIF_TAG_JPEG_INTERCHANGE_FORMAT:
+   o = exif_get_long (d + offset + 12 * i + 8,
+        data->priv->order);
+```
+
+所以它是取 `d + offset + 12 * i + 8` 这个偏移处的值。查阅文档，我们可知它就是返回一个 `uint32_t` 类型，而它内部使用的 `exif_get_slong` 会返回一个 `int32_t` 类型：
+
+```c
+ExifLong
+exif_get_long (const unsigned char *buf, ExifByteOrder order)
+{
+        return (exif_get_slong (buf, order) & 0xffffffff);
+}
+
+ExifSLong
+exif_get_slong (const unsigned char *b, ExifByteOrder order)
+{
+ if (!b) return 0;
+        switch (order) {
+        case EXIF_BYTE_ORDER_MOTOROLA:
+                return ((b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3]);
+        case EXIF_BYTE_ORDER_INTEL:
+                return ((b[3] << 24) | (b[2] << 16) | (b[1] << 8) | b[0]);
+        }
+
+ /* Won't be reached */
+ return (0);
+}
+```
+
+虽然通过 `& 0xffffffff` 截断处理了整数溢出问题，但是 `0xffffffff` 依旧可以表示一个巨大的范围，大概 4 GB？所以问题就在于，它没检查偏移是否合理。
+
+解决方法很简单，只要将 `offset` 限制在 `ds` 的范围内即可。`ds` 代表了 _data size_, 也就是整个图像数据的大小边界。超过 ds 肯定是不对的。
+
+```diff lang="c"
+    case EXIF_TAG_JPEG_INTERCHANGE_FORMAT:
+      o = exif_get_long(d + offset + 12 * i + 8, data->priv->order);
++      if (o >= ds) {
++        exif_log(data->priv->log, EXIF_LOG_CODE_CORRUPT_DATA, "ExifData",
++                 "Illegal offset value detected!");
++        abort();
+      }
+```
