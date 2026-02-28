@@ -27,9 +27,17 @@ interface Props {
 	description?: string;
 	lang?: string;
 	setOGTypeArticle?: boolean;
+	hasSidebar?: boolean;
 }
 
-let { title, banner, description, lang, setOGTypeArticle } = Astro.props;
+let {
+	title,
+	banner,
+	description,
+	lang,
+	setOGTypeArticle,
+	hasSidebar = true,
+} = Astro.props;
 
 // apply a class to the body element to decide the height of the banner, only used for initial page load
 // Swup can update the body for each page visit, but it's after the page transition, causing a delay for banner height change
@@ -151,7 +159,7 @@ const bannerOffset =
     <VercelAnalytics client:only="svelte" />
 
 	</head>
-	<body class=" min-h-screen transition " class:list={[{"lg:is-home": isHomePage, "enable-banner": enableBanner}]}
+	<body class=" min-h-screen transition " class:list={[{"lg:is-home": isHomePage, "enable-banner": enableBanner, "has-sidebar": hasSidebar, "no-sidebar": !hasSidebar}]}
 		  data-overlayscrollbars-initialize
 	>
 		<ConfigCarrier></ConfigCarrier>
@@ -182,7 +190,7 @@ const bannerOffset =
 	.enable-banner #banner {
 		@apply h-[var(--banner-height-home)] translate-y-[var(--bannerOffset)]
 	}
-	.enable-banner.is-home #main-grid {
+	.enable-banner.is-home #main-grid, .enable-banner.is-home #main-grid-wide {
 		@apply translate-y-[var(--banner-height-extend)];
 	}
 	.enable-banner #top-row {
@@ -193,6 +201,18 @@ const bannerOffset =
 	}
 	.navbar-hidden {
 		@apply opacity-0 -translate-y-16
+	}
+	body.no-sidebar #sidebar {
+		display: none !important;
+	}
+	body.no-sidebar #main-grid {
+		grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
+	}
+	body.no-sidebar #swup-container {
+		grid-column: span 2 / span 2 !important;
+	}
+	body.no-sidebar .footer {
+		grid-column: span 2 / span 2 !important;
 	}
 }
 </style>

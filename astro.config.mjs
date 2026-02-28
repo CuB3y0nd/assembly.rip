@@ -48,7 +48,7 @@ export default defineConfig({
       preload: true,
       accessibility: true,
       updateHead: true,
-      updateBodyClass: false,
+      updateBodyClass: true,
       globalInstance: true,
     }),
     icon({
