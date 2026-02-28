@@ -1,4 +1,5 @@
 ---
+title: Friends
 friends:
   - name: N1nEmAn
     url: https://www.cnblogs.com/9man
@@ -51,11 +52,29 @@ friends:
     avatar: https://0xstraw-hat.github.io/avatar/avatar.jpg
 ---
 
-每一个博客都是一座孤岛，直到它被另一个灵魂观测。
-
-在这个信息熵不断增加的世界里，我在这里建立了一个坐标。如果你也在这片荒原上构建了自己的真实，请留下你的信号。
-
-## Requirements
-
-- `sys-apps/human-being (>=1.0)`
-- `net-misc/interesting-content (REQUIRED)`
+```log showLineNumbers=false
+[    0.000000] Initializing existence_kernel.patch... DONE.
+[    0.001042] CPU: Soul(s) 0:1 [Genuine Intelligence Detected]
+[    0.002875] Memory: 1337EB [Infinite Void with Occasional Meaning]
+[    0.004910] ----------------------------------------------------------------
+[    0.005000] [ CHECKING DEPENDENCIES ]
+[    0.005112] [  OK  ] phi-exist/being-precedes-essence (>=1.0)
+[    0.006890] [  OK  ] lib/meaningless-meaning (Shared Library)
+[    0.008441] [  OK  ] net-misc/non-commercial-shells (Strict Mode)
+[    0.015000] ----------------------------------------------------------------
+[    0.016000] 「推石头上山固然枯燥，但如果能看着别人的石头一起滚下去，
+[    0.016000]   西西弗斯也会觉得挺有意思。」
+[    0.017000]   —— 在这片荒诞的海滩上，欢迎互相交换贝壳。
+[    0.018000] ----------------------------------------------------------------
+[    0.020000] [ IDENTITY_BLOB_LOADED ]
+[    0.021000]   NAME:      CuB3y0nd
+[    0.022000]   ENDPOINT:  https://www.cubeyond.net/
+[    0.023000]   MANIFESTO: 心之所向，一苇以航。
+[    0.024000]   AVATAR:    https://avatars.githubusercontent.com/u/91041570?v=4
+[    0.030000] ----------------------------------------------------------------
+[    0.985210] sisyphus_daemon[PID:57]: rolling_stone_state = ACTIVE
+[    0.999999] Status: Absurdity acknowledged. Reality mounted as Read/Write.
+[    1.000000]
+[    1.000001] # EOF: session_persist = true
+[    1.000002] # Listening for peer signals on port 443...
+```
