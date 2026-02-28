@@ -4,9 +4,10 @@ import { onMount } from "svelte";
 import I18nKey from "../i18n/i18nKey";
 import { i18n } from "../i18n/translation";
 import { getPostUrlBySlug } from "../utils/url-utils";
+import PostHeatmap from "./PostHeatmap.svelte";
 
-export let tags: string[];
-export let categories: string[];
+export let tags: string[] = [];
+export let categories: string[] = [];
 export let sortedPosts: Post[] = [];
 
 const params = new URLSearchParams(window.location.search);
@@ -19,7 +20,7 @@ interface Post {
 	data: {
 		title: string;
 		tags: string[];
-		category?: string;
+		category?: string | null;
 		published: Date;
 	};
 }
@@ -30,6 +31,7 @@ interface Group {
 }
 
 let groups: Group[] = [];
+let filteredPosts: Post[] = [];
 
 function formatDate(date: Date) {
 	const month = (date.getMonth() + 1).toString().padStart(2, "0");
@@ -42,7 +44,7 @@ function formatTag(tagList: string[]) {
 }
 
 onMount(async () => {
-	let filteredPosts: Post[] = sortedPosts;
+	filteredPosts = sortedPosts;
 
 	if (tags.length > 0) {
 		filteredPosts = filteredPosts.filter(
@@ -84,6 +86,10 @@ onMount(async () => {
 	groups = groupedPostsArray;
 });
 </script>
+
+<div class="card-base p-4 md:p-6 mb-4">
+    <PostHeatmap posts={filteredPosts} />
+</div>
 
 <div class="card-base px-8 py-6">
   {#each groups as group}
