@@ -4,7 +4,7 @@ import { commentConfig } from "@/config";
 import Giscus from "./Giscus.svelte";
 
 interface Props {
-	post: CollectionEntry<"posts">;
+	post?: CollectionEntry<"posts">;
 }
 
 const showGiscus = !!commentConfig?.giscus;

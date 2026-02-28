@@ -21,7 +21,18 @@ const postsCollection = defineCollection({
 });
 
 const specCollection = defineCollection({
-	schema: z.object({}),
+	schema: z.object({
+		friends: z
+			.array(
+				z.object({
+					name: z.string(),
+					url: z.string(),
+					description: z.string(),
+					avatar: z.string().optional(),
+				}),
+			)
+			.optional(),
+	}),
 });
 
 export const collections = {
