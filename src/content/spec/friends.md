@@ -35,15 +35,12 @@ friends:
   - name: shulkwisec
     url: https://shulkwisec.github.io/
     description: Friend from W4llz
-    # avatar: https://github.com/shulkwisec.png
   - name: wgg
     url: https://wgggggggg.github.io
     description: pwner
-    # avatar: https://github.com/wgggggggg.png
   - name: H1m
     url: https://h1m-redqueen.github.io/
     description: 西北 Pwn 王
-    # avatar: https://github.com/H1m-RedQueen.png
   - name: Duo 云站
     url: https://www.mduo.cloud/
     description: MathForest官方🌲|程序及数学可视化✨|屑魔女游世界🔮

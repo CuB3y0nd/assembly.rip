@@ -188,8 +188,12 @@ const bannerOffset =
 		@apply h-[var(--banner-height-home)] translate-y-0
 	}
 	.enable-banner #banner {
-		@apply h-[var(--banner-height-home)] translate-y-[var(--bannerOffset)]
+		@apply h-[var(--banner-height-home)] translate-y-[var(--bannerOffset)] will-change-transform;
+        transition: opacity 700ms ease, filter 300ms ease; /* Disable transform transition for parallax */
 	}
+    #banner-wrapper {
+        @apply will-change-transform;
+    }
 	.enable-banner.is-home #main-grid, .enable-banner.is-home #main-grid-wide {
 		@apply translate-y-[var(--banner-height-extend)];
 	}
@@ -480,19 +484,34 @@ if (window?.swup?.hooks) {
 let backToTopBtn = document.getElementById('back-to-top-btn');
 let toc = document.getElementById('toc-wrapper');
 let navbar = document.getElementById('navbar-wrapper')
+
 function scrollFunction() {
 	let bannerHeight = window.innerHeight * (BANNER_HEIGHT / 100)
+    let scrollTop = document.body.scrollTop || document.documentElement.scrollTop;
+
+    // Re-fetch elements as they might be replaced by Swup
+    let bannerElement = document.getElementById('banner')
 
 	if (backToTopBtn) {
-		if (document.body.scrollTop > bannerHeight || document.documentElement.scrollTop > bannerHeight) {
+		if (scrollTop > bannerHeight) {
 			backToTopBtn.classList.remove('hide')
 		} else {
 			backToTopBtn.classList.add('hide')
 		}
 	}
 
+    if (bannerEnabled && bannerElement) {
+        // Parallax Effect: Move banner slower than content
+        let parallaxOffset = scrollTop * 0.35;
+        bannerElement.style.setProperty('transform', `translateY(${parallaxOffset}px) scale(1.05)`, 'important');
+
+        // Motion Effect: Slower and more subtle blur
+        let blurRatio = Math.min(scrollTop / (bannerHeight * 2), 1);
+        bannerElement.style.filter = `blur(${blurRatio * 4}px) brightness(${1 - blurRatio * 0.15})`;
+    }
+
 	if (bannerEnabled && toc) {
-		if (document.body.scrollTop > bannerHeight || document.documentElement.scrollTop > bannerHeight) {
+		if (scrollTop > bannerHeight) {
 			toc.classList.remove('toc-hide')
 		} else {
 			toc.classList.add('toc-hide')
