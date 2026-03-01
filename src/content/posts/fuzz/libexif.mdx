@@ -1,7 +1,7 @@
 ---
 title: "Fuzz two legacy CVEs in libexif"
 published: 2026-02-24
-updated: 2026-02-27
+updated: 2026-03-01
 description: "Find  & Patch two legacy CVEs in libexif library."
 image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1e956uogtx.avif"
 tags: ["Fuzz", "CVE"]
@@ -207,29 +207,29 @@ Program received signal SIGSEGV, Segmentation fault.
 #6  0x000055555555f73e in main (argc=2, argv=0x7fffffffdca8) at main.c:438
 
 Program received signal SIGSEGV, Segmentation fault.
-0x000055555556e5bf in exif_get_slong (b=0x5555555b2000 <error: Cannot access memory at address 0x5555555b2000>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:137
-137                     return ((b[3] << 24) | (b[2] << 16) | (b[1] << 8) | b[0]);
-#0  0x000055555556e5bf in exif_get_slong (b=0x5555555b2000 <error: Cannot access memory at address 0x5555555b2000>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:137
-#1  0x000055555556e44f in exif_get_long (buf=0x5555555b2000 <error: Cannot access memory at address 0x5555555b2000>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:167
-#2  0x0000555555565fd6 in exif_entry_fix (e=0x555555593460) at exif-entry.c:193
-#3  0x0000555555562d4d in fix_func (e=0x555555593460, data=0x0) at exif-content.c:231
-#4  0x00005555555629f3 in exif_content_foreach_entry (content=0x555555593270, func=0x555555562d30 <fix_func>, data=0x0) at exif-content.c:200
-#5  0x0000555555562bbc in exif_content_fix (c=0x555555593270) at exif-content.c:247
-#6  0x0000555555565431 in fix_func (c=0x555555593270, data=0x0) at exif-data.c:1169
-#7  0x000055555556507a in exif_data_foreach_content (data=0x5555555931e0, func=0x555555565390 <fix_func>, user_data=0x0) at exif-data.c:1031
-#8  0x0000555555564384 in exif_data_fix (d=0x5555555931e0) at exif-data.c:1176
-#9  0x0000555555563866 in exif_data_load_data (data=0x5555555931e0, d_orig=0x555555595980 "", ds_orig=82) at exif-data.c:871
-#10 0x000055555556cb9b in exif_loader_get_data (loader=0x555555593190) at exif-loader.c:387
-#11 0x000055555555f73e in main (argc=2, argv=0x7fffffffdca8) at main.c:438
+0x000055555556e60f in exif_get_slong (b=0x5555555b2000 <error: Cannot access memory at address 0x5555555b2000>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:129
+129     return ((b[3] << 24) | (b[2] << 16) | (b[1] << 8) | b[0]);
+#0  0x000055555556e60f in exif_get_slong (b=0x5555555b2000 <error: Cannot access memory at address 0x5555555b2000>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:129
+#1  0x000055555556e49f in exif_get_long (buf=0x5555555b2000 <error: Cannot access memory at address 0x5555555b2000>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:156
+#2  0x0000555555566026 in exif_entry_fix (e=0x555555593460) at exif-entry.c:189
+#3  0x0000555555562d6d in fix_func (e=0x555555593460, data=0x0) at exif-content.c:211
+#4  0x0000555555562a13 in exif_content_foreach_entry (content=0x555555593270, func=0x555555562d50 <fix_func>, data=0x0) at exif-content.c:185
+#5  0x0000555555562bdc in exif_content_fix (c=0x555555593270) at exif-content.c:225
+#6  0x0000555555565481 in fix_func (c=0x555555593270, data=0x0) at exif-data.c:1082
+#7  0x00005555555650ca in exif_data_foreach_content (data=0x5555555931e0, func=0x5555555653e0 <fix_func>, user_data=0x0) at exif-data.c:965
+#8  0x00005555555643d4 in exif_data_fix (d=0x5555555931e0) at exif-data.c:1087
+#9  0x0000555555563886 in exif_data_load_data (data=0x5555555931e0, d_orig=0x555555595980 "", ds_orig=82) at exif-data.c:826
+#10 0x000055555556cbeb in exif_loader_get_data (loader=0x555555593190) at exif-loader.c:368
+#11 0x000055555555f75e in main (argc=2, argv=0x7fffffffdbe8) at main.c:438
 
 Program received signal SIGSEGV, Segmentation fault.
-0x000055555556e382 in exif_get_sshort (buf=0x555655595985 <error: Cannot access memory at address 0x555655595985>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:94
-94                      return ((buf[1] << 8) | buf[0]);
-#0  0x000055555556e382 in exif_get_sshort (buf=0x555655595985 <error: Cannot access memory at address 0x555655595985>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:94
-#1  0x000055555556e2ef in exif_get_short (buf=0x555655595985 <error: Cannot access memory at address 0x555655595985>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:104
-#2  0x0000555555563651 in exif_data_load_data (data=0x5555555931e0, d_orig=0x555555595980 "Exif", ds_orig=61) at exif-data.c:819
-#3  0x000055555556cb9b in exif_loader_get_data (loader=0x555555593190) at exif-loader.c:387
-#4  0x000055555555f73e in main (argc=2, argv=0x7fffffffdca8) at main.c:438
+0x000055555556e3d2 in exif_get_sshort (buf=0x555655595985 <error: Cannot access memory at address 0x555655595985>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:92
+92     return ((buf[1] << 8) | buf[0]);
+#0  0x000055555556e3d2 in exif_get_sshort (buf=0x555655595985 <error: Cannot access memory at address 0x555655595985>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:92
+#1  0x000055555556e33f in exif_get_short (buf=0x555655595985 <error: Cannot access memory at address 0x555655595985>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:100
+#2  0x0000555555563671 in exif_data_load_data (data=0x5555555931e0, d_orig=0x555555595980 "Exif", ds_orig=61) at exif-data.c:775
+#3  0x000055555556cbeb in exif_loader_get_data (loader=0x555555593190) at exif-loader.c:368
+#4  0x000055555555f75e in main (argc=2, argv=0x7fffffffdbe8) at main.c:438
 ```
 
 hang 的情况比较唯一，全是卡在 `exif_loader_write` 这里：
@@ -240,6 +240,37 @@ hang 的情况比较唯一，全是卡在 `exif_loader_write` 这里：
     alt=""
   />
 </center>
+
+这里附赠一个我看各个崩溃回溯的脚本：
+
+```bash
+#!/usr/bin/env bash
+
+TARGET="./exif-debug/bin/exif"
+CRASH_DIR="./out/default/crashes"
+OUTPUT_LOG="crash_reports.txt"
+
+>"$OUTPUT_LOG"
+
+echo "[+] Analysing crashes in $CRASH_DIR..."
+
+for crash_file in "$CRASH_DIR"/id:*; do
+  [ -e "$crash_file" ] || continue
+
+  echo "--------------------------------------------------" >>"$OUTPUT_LOG"
+  echo "File: $(basename "$crash_file")" >>"$OUTPUT_LOG"
+
+  gdb --batch \
+    --ex "run" \
+    --ex "bt" \
+    --ex "quit" \
+    --args "$TARGET" "$crash_file" >>"$OUTPUT_LOG" 2>&1
+
+  echo -e "\n" >>"$OUTPUT_LOG"
+done
+
+echo "[+] Done! Result in: $OUTPUT_LOG"
+```
 
 # Analysis
 
@@ -398,6 +429,92 @@ memcpy (data->data, d + offset, data->size);
 
 <CveCard id="CVE-2012-2836" client:idle />
 
+## CVE-2009-3895
+
+```plaintext showLineNumbers=false
+Program received signal SIGSEGV, Segmentation fault.
+0x000055555556e60f in exif_get_slong (b=0x5555555b2000 <error: Cannot access memory at address 0x5555555b2000>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:129
+129     return ((b[3] << 24) | (b[2] << 16) | (b[1] << 8) | b[0]);
+#0  0x000055555556e60f in exif_get_slong (b=0x5555555b2000 <error: Cannot access memory at address 0x5555555b2000>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:129
+#1  0x000055555556e49f in exif_get_long (buf=0x5555555b2000 <error: Cannot access memory at address 0x5555555b2000>, order=EXIF_BYTE_ORDER_INTEL) at exif-utils.c:156
+#2  0x0000555555566026 in exif_entry_fix (e=0x555555593460) at exif-entry.c:189
+#3  0x0000555555562d6d in fix_func (e=0x555555593460, data=0x0) at exif-content.c:211
+#4  0x0000555555562a13 in exif_content_foreach_entry (content=0x555555593270, func=0x555555562d50 <fix_func>, data=0x0) at exif-content.c:185
+#5  0x0000555555562bdc in exif_content_fix (c=0x555555593270) at exif-content.c:225
+#6  0x0000555555565481 in fix_func (c=0x555555593270, data=0x0) at exif-data.c:1082
+#7  0x00005555555650ca in exif_data_foreach_content (data=0x5555555931e0, func=0x5555555653e0 <fix_func>, user_data=0x0) at exif-data.c:965
+#8  0x00005555555643d4 in exif_data_fix (d=0x5555555931e0) at exif-data.c:1087
+#9  0x0000555555563886 in exif_data_load_data (data=0x5555555931e0, d_orig=0x555555595980 "", ds_orig=82) at exif-data.c:826
+#10 0x000055555556cbeb in exif_loader_get_data (loader=0x555555593190) at exif-loader.c:368
+#11 0x000055555555f75e in main (argc=2, argv=0x7fffffffdbe8) at main.c:438
+```
+
+直接调，调就完了。
+
+一开始都是差不多的，`exif_data_fix` 的作用是将不符合规格的 exif 数据修复，使其符合规范，内部其实就是对 `exif_data_foreach_content` 的包装，而 `exif_data_foreach_content` 则是对每一个 _IFD_ 执行指定的函数，这里是 `fix_func` ……
+
+其实我觉得没必要从 main 开始分析，直接从崩溃边界开始分析就好了，所以接下来我会从后往前分析。
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2a5mqzim92.avif"
+    alt=""
+  />
+</center>
+
+可以看到，是 rax 无法解引用导致的问题。入口是 `exif_entry_fix` 之后的 `exif_get_long`。
+
+回溯到调用 `exif_get_long` 的函数 `exif_entry_fix`：
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1apjdtv699.avif"
+    alt=""
+  />
+</center>
+
+我们发现这里是一个 for 循环，并且此时的索引是 `31440`，巨大无比，显然不正常，而索引范围是 `e->components` 指定的：
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.1zisxut0p7.avif"
+    alt=""
+  />
+</center>
+
+这都十亿多次了，所以问题就是没有验证这个 _component_ 大小的合法性。此外，这个大小也是攻击者可控的：
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2yywb0xnz3.avif"
+    alt=""
+  />
+</center>
+
+_components_ 肯定代表了组件数量，什么东西的组件数量？翻代码，发现是 `ExifEntry`：
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.26m0tar13e.avif"
+    alt=""
+  />
+</center>
+
+通过查询 exif 标准 [^1] 我们可知，一个 `ExifEntry` 由 `Format`，`Components` 和 `Data` 组成。如果 _format_ 类型是 `unsigned short`，则它代表每个 _component_ 占用 2 bytes，而 _components_ 则代表了这样的组件有几个，将它和 _format_ 相乘即是这一 _entry_ 总共占用的字节数。
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.32ii8rjv20.avif"
+    alt=""
+  />
+</center>
+
+所以这里的问题显然就是 `e->components` 很大，而 `e->data` 分配的内存很小，导致 OOB 。而在计算 `e->size = e->components * exif_format_get_size(e->format)` 时，如果 _components_ 特别大也有可能发生溢出，导致最后得到一个特别小的值。如果后续用这个特别小的 _size_ 去申请内存，就会有申请大小远小于实际需求的问题，写入将直接崩溃或允许执行任意代码。
+
+定位一下 CVE，发现符合 CVE-2009-3895 的描述。至此，这个 chall 要求的两个 CVE 我们均已找齐，剩下那几个 crashes 和 hang 我就不分析了，懒（
+
+<CveCard id="CVE-2009-3895" client:idle />
+
 # Fix
 
 ## CVE-2012-2836
@@ -448,7 +565,7 @@ exif_get_slong (const unsigned char *b, ExifByteOrder order)
 
 解决方法很简单，只要将 `offset` 限制在 `ds` 的范围内即可。`ds` 代表了 _data size_, 也就是整个图像数据的大小边界。超过 ds 肯定是不对的。
 
-```diff lang="c"
+```diff lang="c" title="exif-data.c"
     case EXIF_TAG_JPEG_INTERCHANGE_FORMAT:
       o = exif_get_long(d + offset + 12 * i + 8, data->priv->order);
 +      if (o >= ds) {
@@ -457,3 +574,102 @@ exif_get_slong (const unsigned char *b, ExifByteOrder order)
 +        abort();
       }
 ```
+
+## CVE-2009-3895
+
+分析的时候已经写过问题了，修复方法就是校验 _components_ 与当前 _size_ 是否匹配：
+
+```diff lang="c" title="exif-entry.c"
+  case EXIF_TAG_SHARPNESS:
+    switch (e->format) {
+    case EXIF_FORMAT_LONG:
+      if (!e->parent || !e->parent->parent)
+        break;
++      if (e->components <= 0 || e->components > 65535) {
++        exif_entry_log(e, EXIF_LOG_CODE_CORRUPT_DATA,
++                       "Component size is too large!");
++        abort();
++      }
++      if (e->size < e->components * exif_format_get_size(EXIF_FORMAT_LONG)) {
++        exif_entry_log(e, EXIF_LOG_CODE_CORRUPT_DATA,
++                       "Corrupted data size detected!");
++        abort();
++      };
+      o = exif_data_get_byte_order(e->parent->parent);
+      for (i = 0; i < e->components; i++)
+        exif_set_short(
+            e->data + i * exif_format_get_size(EXIF_FORMAT_SHORT), o,
+            (ExifShort)exif_get_long(
+                e->data + i * exif_format_get_size(EXIF_FORMAT_LONG), o));
+      e->format = EXIF_FORMAT_SHORT;
+      e->size = e->components * exif_format_get_size(e->format);
+      e->data = exif_entry_realloc(e, e->data, e->size);
+      exif_entry_log(e, EXIF_LOG_CODE_DEBUG,
+                     _("Tag '%s' was of format '%s' (which is "
+                       "against specification) and has been "
+                       "changed to format '%s'."),
+                     exif_tag_get_name(e->tag),
+                     exif_format_get_name(EXIF_FORMAT_LONG),
+                     exif_format_get_name(EXIF_FORMAT_SHORT));
+      break;
+```
+
+成功修复：
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.szhpf1sld.avif"
+    alt=""
+  />
+</center>
+
+但是发现 rational 类型也有问题，不过直接使用和上面一样的 patch 方案就能解决。
+
+<center>
+  <img
+    src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.2rvofrnxvl.avif"
+    alt=""
+  />
+</center>
+
+```diff lang="c"
+  case EXIF_TAG_FOCAL_LENGTH:
+    switch (e->format) {
+    case EXIF_FORMAT_SRATIONAL:
+      if (!e->parent || !e->parent->parent)
+        break;
++      if (e->components <= 0 || e->components > 65535) {
++        exif_entry_log(e, EXIF_LOG_CODE_CORRUPT_DATA,
++                       "Component size is too large!");
++        abort();
++      }
++      if (e->size < e->components * exif_format_get_size(EXIF_FORMAT_LONG)) {
++        exif_entry_log(e, EXIF_LOG_CODE_CORRUPT_DATA,
++                       "Corrupted data size detected!");
++        abort();
++      };
+      o = exif_data_get_byte_order(e->parent->parent);
+      for (i = 0; i < e->components; i++) {
+        sr = exif_get_srational(
+            e->data + i * exif_format_get_size(EXIF_FORMAT_SRATIONAL), o);
+        r.numerator = (ExifLong)sr.numerator;
+        r.denominator = (ExifLong)sr.denominator;
+        exif_set_rational(
+            e->data + i * exif_format_get_size(EXIF_FORMAT_RATIONAL), o, r);
+      }
+      e->format = EXIF_FORMAT_RATIONAL;
+      exif_entry_log(e, EXIF_LOG_CODE_DEBUG,
+                     _("Tag '%s' was of format '%s' (which is "
+                       "against specification) and has been "
+                       "changed to format '%s'."),
+                     exif_tag_get_name(e->tag),
+                     exif_format_get_name(EXIF_FORMAT_SRATIONAL),
+                     exif_format_get_name(EXIF_FORMAT_RATIONAL));
+      break;
+```
+
+也算是在开学前完成了这两个 CVE 的复现，还没懒到啥也不干……
+
+# References
+
+[^1]: [Description of Exif file format](https://www.media.mit.edu/pia/Research/deepview/exif.html)
