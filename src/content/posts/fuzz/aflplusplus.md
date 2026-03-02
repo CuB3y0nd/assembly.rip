@@ -422,4 +422,6 @@ void Specs::min_airspeed() {
 
 下面是我做过的 [Fuzzing101](https://github.com/antonio-morales/Fuzzing101) Exercises 导航列表：
 
-- [Exercise 1 - CVE-2019-13288: Xpdf](/posts/fuzz/xpdf-cve-2019-13288/)
+- [Exercise 1 - Xpdf](/posts/fuzz/xpdf-cve-2019-13288/)
+- [Exercise 2 - libexif](/posts/fuzz/libexif/)
+- [Exercise 3 - TCPdump](/posts/fuzz/tcpdump-cve-2017-13028/)
