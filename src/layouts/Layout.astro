@@ -4,7 +4,7 @@ import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
 
 import ConfigCarrier from "@components/ConfigCarrier.astro";
-import { profileConfig, siteConfig } from "@/config";
+import { expressiveCodeConfig, profileConfig, siteConfig } from "@/config";
 import {
 	AUTO_MODE,
 	BANNER_HEIGHT,
@@ -119,23 +119,29 @@ const bannerOffset =
 		))}
 
 		<!-- Set the theme before the page is rendered to avoid a flash -->
-		<script is:inline define:vars={{DEFAULT_THEME, LIGHT_MODE, DARK_MODE, AUTO_MODE, BANNER_HEIGHT_EXTEND, PAGE_WIDTH, configHue}}>
+		<script is:inline define:vars={{DEFAULT_THEME, LIGHT_MODE, DARK_MODE, AUTO_MODE, BANNER_HEIGHT_EXTEND, PAGE_WIDTH, configHue, expressiveCodeThemes: expressiveCodeConfig.themes}}>
 			// Load the theme from local storage
+			let isDarkMode = false;
 			const theme = localStorage.getItem('theme') || DEFAULT_THEME;
 			switch (theme) {
 				case LIGHT_MODE:
 					document.documentElement.classList.remove('dark');
+					isDarkMode = false;
 					break
 				case DARK_MODE:
 					document.documentElement.classList.add('dark');
+					isDarkMode = true;
 					break
 				case AUTO_MODE:
 					if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
 						document.documentElement.classList.add('dark');
+						isDarkMode = true;
 					} else {
 						document.documentElement.classList.remove('dark');
+						isDarkMode = false;
 					}
 			}
+			document.documentElement.setAttribute('data-theme', expressiveCodeThemes[Number(isDarkMode)]);
 
 			// Load the hue from local storage
 			const hue = localStorage.getItem('hue') || configHue;
