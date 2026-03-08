@@ -26,7 +26,6 @@ const bangumiConfig: BangumiConfig = {
 };
 
 const enabledBangumiCategories = {
-	book: false,
 	anime: true,
 	music: false,
 	game: true,
@@ -40,7 +39,6 @@ const zoteroConfig: ZoteroConfig = {
 };
 
 const categoryMap = {
-	book: { id: "book", name: i18n(I18nKey.collectionsBook), subjectType: 1 },
 	anime: { id: "anime", name: i18n(I18nKey.collectionsAnime), subjectType: 2 },
 	music: { id: "music", name: i18n(I18nKey.collectionsMusic), subjectType: 3 },
 	game: { id: "game", name: i18n(I18nKey.collectionsGame), subjectType: 4 },
@@ -55,6 +53,7 @@ const tabs: Array<{
 	name: string;
 	count: number;
 	type: "bangumi" | "zotero";
+	subjectType?: number;
 }> = [];
 
 console.log("[Collections] Starting to fetch all data");
@@ -88,6 +87,7 @@ for (const [categoryKey, enabled] of Object.entries(enabledBangumiCategories)) {
 				name: categoryInfo.name,
 				count: data.length,
 				type: "bangumi",
+				subjectType: categoryInfo.subjectType,
 			});
 		} catch (error) {
 			console.error(`[Bangumi] Failed to fetch ${categoryInfo.name} data:`, error);
@@ -97,6 +97,7 @@ for (const [categoryKey, enabled] of Object.entries(enabledBangumiCategories)) {
 				name: categoryInfo.name,
 				count: 0,
 				type: "bangumi",
+				subjectType: categoryInfo.subjectType,
 			});
 		}
 	}
@@ -125,6 +126,7 @@ const activeTab = tabs[0]?.id || "zotero";
                   items={bangumiData[tab.id] || []}
                   isActive={tab.id === activeTab}
                   itemsPerPage={6}
+                  subjectType={tab.subjectType}
                 />
               ) : (
                 <ZoteroSection

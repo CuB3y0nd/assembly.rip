@@ -5,9 +5,10 @@ import I18nKey from "@/i18n/i18nKey";
 
 interface Props {
 	item: UserSubjectCollection;
+	subjectType?: number;
 }
 
-const { item } = Astro.props;
+const { item, subjectType } = Astro.props;
 
 const subject_base_url = "https://bgm.tv/subject/";
 
@@ -29,6 +30,40 @@ const getStatusColor = (type: number) => {
 };
 
 const getStatusText = (type: number) => {
+	const isGame = subjectType === 4;
+	const isReal = subjectType === 6;
+
+	if (isGame) {
+		switch (type) {
+			case 1:
+				return i18n(I18nKey.bangumiGameWish);
+			case 2:
+				return i18n(I18nKey.bangumiGameCompleted);
+			case 3:
+				return i18n(I18nKey.bangumiGameInProgress);
+			case 4:
+				return i18n(I18nKey.bangumiGameOnHold);
+			case 5:
+				return i18n(I18nKey.bangumiGameDropped);
+		}
+	}
+
+	if (isReal) {
+		switch (type) {
+			case 1:
+				return i18n(I18nKey.bangumiRealWish);
+			case 2:
+				return i18n(I18nKey.bangumiRealCompleted);
+			case 3:
+				return i18n(I18nKey.bangumiRealInProgress);
+			case 4:
+				return i18n(I18nKey.bangumiRealOnHold);
+			case 5:
+				return i18n(I18nKey.bangumiRealDropped);
+		}
+	}
+
+	// Default (Anime/Other)
 	switch (type) {
 		case 1:
 			return i18n(I18nKey.bangumiWish);

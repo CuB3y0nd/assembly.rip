@@ -13,8 +13,8 @@ interface Props {
 const { tabs, activeTab } = Astro.props;
 ---
 
-<div class="border-b border-gray-200 dark:border-gray-700 mb-3">
-  <nav class="flex space-x-8" aria-label="Tabs">
+<div class="border-b border-gray-200 dark:border-gray-700 mb-3 overflow-x-auto no-scrollbar">
+  <nav class="flex space-x-8 min-w-max" aria-label="Tabs">
     {tabs.map((tab) => (
       <button
         class:list={[

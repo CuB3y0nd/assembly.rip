@@ -99,6 +99,20 @@ export const en: Translation = {
   [Key.bangumiNoComments]: "No comments",
   [Key.bangumiViewOnBangumi]: "View on Bangumi",
 
+  // Bangumi Game Specific
+  [Key.bangumiGameWish]: "To Play",
+  [Key.bangumiGameCompleted]: "Played",
+  [Key.bangumiGameInProgress]: "Playing",
+  [Key.bangumiGameOnHold]: "On Hold",
+  [Key.bangumiGameDropped]: "Dropped",
+
+  // Bangumi TV Specific
+  [Key.bangumiRealWish]: "Wish to Watch",
+  [Key.bangumiRealCompleted]: "Watched",
+  [Key.bangumiRealInProgress]: "Watching",
+  [Key.bangumiRealOnHold]: "On Hold",
+  [Key.bangumiRealDropped]: "Dropped",
+
   // Spotify
   [Key.spotifyLoading]: "Loading...",
   [Key.spotifyRefreshing]: "Refreshing...",

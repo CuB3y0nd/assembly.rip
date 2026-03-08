@@ -87,13 +87,28 @@ enum I18nKey {
   bangumiWish = "bangumiWish",
   bangumiCompleted = "bangumiCompleted",
   bangumiInProgress = "bangumiInProgress",
-  bangumiOnHold = "bangumiOnHold",  bangumiDropped = "bangumiDropped",
+  bangumiOnHold = "bangumiOnHold",
+  bangumiDropped = "bangumiDropped",
   bangumiUnknown = "bangumiUnknown",
   bangumiNoData = "bangumiNoData",
   bangumiNoItems = "bangumiNoItems",
   bangumiMyComment = "bangumiMyComment",
   bangumiNoComments = "bangumiNoComments",
   bangumiViewOnBangumi = "bangumiViewOnBangumi",
+
+  // Bangumi Game Specific
+  bangumiGameWish = "bangumiGameWish",
+  bangumiGameCompleted = "bangumiGameCompleted",
+  bangumiGameInProgress = "bangumiGameInProgress",
+  bangumiGameOnHold = "bangumiGameOnHold",
+  bangumiGameDropped = "bangumiGameDropped",
+
+  // Bangumi TV Specific
+  bangumiRealWish = "bangumiRealWish",
+  bangumiRealCompleted = "bangumiRealCompleted",
+  bangumiRealInProgress = "bangumiRealInProgress",
+  bangumiRealOnHold = "bangumiRealOnHold",
+  bangumiRealDropped = "bangumiRealDropped",
 
   // Spotify
   spotifyLoading = "spotifyLoading",

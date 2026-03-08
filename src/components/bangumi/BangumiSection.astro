@@ -10,9 +10,16 @@ interface Props {
 	items: UserSubjectCollection[];
 	isActive: boolean;
 	itemsPerPage?: number;
+	subjectType?: number;
 }
 
-const { sectionId, items, isActive, itemsPerPage = 12 } = Astro.props;
+const {
+	sectionId,
+	items,
+	isActive,
+	itemsPerPage = 12,
+	subjectType,
+} = Astro.props;
 
 const statusMap = {
 	1: "wish",
@@ -32,16 +39,54 @@ const statusCounts = items.reduce(
 	{} as Record<string, number>,
 );
 
+const isGame = subjectType === 4;
+const isReal = subjectType === 6;
+
+const getStatusLabel = (status: string) => {
+	if (status === "all") return i18n(I18nKey.bangumiAll);
+
+	if (isGame) {
+		const map: Record<string, I18nKey> = {
+			collect: I18nKey.bangumiGameCompleted,
+			doing: I18nKey.bangumiGameInProgress,
+			wish: I18nKey.bangumiGameWish,
+			on_hold: I18nKey.bangumiGameOnHold,
+			dropped: I18nKey.bangumiGameDropped,
+		};
+		return i18n(map[status]);
+	}
+	if (isReal) {
+		const map: Record<string, I18nKey> = {
+			collect: I18nKey.bangumiRealCompleted,
+			doing: I18nKey.bangumiRealInProgress,
+			wish: I18nKey.bangumiRealWish,
+			on_hold: I18nKey.bangumiRealOnHold,
+			dropped: I18nKey.bangumiRealDropped,
+		};
+		return i18n(map[status]);
+	}
+
+	// Default (Anime/Other)
+	const map: Record<string, I18nKey> = {
+		collect: I18nKey.bangumiCompleted,
+		doing: I18nKey.bangumiInProgress,
+		wish: I18nKey.bangumiWish,
+		on_hold: I18nKey.bangumiOnHold,
+		dropped: I18nKey.bangumiDropped,
+	};
+	return i18n(map[status]);
+};
+
 const filters = [
-	{ value: "all", label: i18n(I18nKey.bangumiAll), count: items.length },
-	{ value: "collect", label: i18n(I18nKey.bangumiCompleted), count: statusCounts.collect || 0 },
-	{ value: "doing", label: i18n(I18nKey.bangumiInProgress), count: statusCounts.doing || 0 },
-	{ value: "wish", label: i18n(I18nKey.bangumiWish), count: statusCounts.wish || 0 },
-	{ value: "on_hold", label: i18n(I18nKey.bangumiOnHold), count: statusCounts.on_hold || 0 },
-	{ value: "dropped", label: i18n(I18nKey.bangumiDropped), count: statusCounts.dropped || 0 },
+	{ value: "all", label: getStatusLabel("all"), count: items.length },
+	{ value: "collect", label: getStatusLabel("collect"), count: statusCounts.collect || 0 },
+	{ value: "doing", label: getStatusLabel("doing"), count: statusCounts.doing || 0 },
+	{ value: "wish", label: getStatusLabel("wish"), count: statusCounts.wish || 0 },
+	{ value: "on_hold", label: getStatusLabel("on_hold"), count: statusCounts.on_hold || 0 },
+	{ value: "dropped", label: getStatusLabel("dropped"), count: statusCounts.dropped || 0 },
 ].filter((filter) => filter.value === "all" || filter.count > 0);
 
-const defaultFilter = "all"; // 默认显示全部，用户可以通过筛选器选择
+const defaultFilter = "all";
 ---
 
 <div class:list={["bangumi-section", { "hidden": !isActive }]} data-section={sectionId}>
@@ -61,7 +106,7 @@ const defaultFilter = "all"; // 默认显示全部，用户可以通过筛选器
             data-item-status={statusMap[item.type as keyof typeof statusMap] || "unknown"}
             style={index >= itemsPerPage ? "display: none;" : ""}
           >
-            <Card item={item} />
+            <Card item={item} subjectType={subjectType} />
           </div>
         ))}
       </div>
