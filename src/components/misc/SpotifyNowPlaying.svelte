@@ -1,5 +1,7 @@
 <script lang="ts">
 import { onMount } from "svelte";
+import { i18n } from "@/i18n/translation";
+import I18nKey from "@/i18n/i18nKey";
 
 interface Player {
 	isPlaying: boolean;
@@ -41,9 +43,9 @@ onMount(() => {
 
 {#await playerPromise}
   {#if initial}
-    <span class="now-playing">Loading...</span>
+    <span class="now-playing">{i18n(I18nKey.spotifyLoading)}</span>
   {:else}
-    <span class="loading-indicator">Refreshing...</span>
+    <span class="loading-indicator">{i18n(I18nKey.spotifyRefreshing)}</span>
   {/if}
 {:then player}
   {#if player.isPlaying}
@@ -52,7 +54,7 @@ onMount(() => {
     </a>
   {:else}
     <span class="now-playing"
-      >No song at the moment — enjoying the silence.</span
+      >{i18n(I18nKey.spotifyNoSong)}</span
     >
   {/if}
 {/await}

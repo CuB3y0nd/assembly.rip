@@ -2,6 +2,8 @@
 import type { ZoteroItem } from "@/types/zotero";
 import FilterControls from "../bangumi/FilterControls.astro";
 import ZoteroCard from "./ZoteroCard.astro";
+import { i18n } from "@/i18n/translation";
+import I18nKey from "@/i18n/i18nKey";
 
 interface Props {
 	sectionId: string;
@@ -23,48 +25,48 @@ const typeCounts = items.reduce(
 );
 
 const typeLabels: Record<string, string> = {
-	book: "书籍",
-	bookSection: "章节",
-	journalArticle: "期刊论文",
-	magazineArticle: "杂志文章",
-	newspaperArticle: "报纸文章",
-	thesis: "学位论文",
-	letter: "书信",
-	manuscript: "手稿",
-	interview: "访谈",
-	film: "电影",
-	tvBroadcast: "电视广播",
-	radioBroadcast: "广播",
-	podcast: "播客",
-	videoRecording: "视频录制",
-	audioRecording: "录音",
-	webpage: "网页",
-	software: "软件",
-	report: "报告",
-	statute: "法令",
-	bill: "法案",
-	case: "案例",
-	hearing: "听证会",
-	patent: "专利",
-	map: "地图",
-	artwork: "艺术品",
-	presentation: "演示文稿",
-	instantMessage: "即时消息",
-	forumPost: "论坛帖子",
-	blogPost: "博客文章",
-	email: "电子邮件",
-	computerProgram: "计算机程序",
-	conferencePaper: "会议论文",
-	dictionaryEntry: "词典条目",
-	encyclopediaArticle: "百科全书文章",
-	preprint: "预印本",
-	standard: "标准",
-	document: "文档",
-	unknown: "其他",
+	book: i18n(I18nKey.zoteroBook),
+	bookSection: i18n(I18nKey.zoteroBookSection),
+	journalArticle: i18n(I18nKey.zoteroJournalArticle),
+	magazineArticle: i18n(I18nKey.zoteroMagazineArticle),
+	newspaperArticle: i18n(I18nKey.zoteroNewspaperArticle),
+	thesis: i18n(I18nKey.zoteroThesis),
+	letter: i18n(I18nKey.zoteroLetter),
+	manuscript: i18n(I18nKey.zoteroManuscript),
+	interview: i18n(I18nKey.zoteroInterview),
+	film: i18n(I18nKey.zoteroFilm),
+	tvBroadcast: i18n(I18nKey.zoteroTvBroadcast),
+	radioBroadcast: i18n(I18nKey.zoteroRadioBroadcast),
+	podcast: i18n(I18nKey.zoteroPodcast),
+	videoRecording: i18n(I18nKey.zoteroVideoRecording),
+	audioRecording: i18n(I18nKey.zoteroAudioRecording),
+	webpage: i18n(I18nKey.zoteroWebpage),
+	software: i18n(I18nKey.zoteroSoftware),
+	report: i18n(I18nKey.zoteroReport),
+	statute: i18n(I18nKey.zoteroStatute),
+	bill: i18n(I18nKey.zoteroBill),
+	case: i18n(I18nKey.zoteroCase),
+	hearing: i18n(I18nKey.zoteroHearing),
+	patent: i18n(I18nKey.zoteroPatent),
+	map: i18n(I18nKey.zoteroMap),
+	artwork: i18n(I18nKey.zoteroArtwork),
+	presentation: i18n(I18nKey.zoteroPresentation),
+	instantMessage: i18n(I18nKey.zoteroInstantMessage),
+	forumPost: i18n(I18nKey.zoteroForumPost),
+	blogPost: i18n(I18nKey.zoteroBlogPost),
+	email: i18n(I18nKey.zoteroEmail),
+	computerProgram: i18n(I18nKey.zoteroComputerProgram),
+	conferencePaper: i18n(I18nKey.zoteroConferencePaper),
+	dictionaryEntry: i18n(I18nKey.zoteroDictionaryEntry),
+	encyclopediaArticle: i18n(I18nKey.zoteroEncyclopediaArticle),
+	preprint: i18n(I18nKey.zoteroPreprint),
+	standard: i18n(I18nKey.zoteroStandard),
+	document: i18n(I18nKey.zoteroDocument),
+	unknown: i18n(I18nKey.zoteroUnknown),
 };
 
 const filters = [
-	{ value: "all", label: "全部", count: items.length },
+	{ value: "all", label: i18n(I18nKey.zoteroAll), count: items.length },
 	...Object.entries(typeCounts)
 		.map(([type, count]) => ({
 			value: type,
@@ -101,8 +103,8 @@ const defaultFilter = "all";
     </>
   ) : (
     <div class="text-center py-12">
-      <h3 class="text-xl font-medium text-gray-600 dark:text-gray-400 mb-2">暂无数据</h3>
-      <p class="text-gray-500 dark:text-gray-500">无法从 Zotero 获取到任何文献条目</p>
+      <h3 class="text-xl font-medium text-gray-600 dark:text-gray-400 mb-2">{i18n(I18nKey.zoteroNoData)}</h3>
+      <p class="text-gray-500 dark:text-gray-500">{i18n(I18nKey.zoteroFetchError)}</p>
     </div>
   )}
 </div>

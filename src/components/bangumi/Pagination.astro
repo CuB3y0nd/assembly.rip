@@ -51,7 +51,7 @@ const pageNumbers = generatePageNumbers(currentPage, totalPages);
 
 {totalPages > 1 && (
 	<div class="flex flex-row gap-3 justify-center collections-pagination" data-pagination-section={sectionId}>
-		<!-- 上一页 -->
+		<!-- Previous Page -->
 		<button
 			type="button"
 			class:list={["btn-card overflow-hidden rounded-lg text-[var(--primary)] w-11 h-11 transition-all active:scale-90",
@@ -63,7 +63,7 @@ const pageNumbers = generatePageNumbers(currentPage, totalPages);
 			<Icon name="material-symbols:chevron-left-rounded" class="text-[1.75rem] pointer-events-none" />
 		</button>
 
-		<!-- 页码容器 -->
+		<!-- Page Number Container -->
 		<div class="bg-[var(--card-bg)] flex flex-row rounded-lg items-center text-neutral-700 dark:text-neutral-300 font-bold" data-page-numbers-container>
 			{pageNumbers.map((p) => {
 				if (p === HIDDEN)
@@ -87,7 +87,7 @@ const pageNumbers = generatePageNumbers(currentPage, totalPages);
 			})}
 		</div>
 
-		<!-- 下一页 -->
+		<!-- Next Page -->
 		<button
 			type="button"
 			class:list={["btn-card overflow-hidden rounded-lg text-[var(--primary)] w-11 h-11 transition-all active:scale-90",
@@ -108,7 +108,7 @@ const pageNumbers = generatePageNumbers(currentPage, totalPages);
 
 		let currentPage = 1;
 
-		// 事件委托：处理所有分页按钮点击
+		// Event delegation: handle all pagination button clicks
 		pagination.addEventListener('click', (e) => {
 			const btn = e.target.closest('[data-page-btn]');
 			if (!btn) return;
@@ -128,7 +128,7 @@ const pageNumbers = generatePageNumbers(currentPage, totalPages);
 			updateUI(totalPages);
 		});
 
-		// 监听来自 FilterControls 的更新事件
+		// Listen for update events from FilterControls
 		pagination.addEventListener('updatePagination', () => {
 			currentPage = 1;
 			const items = document.querySelectorAll(`[data-item-section="${sectionId}"]:not(.hidden)`);
@@ -139,7 +139,7 @@ const pageNumbers = generatePageNumbers(currentPage, totalPages);
 			const items = document.querySelectorAll(`[data-item-section="${sectionId}"]:not(.hidden)`);
 			const allItemsInSection = document.querySelectorAll(`[data-item-section="${sectionId}"]`);
 
-			// 1. 切换项目的显示状态
+			// 1. Toggle display state of items
 			allItemsInSection.forEach(item => item.style.display = 'none');
 			const start = (currentPage - 1) * itemsPerPage;
 			const end = start + itemsPerPage;
@@ -147,7 +147,7 @@ const pageNumbers = generatePageNumbers(currentPage, totalPages);
 				items[i].style.display = 'block';
 			}
 
-			// 2. 更新前后翻页按钮的状态
+			// 2. Update status of previous/next buttons
 			const prevBtn = pagination.querySelector('[data-page-btn="prev"]');
 			const nextBtn = pagination.querySelector('[data-page-btn="next"]');
 
@@ -165,7 +165,7 @@ const pageNumbers = generatePageNumbers(currentPage, totalPages);
 				nextBtn.classList.toggle('disabled', isLast);
 			}
 
-			// 3. 动态重新渲染中间的页码 (保持主题样式)
+			// 3. Dynamically re-render middle page numbers (maintain theme style)
 			const container = pagination.querySelector('[data-page-numbers-container]');
 			if (container) {
 				const pages = generatePageNumbersJS(currentPage, totalPages);
@@ -177,7 +177,7 @@ const pageNumbers = generatePageNumbers(currentPage, totalPages);
 			}
 		}
 
-		// JS 端页码逻辑：与 Astro 端完全同步
+		// JS side page number logic: fully synchronized with Astro side
 		function generatePageNumbersJS(current, total) {
 			const ADJ_DIST = 2; const VISIBLE = ADJ_DIST * 2 + 1;
 			let count = 1; let l = current; let r = current;
@@ -195,7 +195,7 @@ const pageNumbers = generatePageNumbers(currentPage, totalPages);
 			return pages;
 		}
 
-		// 初始调用一次以确保状态正确
+		// Initial call to ensure correct state
 		const initialItems = document.querySelectorAll(`[data-item-section="${sectionId}"]:not(.hidden)`);
 		updateUI(Math.ceil(initialItems.length / itemsPerPage));
 	})();

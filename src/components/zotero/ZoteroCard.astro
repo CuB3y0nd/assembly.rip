@@ -1,6 +1,8 @@
 ---
 import { Icon } from "astro-icon/components";
 import type { ZoteroItem } from "@/types/zotero";
+import { i18n } from "@/i18n/translation";
+import I18nKey from "@/i18n/i18nKey";
 
 interface Props {
 	item: ZoteroItem;
@@ -53,46 +55,47 @@ const getIconName = (type: string) => {
 };
 
 const getTypeLabel = (type: string) => {
-	const labelMap: Record<string, string> = {
-		book: "Book",
-		bookSection: "Section",
-		journalArticle: "Journal",
-		magazineArticle: "Magazine",
-		newspaperArticle: "Newspaper",
-		thesis: "Thesis",
-		letter: "Letter",
-		manuscript: "Manuscript",
-		interview: "Interview",
-		film: "Film",
-		tvBroadcast: "TV",
-		radioBroadcast: "Radio",
-		podcast: "Podcast",
-		videoRecording: "Video",
-		audioRecording: "Audio",
-		webpage: "Web",
-		software: "Software",
-		report: "Report",
-		statute: "Statute",
-		bill: "Bill",
-		case: "Case",
-		hearing: "Hearing",
-		patent: "Patent",
-		map: "Map",
-		artwork: "Artwork",
-		presentation: "Presentation",
-		instantMessage: "Chat",
-		forumPost: "Forum",
-		blogPost: "Blog",
-		email: "Email",
-		computerProgram: "Program",
-		conferencePaper: "Conference",
-		dictionaryEntry: "Dictionary",
-		encyclopediaArticle: "Encyclopedia",
-		preprint: "Preprint",
-		standard: "Standard",
-		document: "Document",
+	const labelMap: Record<string, I18nKey> = {
+		book: I18nKey.zoteroBook,
+		bookSection: I18nKey.zoteroBookSection,
+		journalArticle: I18nKey.zoteroJournalArticle,
+		magazineArticle: I18nKey.zoteroMagazineArticle,
+		newspaperArticle: I18nKey.zoteroNewspaperArticle,
+		thesis: I18nKey.zoteroThesis,
+		letter: I18nKey.zoteroLetter,
+		manuscript: I18nKey.zoteroManuscript,
+		interview: I18nKey.zoteroInterview,
+		film: I18nKey.zoteroFilm,
+		tvBroadcast: I18nKey.zoteroTvBroadcast,
+		radioBroadcast: I18nKey.zoteroRadioBroadcast,
+		podcast: I18nKey.zoteroPodcast,
+		videoRecording: I18nKey.zoteroVideoRecording,
+		audioRecording: I18nKey.zoteroAudioRecording,
+		webpage: I18nKey.zoteroWebpage,
+		software: I18nKey.zoteroSoftware,
+		report: I18nKey.zoteroReport,
+		statute: I18nKey.zoteroStatute,
+		bill: I18nKey.zoteroBill,
+		case: I18nKey.zoteroCase,
+		hearing: I18nKey.zoteroHearing,
+		patent: I18nKey.zoteroPatent,
+		map: I18nKey.zoteroMap,
+		artwork: I18nKey.zoteroArtwork,
+		presentation: I18nKey.zoteroPresentation,
+		instantMessage: I18nKey.zoteroInstantMessage,
+		forumPost: I18nKey.zoteroForumPost,
+		blogPost: I18nKey.zoteroBlogPost,
+		email: I18nKey.zoteroEmail,
+		computerProgram: I18nKey.zoteroComputerProgram,
+		conferencePaper: I18nKey.zoteroConferencePaper,
+		dictionaryEntry: I18nKey.zoteroDictionaryEntry,
+		encyclopediaArticle: I18nKey.zoteroEncyclopediaArticle,
+		preprint: I18nKey.zoteroPreprint,
+		standard: I18nKey.zoteroStandard,
+		document: I18nKey.zoteroDocument,
 	};
-	return labelMap[type] || "Item";
+	const key = labelMap[type];
+	return key ? i18n(key) : i18n(I18nKey.zoteroUnknown);
 };
 
 const creatorList =
@@ -178,7 +181,7 @@ const Container = href ? "a" : "div";
         <div class="px-6 pt-6 pb-2 shrink-0">
           <div class="flex items-center gap-3 mb-3">
             <!-- 标题中性色 -->
-            <span class="text-xs font-black uppercase tracking-[0.3em] text-gray-900 dark:text-gray-100">Abstract</span>
+            <span class="text-xs font-black uppercase tracking-[0.3em] text-gray-900 dark:text-gray-100">{i18n(I18nKey.zoteroAbstract)}</span>
             <div class="flex-1 h-[1px] bg-gray-200 dark:bg-white/10"></div>
           </div>
           <div class="h-[1px] w-full bg-gray-100 dark:bg-white/5"></div>
@@ -192,14 +195,14 @@ const Container = href ? "a" : "div";
           ) : (
             <div class="h-full min-h-[100px] flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 opacity-80">
               <Icon name="tabler:note-off" class="text-3xl mb-2 shrink-0" />
-              <p class="text-[11px] font-mono uppercase tracking-widest text-center">No abstract available</p>
+              <p class="text-[11px] font-mono uppercase tracking-widest text-center">{i18n(I18nKey.zoteroNoAbstract)}</p>
             </div>
           )}
         </div>
 
         <div class="px-6 pb-6 pt-2 shrink-0">
           <div class="mt-2 pt-4 border-t border-gray-100 dark:border-white/10 flex justify-between items-center text-[9px] font-mono text-gray-400 dark:text-gray-300 uppercase tracking-widest">
-            <span>{getTypeLabel(data.itemType)} Data</span>
+            <span>{getTypeLabel(data.itemType)} {i18n(I18nKey.zoteroData)}</span>
             <span>Ref: {item.key}</span>
           </div>
         </div>

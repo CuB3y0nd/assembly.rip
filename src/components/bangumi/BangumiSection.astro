@@ -2,6 +2,8 @@
 import type { UserSubjectCollection } from "@/types/bangumi";
 import Card from "./Card.astro";
 import FilterControls from "./FilterControls.astro";
+import { i18n } from "@/i18n/translation";
+import I18nKey from "@/i18n/i18nKey";
 
 interface Props {
 	sectionId: string;
@@ -31,12 +33,12 @@ const statusCounts = items.reduce(
 );
 
 const filters = [
-	{ value: "all", label: "全部", count: items.length },
-	{ value: "collect", label: "看过", count: statusCounts.collect || 0 },
-	{ value: "doing", label: "在看", count: statusCounts.doing || 0 },
-	{ value: "wish", label: "想看", count: statusCounts.wish || 0 },
-	{ value: "on_hold", label: "搁置", count: statusCounts.on_hold || 0 },
-	{ value: "dropped", label: "抛弃", count: statusCounts.dropped || 0 },
+	{ value: "all", label: i18n(I18nKey.bangumiAll), count: items.length },
+	{ value: "collect", label: i18n(I18nKey.bangumiCompleted), count: statusCounts.collect || 0 },
+	{ value: "doing", label: i18n(I18nKey.bangumiInProgress), count: statusCounts.doing || 0 },
+	{ value: "wish", label: i18n(I18nKey.bangumiWish), count: statusCounts.wish || 0 },
+	{ value: "on_hold", label: i18n(I18nKey.bangumiOnHold), count: statusCounts.on_hold || 0 },
+	{ value: "dropped", label: i18n(I18nKey.bangumiDropped), count: statusCounts.dropped || 0 },
 ].filter((filter) => filter.value === "all" || filter.count > 0);
 
 const defaultFilter = "all"; // 默认显示全部，用户可以通过筛选器选择
@@ -66,8 +68,8 @@ const defaultFilter = "all"; // 默认显示全部，用户可以通过筛选器
     </>
   ) : (
     <div class="text-center py-12">
-      <h3 class="text-xl font-medium text-gray-600 dark:text-gray-400 mb-2">暂无数据</h3>
-      <p class="text-gray-500 dark:text-gray-500">该分类下还没有任何条目</p>
+      <h3 class="text-xl font-medium text-gray-600 dark:text-gray-400 mb-2">{i18n(I18nKey.bangumiNoData)}</h3>
+      <p class="text-gray-500 dark:text-gray-500">{i18n(I18nKey.bangumiNoItems)}</p>
     </div>
   )}
 </div>

@@ -2,6 +2,8 @@
 import { onMount } from "svelte";
 import { cubicOut } from "svelte/easing";
 import { Tween } from "svelte/motion";
+import { i18n } from "@/i18n/translation";
+import I18nKey from "@/i18n/i18nKey";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const UPDATE_INTERVAL = 10;
@@ -118,37 +120,37 @@ onMount(() => {
 
 <ul>
   <li>
-    Today is <span class="time-number">{Math.round(dayOfYear.current)}</span>
-    day of
+    {i18n(I18nKey.timelineTodayIs)} <span class="time-number">{Math.round(dayOfYear.current)}</span>
+    {i18n(I18nKey.timelineDayOf)}
     <span class="time-number">{Math.round(curYear.current)}</span>
   </li>
   <li>
-    Century progress: <span class="time-number"
+    {i18n(I18nKey.timelineCenturyProgress)} <span class="time-number"
       >{formatPercent(centuryProg.current)}</span
     >
   </li>
   <li>
-    Year progress: <span class="time-number"
+    {i18n(I18nKey.timelineYearProgress)} <span class="time-number"
       >{formatPercent(yProg.current)}</span
     >
   </li>
   <li>
-    Day progress: <span class="time-number">{formatPercent(dProg.current)}</span
+    {i18n(I18nKey.timelineDayProgress)} <span class="time-number">{formatPercent(dProg.current)}</span
     >
   </li>
   <hr />
   <center>
     <div style="margin-bottom: 0.5rem; font-size: 0.9rem;">
-      <a href="https://www.foreverblog.cn/blog/7063.html">「十年之约」</a>已履行
+      <a href="https://www.foreverblog.cn/blog/7063.html">「{i18n(I18nKey.timelineTenYearPledge)}」</a>{i18n(I18nKey.timelineFulfilled)}
       <span class="time-number">{formatPercent(blogProg.current)}</span>
     </div>
     {#if loveStartDate}
       <span class="time-number" style="font-size: 0.95rem;"
         >{Math.floor(loveDays.current)}</span
-      > days painted softly on the canvas of 「时光」🎨
+      > {i18n(I18nKey.timelineLoveDays)}
     {:else}
       <span class="time-number" style="font-size: 0.95rem;"
-        >一场未曾落幕的梦，静待与君相逢 💫</span
+        >{i18n(I18nKey.timelineWaitingForYou)}</span
       >
     {/if}
   </center>

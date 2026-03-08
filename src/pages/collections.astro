@@ -8,6 +8,8 @@ import type { UserSubjectCollection } from "@/types/bangumi";
 import type { ZoteroItem } from "@/types/zotero";
 import { type BangumiConfig, fetchBangumiData } from "@/utils/bangumi";
 import { fetchZoteroData, type ZoteroConfig } from "@/utils/zotero";
+import { i18n } from "@/i18n/translation";
+import I18nKey from "@/i18n/i18nKey";
 
 const bangumiUsername = process.env.BANGUMI_USERNAME;
 const zoteroUserID = process.env.ZOTERO_USER_ID;
@@ -38,14 +40,14 @@ const zoteroConfig: ZoteroConfig = {
 };
 
 const categoryMap = {
-	book: { id: "book", name: "书籍", subjectType: 1 },
-	anime: { id: "anime", name: "追番", subjectType: 2 },
-	music: { id: "music", name: "音乐", subjectType: 3 },
-	game: { id: "game", name: "游戏", subjectType: 4 },
-	real: { id: "real", name: "追剧", subjectType: 6 },
+	book: { id: "book", name: i18n(I18nKey.collectionsBook), subjectType: 1 },
+	anime: { id: "anime", name: i18n(I18nKey.collectionsAnime), subjectType: 2 },
+	music: { id: "music", name: i18n(I18nKey.collectionsMusic), subjectType: 3 },
+	game: { id: "game", name: i18n(I18nKey.collectionsGame), subjectType: 4 },
+	real: { id: "real", name: i18n(I18nKey.collectionsReal), subjectType: 6 },
 };
 
-// 获取所有启用分类的数据
+// Get data for all enabled categories
 const bangumiData: Record<string, UserSubjectCollection[]> = {};
 let zoteroData: ZoteroItem[] = [];
 const tabs: Array<{
@@ -55,21 +57,21 @@ const tabs: Array<{
 	type: "bangumi" | "zotero";
 }> = [];
 
-console.log("[Collections] 开始获取所有数据");
+console.log("[Collections] Starting to fetch all data");
 
-// 获取 Zotero 数据并添加到标签页
+// Fetch Zotero data and add to tabs
 try {
 	zoteroData = await fetchZoteroData(zoteroConfig);
 	if (zoteroData.length > 0) {
 		tabs.push({
 			id: "zotero",
-			name: "文献",
+			name: i18n(I18nKey.collectionsZotero),
 			count: zoteroData.length,
 			type: "zotero",
 		});
 	}
 } catch (error) {
-	console.error("[Zotero] 初始化失败:", error);
+	console.error("[Zotero] Initialization failed:", error);
 }
 
 for (const [categoryKey, enabled] of Object.entries(enabledBangumiCategories)) {
@@ -88,7 +90,7 @@ for (const [categoryKey, enabled] of Object.entries(enabledBangumiCategories)) {
 				type: "bangumi",
 			});
 		} catch (error) {
-			console.error(`[Bangumi] 获取 ${categoryInfo.name} 数据失败:`, error);
+			console.error(`[Bangumi] Failed to fetch ${categoryInfo.name} data:`, error);
 			bangumiData[categoryKey] = [];
 			tabs.push({
 				id: categoryKey,
@@ -103,16 +105,19 @@ for (const [categoryKey, enabled] of Object.entries(enabledBangumiCategories)) {
 const activeTab = tabs[0]?.id || "zotero";
 ---
 
-<MainGridLayout title={"Collections"} description={"My Collections from Bangumi and Zotero"}>
-  <div class="flex flex-col w-full gap-4">
-    <div class="flex w-full rounded-[var(--radius-large)] overflow-hidden relative min-h-32">
-      <div class="card-base z-10 px-9 py-6 relative w-full">
-        <!-- Tab 导航和内容 -->
-        {tabs.length > 0 ? (
-          <>
-            <TabNav tabs={tabs} activeTab={activeTab} />
+<MainGridLayout title={i18n(I18nKey.collections)} description={"My Collections from Bangumi and Zotero"}>
+  <div class="flex flex-col w-full gap-4 mb-4">
+    <div class="card-base px-9 py-6 relative w-full">
+      <h1 class="text-3xl font-bold text-90 mb-4">
+        {i18n(I18nKey.collections)}
+      </h1>
 
-            <!-- 内容区域 -->
+      <!-- Tab Navigation and Content -->
+      {tabs.length > 0 ? (
+        <>
+          <TabNav tabs={tabs} activeTab={activeTab} />
+
+            <!-- Content Area -->
             {tabs.map((tab) => (
               tab.type === "bangumi" ? (
                 <BangumiSection
@@ -134,16 +139,16 @@ const activeTab = tabs[0]?.id || "zotero";
         ) : (
           <div class="text-center py-12">
             <h2 class="text-xl font-medium text-gray-600 dark:text-gray-400 mb-2">
-              暂无数据
+              {i18n(I18nKey.collectionsNoData)}
             </h2>
             <p class="text-gray-500 dark:text-gray-400 mb-4">
-              可能的原因：用户名不存在、网络连接问题或 API 限制
+              {i18n(I18nKey.collectionsNoDataReason)}
             </p>
             <div class="text-sm text-gray-400 dark:text-gray-500 space-y-1">
-              <div>用户名: {bangumiConfig.username}</div>
-              <div>API: {bangumiConfig.apiUrl}</div>
+              <div>{i18n(I18nKey.collectionsUsername)}: {bangumiConfig.username}</div>
+              <div>{i18n(I18nKey.collectionsApi)}: {bangumiConfig.apiUrl}</div>
               <div class="mt-3 text-xs">
-                提示：请在页面配置中设置正确的 Bangumi 用户名
+                {i18n(I18nKey.collectionsHint)}
               </div>
             </div>
           </div>

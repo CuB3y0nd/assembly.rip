@@ -2,6 +2,8 @@
 import { onMount } from "svelte";
 import type { Severity } from "@/types/cve";
 import { fetchCveData } from "@/utils/cve";
+import { i18n } from "@/i18n/translation";
+import I18nKey from "@/i18n/i18nKey";
 
 export let id: string;
 export let desc = "";
@@ -61,7 +63,7 @@ onMount(loadCveData);
         <div class="title-line">
           <span class="cve-id">{id}</span>
           <div class="tags-row">
-            {#if state === "RESERVED"}<span class="badge rsvd">RESERVED</span
+            {#if state === "RESERVED"}<span class="badge rsvd">{i18n(I18nKey.cveReserved)}</span
               >{/if}
             {#each cwes as cwe}<span class="badge cwe">{cwe}</span>{/each}
             {#each tags as tag}<span class="badge tag-{tag.toLowerCase()}"
@@ -73,39 +75,39 @@ onMount(loadCveData);
         <p class="description">
           {displayDesc ||
             (loading
-              ? "Aggregating intelligence..."
-              : "Detailed information reserved by CNA. Public disclosure is pending.")}
+              ? i18n(I18nKey.cveAggregating)
+              : i18n(I18nKey.cveReservedInfo))}
         </p>
 
         <div class="metadata-line">
           <div class="meta-box">
-            <span class="label">PRODUCT</span><span class="value bold"
-              >{affected || (loading ? "..." : "None")}</span
+            <span class="label">{i18n(I18nKey.cveProduct)}</span><span class="value bold"
+              >{affected || (loading ? "..." : i18n(I18nKey.cveNone))}</span
             >
           </div>
           <div class="meta-box">
-            <span class="label">ASSIGNER</span><span class="value"
-              >{assigner || (loading ? "..." : "None")}</span
+            <span class="label">{i18n(I18nKey.cveAssigner)}</span><span class="value"
+              >{assigner || (loading ? "..." : i18n(I18nKey.cveNone))}</span
             >
           </div>
           <div class="meta-box">
-            <span class="label">PUBLISHED</span><span class="value"
-              >{dates.published || (loading ? "..." : "None")}</span
+            <span class="label">{i18n(I18nKey.cvePublished)}</span><span class="value"
+              >{dates.published || (loading ? "..." : i18n(I18nKey.cveNone))}</span
             >
           </div>
           <div class="meta-box">
-            <span class="label">UPDATED</span><span class="value"
-              >{dates.updated || (loading ? "..." : "None")}</span
+            <span class="label">{i18n(I18nKey.cveUpdated)}</span><span class="value"
+              >{dates.updated || (loading ? "..." : i18n(I18nKey.cveNone))}</span
             >
           </div>
-          {#if refCount > 0}<div class="ref-counter">{refCount} Refs</div>{/if}
+          {#if refCount > 0}<div class="ref-counter">{refCount} {i18n(I18nKey.cveRefs)}</div>{/if}
         </div>
       </div>
 
       <!-- Score Column -->
       <div class="score-pane" style="--sev-color: {severityColors[severity]}">
         {#if state === "RESERVED" && cvssScore === null}
-          <div class="rsvd-title">RESERVED</div>
+          <div class="rsvd-title">{i18n(I18nKey.cveReserved)}</div>
         {:else}
           <div class="cvss-v">CVSS {cvssVersion || "N/A"}</div>
           <div class="cvss-n">
@@ -123,7 +125,7 @@ onMount(loadCveData);
     margin: 2.5rem 0;
     width: 100%;
     display: flex;
-    padding: 12px; /* 给悬浮阴影留出绝对空间 */
+    padding: 12px; /* Reserved space for hover shadow */
     box-sizing: border-box;
   }
 

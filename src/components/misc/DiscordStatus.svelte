@@ -2,9 +2,11 @@
 import { onMount } from "svelte";
 import type { DiscordStatus } from "@/types/discord";
 import { fetchDiscordStatus } from "@/utils/discord";
+import { i18n } from "@/i18n/translation";
+import I18nKey from "@/i18n/i18nKey";
 
 let status: DiscordStatus = "loading";
-let statusText = "Loading...";
+let statusText = i18n(I18nKey.spotifyLoading); // Reuse spotify loading or use a new one
 
 const statusColors: Record<DiscordStatus, string> = {
 	online: "35, 165, 90",
@@ -19,15 +21,15 @@ async function loadStatus() {
 	if (data?.success) {
 		status = data.data.discord_status;
 		const statusMap: Record<string, string> = {
-			online: "Online",
-			idle: "Idle",
-			dnd: "Do Not Disturb",
-			offline: "Offline",
+			online: i18n(I18nKey.discordOnline),
+			idle: i18n(I18nKey.discordIdle),
+			dnd: i18n(I18nKey.discordDnd),
+			offline: i18n(I18nKey.discordOffline),
 		};
-		statusText = statusMap[status] || "Offline";
+		statusText = statusMap[status] || i18n(I18nKey.discordOffline);
 	} else {
 		status = "offline";
-		statusText = "Offline";
+		statusText = i18n(I18nKey.discordOffline);
 	}
 }
 
@@ -52,7 +54,7 @@ onMount(() => {
     align-items: center;
     vertical-align: middle;
     cursor: help;
-    transform: translateY(-1px); /* 向上微调，补偿 code 标签的行高对齐 */
+    transform: translateY(-1px); /* Slight upward adjustment to compensate for code tag line-height alignment */
     margin-right: 2px;
   }
 
