@@ -87,9 +87,9 @@ export const en: Translation = {
 
   // Bangumi
   [Key.bangumiAll]: "All",
-  [Key.bangumiWish]: "Wish",
-  [Key.bangumiCompleted]: "Completed",
-  [Key.bangumiInProgress]: "In Progress",
+  [Key.bangumiWish]: "Wish to Watch",
+  [Key.bangumiCompleted]: "Watched",
+  [Key.bangumiInProgress]: "Watching",
   [Key.bangumiOnHold]: "On Hold",
   [Key.bangumiDropped]: "Dropped",
   [Key.bangumiUnknown]: "Unknown",
@@ -100,7 +100,7 @@ export const en: Translation = {
   [Key.bangumiViewOnBangumi]: "View on Bangumi",
 
   // Bangumi Game Specific
-  [Key.bangumiGameWish]: "To Play",
+  [Key.bangumiGameWish]: "Wish to Play",
   [Key.bangumiGameCompleted]: "Played",
   [Key.bangumiGameInProgress]: "Playing",
   [Key.bangumiGameOnHold]: "On Hold",
