@@ -1,9 +1,9 @@
 <script lang="ts">
 import { onMount } from "svelte";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
 import type { DiscordStatus } from "@/types/discord";
 import { fetchDiscordStatus } from "@/utils/discord";
-import { i18n } from "@/i18n/translation";
-import I18nKey from "@/i18n/i18nKey";
 
 let status: DiscordStatus = "loading";
 let statusText = i18n(I18nKey.spotifyLoading); // Reuse spotify loading or use a new one

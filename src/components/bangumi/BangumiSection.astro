@@ -1,9 +1,9 @@
 ---
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
 import type { UserSubjectCollection } from "@/types/bangumi";
 import Card from "./Card.astro";
 import FilterControls from "./FilterControls.astro";
-import { i18n } from "@/i18n/translation";
-import I18nKey from "@/i18n/i18nKey";
 
 interface Props {
 	sectionId: string;
@@ -79,11 +79,31 @@ const getStatusLabel = (status: string) => {
 
 const filters = [
 	{ value: "all", label: getStatusLabel("all"), count: items.length },
-	{ value: "collect", label: getStatusLabel("collect"), count: statusCounts.collect || 0 },
-	{ value: "doing", label: getStatusLabel("doing"), count: statusCounts.doing || 0 },
-	{ value: "wish", label: getStatusLabel("wish"), count: statusCounts.wish || 0 },
-	{ value: "on_hold", label: getStatusLabel("on_hold"), count: statusCounts.on_hold || 0 },
-	{ value: "dropped", label: getStatusLabel("dropped"), count: statusCounts.dropped || 0 },
+	{
+		value: "collect",
+		label: getStatusLabel("collect"),
+		count: statusCounts.collect || 0,
+	},
+	{
+		value: "doing",
+		label: getStatusLabel("doing"),
+		count: statusCounts.doing || 0,
+	},
+	{
+		value: "wish",
+		label: getStatusLabel("wish"),
+		count: statusCounts.wish || 0,
+	},
+	{
+		value: "on_hold",
+		label: getStatusLabel("on_hold"),
+		count: statusCounts.on_hold || 0,
+	},
+	{
+		value: "dropped",
+		label: getStatusLabel("dropped"),
+		count: statusCounts.dropped || 0,
+	},
 ].filter((filter) => filter.value === "all" || filter.count > 0);
 
 const defaultFilter = "all";

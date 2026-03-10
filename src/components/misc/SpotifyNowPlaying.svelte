@@ -1,7 +1,7 @@
 <script lang="ts">
 import { onMount } from "svelte";
-import { i18n } from "@/i18n/translation";
 import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
 
 interface Player {
 	isPlaying: boolean;

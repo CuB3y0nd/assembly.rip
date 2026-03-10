@@ -1,9 +1,9 @@
 <script lang="ts">
 import { onMount } from "svelte";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
 import type { Severity } from "@/types/cve";
 import { fetchCveData } from "@/utils/cve";
-import { i18n } from "@/i18n/translation";
-import I18nKey from "@/i18n/i18nKey";
 
 export let id: string;
 export let desc = "";

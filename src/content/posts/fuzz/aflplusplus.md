@@ -426,3 +426,4 @@ void Specs::min_airspeed() {
 - [Exercise 2 - libexif](/posts/fuzz/libexif/)
 - [Exercise 3 - TCPdump](/posts/fuzz/tcpdump-cve-2017-13028/)
 - [Exercise 4 - LibTIFF](/posts/fuzz/libtiff-cve-2016-9297/)
+- [Exercise 5 - libxml2](/posts/fuzz/libxml2-cve-2017-9048/)

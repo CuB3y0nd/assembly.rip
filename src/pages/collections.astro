@@ -3,13 +3,13 @@ import BangumiSection from "@/components/bangumi/BangumiSection.astro";
 import Pagination from "@/components/bangumi/Pagination.astro";
 import TabNav from "@/components/bangumi/TabNav.astro";
 import ZoteroSection from "@/components/zotero/ZoteroSection.astro";
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
 import MainGridLayout from "@/layouts/MainGridLayout.astro";
 import type { UserSubjectCollection } from "@/types/bangumi";
 import type { ZoteroItem } from "@/types/zotero";
 import { type BangumiConfig, fetchBangumiData } from "@/utils/bangumi";
 import { fetchZoteroData, type ZoteroConfig } from "@/utils/zotero";
-import { i18n } from "@/i18n/translation";
-import I18nKey from "@/i18n/i18nKey";
 
 const bangumiUsername = process.env.BANGUMI_USERNAME;
 const zoteroUserID = process.env.ZOTERO_USER_ID;
@@ -90,7 +90,10 @@ for (const [categoryKey, enabled] of Object.entries(enabledBangumiCategories)) {
 				subjectType: categoryInfo.subjectType,
 			});
 		} catch (error) {
-			console.error(`[Bangumi] Failed to fetch ${categoryInfo.name} data:`, error);
+			console.error(
+				`[Bangumi] Failed to fetch ${categoryInfo.name} data:`,
+				error,
+			);
 			bangumiData[categoryKey] = [];
 			tabs.push({
 				id: categoryKey,

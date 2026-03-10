@@ -2,8 +2,8 @@
 import { onMount } from "svelte";
 import { cubicOut } from "svelte/easing";
 import { Tween } from "svelte/motion";
-import { i18n } from "@/i18n/translation";
 import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const UPDATE_INTERVAL = 10;
