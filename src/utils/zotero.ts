@@ -11,7 +11,7 @@ export async function fetchZoteroData(
 ): Promise<ZoteroItem[]> {
 	try {
 		console.log("[Zotero] 开始获取数据...");
-		const url = `https://api.zotero.org/users/${config.userId}/items?format=json&limit=${config.limit}&itemType=-attachment,-annotation,-note`;
+		const url = `https://api.zotero.org/users/${config.userId}/items/top?format=json&limit=${config.limit}`;
 		const response = await fetch(url, {
 			headers: {
 				"Zotero-API-Key": config.apiKey,
@@ -27,9 +27,12 @@ export async function fetchZoteroData(
 		const data = (await response.json()) as ZoteroItem[];
 		const filteredData = data.filter(
 			(item) =>
+				item.data &&
 				!["attachment", "annotation", "note"].includes(item.data.itemType),
 		);
-		console.log(`[Zotero] 总共获取到 ${filteredData.length} 条数据`);
+		console.log(
+			`[Zotero] 获取到 ${data.length} 条原始数据，过滤后剩余 ${filteredData.length} 条`,
+		);
 		return filteredData;
 	} catch (error) {
 		console.error("[Zotero] 获取数据时出错:", error);
