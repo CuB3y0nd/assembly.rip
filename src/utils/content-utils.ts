@@ -3,74 +3,17 @@ import I18nKey from "@i18n/i18nKey";
 import { i18n } from "@i18n/translation";
 import { getCategoryUrl } from "@utils/url-utils.ts";
 
-// // Retrieve posts and sort them by publication date
-async function getRawSortedPosts() {
-	const allBlogPosts = await getCollection("posts", ({ data }) => {
-		return import.meta.env.PROD ? data.draft !== true : true;
-	});
+type PostEntry = CollectionEntry<"posts">;
 
-	const sorted = allBlogPosts.sort((a, b) => {
-		const dateA = new Date(a.data.published);
-		const dateB = new Date(b.data.published);
-		return dateA > dateB ? -1 : 1;
-	});
-	return sorted;
-}
-
-export async function getSortedPosts() {
-	const sorted = await getRawSortedPosts();
-
-	for (let i = 1; i < sorted.length; i++) {
-		sorted[i].data.nextSlug = sorted[i - 1].slug;
-		sorted[i].data.nextTitle = sorted[i - 1].data.title;
-	}
-	for (let i = 0; i < sorted.length - 1; i++) {
-		sorted[i].data.prevSlug = sorted[i + 1].slug;
-		sorted[i].data.prevTitle = sorted[i + 1].data.title;
-	}
-
-	return sorted;
-}
 export type PostForList = {
 	slug: string;
-	data: CollectionEntry<"posts">["data"];
+	data: PostEntry["data"];
 };
-export async function getSortedPostsList(): Promise<PostForList[]> {
-	const sortedFullPosts = await getRawSortedPosts();
 
-	// delete post.body
-	const sortedPostsList = sortedFullPosts.map((post) => ({
-		slug: post.slug,
-		data: post.data,
-	}));
-
-	return sortedPostsList;
-}
 export type Tag = {
 	name: string;
 	count: number;
 };
-
-export async function getTagList(): Promise<Tag[]> {
-	const allBlogPosts = await getCollection<"posts">("posts", ({ data }) => {
-		return import.meta.env.PROD ? data.draft !== true : true;
-	});
-
-	const countMap: { [key: string]: number } = {};
-	allBlogPosts.forEach((post: { data: { tags: string[] } }) => {
-		post.data.tags.forEach((tag: string) => {
-			if (!countMap[tag]) countMap[tag] = 0;
-			countMap[tag]++;
-		});
-	});
-
-	// sort tags
-	const keys: string[] = Object.keys(countMap).sort((a, b) => {
-		return a.toLowerCase().localeCompare(b.toLowerCase());
-	});
-
-	return keys.map((key) => ({ name: key, count: countMap[key] }));
-}
 
 export type Category = {
 	name: string;
@@ -78,37 +21,105 @@ export type Category = {
 	url: string;
 };
 
-export async function getCategoryList(): Promise<Category[]> {
-	const allBlogPosts = await getCollection<"posts">("posts", ({ data }) => {
-		return import.meta.env.PROD ? data.draft !== true : true;
+let allPostsPromise: Promise<PostEntry[]> | undefined;
+let sortedPostsPromise: Promise<PostEntry[]> | undefined;
+let tagListPromise: Promise<Tag[]> | undefined;
+let categoryListPromise: Promise<Category[]> | undefined;
+
+function shouldIncludePost({ data }: PostEntry) {
+	return !import.meta.env.PROD || data.draft !== true;
+}
+
+function sortPostsByPublishedDateDesc(a: PostEntry, b: PostEntry) {
+	return b.data.published.getTime() - a.data.published.getTime();
+}
+
+async function getAllPosts() {
+	allPostsPromise ??= getCollection("posts", shouldIncludePost);
+	return allPostsPromise;
+}
+
+export async function getSortedPosts(): Promise<PostEntry[]> {
+	sortedPostsPromise ??= getAllPosts().then((posts) => {
+		const sortedPosts = [...posts].sort(sortPostsByPublishedDateDesc);
+
+		return sortedPosts.map((post, index) => {
+			const newerPost = sortedPosts[index - 1];
+			const olderPost = sortedPosts[index + 1];
+
+			return {
+				...post,
+				data: {
+					...post.data,
+					nextSlug: newerPost?.id ?? "",
+					nextTitle: newerPost?.data.title ?? "",
+					prevSlug: olderPost?.id ?? "",
+					prevTitle: olderPost?.data.title ?? "",
+				},
+			};
+		});
 	});
-	const count: { [key: string]: number } = {};
-	allBlogPosts.forEach((post: { data: { category: string | null } }) => {
-		if (!post.data.category) {
-			const ucKey = i18n(I18nKey.uncategorized);
-			count[ucKey] = count[ucKey] ? count[ucKey] + 1 : 1;
-			return;
+
+	return sortedPostsPromise;
+}
+
+export async function getSortedPostsList(): Promise<PostForList[]> {
+	const sortedPosts = await getSortedPosts();
+
+	return sortedPosts.map((post) => ({
+		slug: post.id,
+		data: post.data,
+	}));
+}
+
+export async function getTagList(): Promise<Tag[]> {
+	tagListPromise ??= getAllPosts().then((posts) => {
+		const tagCounts = new Map<string, number>();
+
+		for (const post of posts) {
+			for (const tag of post.data.tags) {
+				tagCounts.set(tag, (tagCounts.get(tag) ?? 0) + 1);
+			}
 		}
 
-		const categoryName =
-			typeof post.data.category === "string"
-				? post.data.category.trim()
-				: String(post.data.category).trim();
-
-		count[categoryName] = count[categoryName] ? count[categoryName] + 1 : 1;
+		return Array.from(tagCounts.entries())
+			.sort(([left], [right]) =>
+				left.toLowerCase().localeCompare(right.toLowerCase()),
+			)
+			.map(([name, count]) => ({ name, count }));
 	});
 
-	const lst = Object.keys(count).sort((a, b) => {
-		return a.toLowerCase().localeCompare(b.toLowerCase());
+	return tagListPromise;
+}
+
+export async function getCategoryList(): Promise<Category[]> {
+	categoryListPromise ??= getAllPosts().then((posts) => {
+		const uncategorizedLabel = i18n(I18nKey.uncategorized);
+		const categoryCounts = new Map<string, number>();
+
+		for (const post of posts) {
+			const rawCategory = post.data.category;
+			const categoryName =
+				typeof rawCategory === "string" && rawCategory.trim() !== ""
+					? rawCategory.trim()
+					: uncategorizedLabel;
+
+			categoryCounts.set(
+				categoryName,
+				(categoryCounts.get(categoryName) ?? 0) + 1,
+			);
+		}
+
+		return Array.from(categoryCounts.entries())
+			.sort(([left], [right]) =>
+				left.toLowerCase().localeCompare(right.toLowerCase()),
+			)
+			.map(([name, count]) => ({
+				name,
+				count,
+				url: getCategoryUrl(name),
+			}));
 	});
 
-	const ret: Category[] = [];
-	for (const c of lst) {
-		ret.push({
-			name: c,
-			count: count[c],
-			url: getCategoryUrl(c),
-		});
-	}
-	return ret;
+	return categoryListPromise;
 }

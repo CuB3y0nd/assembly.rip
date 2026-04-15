@@ -1,0 +1,137 @@
+---
+import { commentConfig } from "@/config";
+import giscusDarkThemeUrl from "@/styles/giscus-dark.css?url";
+import giscusLightThemeUrl from "@/styles/giscus-light.css?url";
+
+const giscus = commentConfig.giscus;
+
+if (!giscus) {
+	throw new Error("Giscus comments are not configured");
+}
+
+const giscusConfig = {
+	host: giscus.host ?? "https://giscus.app",
+	repo: giscus.repo,
+	repoId: giscus.repoId,
+	category: giscus.category,
+	categoryId: giscus.categoryId,
+	mapping: giscus.mapping ?? "pathname",
+	term: giscus.term ?? "",
+	strict: giscus.strict ?? "0",
+	reactionsEnabled: giscus.reactionsEnabled ?? "1",
+	emitMetadata: giscus.emitMetadata ?? "0",
+	inputPosition: giscus.inputPosition ?? "top",
+	theme: giscus.theme ?? "reactive",
+	lang: giscus.lang ?? "en",
+	loading: giscus.loading ?? "lazy",
+};
+
+const initialTheme =
+	giscusConfig.theme === "reactive" ? giscusLightThemeUrl : giscusConfig.theme;
+---
+
+<div
+  data-giscus-root
+  data-theme-mode={giscusConfig.theme}
+  data-theme-light-url={giscusLightThemeUrl}
+  data-theme-dark-url={giscusDarkThemeUrl}
+>
+  <giscus-widget
+    id="comments"
+    host={giscusConfig.host}
+    repo={giscusConfig.repo}
+    repoid={giscusConfig.repoId}
+    category={giscusConfig.category}
+    categoryid={giscusConfig.categoryId}
+    mapping={giscusConfig.mapping}
+    term={giscusConfig.term}
+    strict={giscusConfig.strict}
+    reactionsenabled={giscusConfig.reactionsEnabled}
+    emitmetadata={giscusConfig.emitMetadata}
+    inputposition={giscusConfig.inputPosition}
+    theme={initialTheme}
+    lang={giscusConfig.lang}
+    loading={giscusConfig.loading}
+  ></giscus-widget>
+</div>
+
+<script>
+	import "giscus";
+
+	let themeObserver: MutationObserver | undefined;
+
+	function getTheme(root: HTMLElement): string {
+		const configuredTheme = root.dataset.themeMode || "reactive";
+		if (configuredTheme !== "reactive") {
+			return configuredTheme;
+		}
+
+		const isDark = document.documentElement.classList.contains("dark");
+		const themeUrl = new URL(
+			isDark
+				? root.dataset.themeDarkUrl || ""
+				: root.dataset.themeLightUrl || "",
+			window.location.href,
+		).toString();
+
+		// Giscus runs on https://giscus.app; avoid mixed-content breakage in local http dev.
+		if (window.location.protocol !== "https:") {
+			return isDark ? "dark" : "light";
+		}
+
+		return themeUrl;
+	}
+
+	function updateGiscusTheme(root: HTMLElement): void {
+		const widget = root.querySelector("giscus-widget");
+		if (!(widget instanceof HTMLElement)) {
+			return;
+		}
+
+		widget.setAttribute("theme", getTheme(root));
+	}
+
+	function ensureThemeObserver(): void {
+		if (themeObserver) {
+			return;
+		}
+
+		themeObserver = new MutationObserver(() => {
+			document
+				.querySelectorAll("[data-giscus-root]")
+				.forEach((root) => {
+					if (root instanceof HTMLElement) {
+						updateGiscusTheme(root);
+					}
+				});
+		});
+
+		themeObserver.observe(document.documentElement, {
+			attributes: true,
+			attributeFilter: ["class"],
+		});
+	}
+
+	function initGiscus(root: Element): void {
+		if (!(root instanceof HTMLElement)) {
+			return;
+		}
+
+		updateGiscusTheme(root);
+	}
+
+	function initGiscusWidgets(): void {
+		document.querySelectorAll("[data-giscus-root]").forEach(initGiscus);
+		ensureThemeObserver();
+	}
+
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", initGiscusWidgets, {
+			once: true,
+		});
+	} else {
+		initGiscusWidgets();
+	}
+
+	document.addEventListener("astro:page-load", initGiscusWidgets);
+</script>

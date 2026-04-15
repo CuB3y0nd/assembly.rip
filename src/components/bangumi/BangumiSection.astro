@@ -109,7 +109,10 @@ const filters = [
 const defaultFilter = "all";
 ---
 
-<div class:list={["bangumi-section", { "hidden": !isActive }]} data-section={sectionId}>
+<div
+  class:list={["bangumi-section", { "hidden": !isActive }]}
+  data-collections-section={sectionId}
+>
   {items.length > 0 ? (
     <>
       <FilterControls

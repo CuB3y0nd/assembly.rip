@@ -9,6 +9,8 @@ category: "Write-ups"
 draft: false
 ---
 
+import GithubCard from "@components/misc/GithubCard.astro";
+
 > 你终于踏入了 Ring 0，那不是权力的开始，而是谦卑的第一步。
 
 # 前言
@@ -17,11 +19,11 @@ draft: false
 
 期间花了几天时间写了一个全平台通用的自动化创建 kernel exploitation lab 环境的脚本，~~请务必 star 一下（~~
 
-::github{repo="CuB3y0nd/panix"}
+<GithubCard repo="CuB3y0nd/panix" />
 
 之后又因为每次一个 exp 脚本都要写很长很长，而且很多功能重复，就写了一个专用于打 kernel 的 C 版本 pwntools:
 
-::github{repo="CuB3y0nd/axium"}
+<GithubCard repo="CuB3y0nd/axium" />
 
 # Level 1.0
 
@@ -957,7 +959,7 @@ int load_flag()
 
 是时候祭出我写的 [axium](https://github.com/CuB3y0nd/axium) 了，目前是根据我 pwncollege 做题遇到的需求在拓展功能，后面还会继续更新更多内容，希望能成为 kernel exploitation 界的 pwntools xD
 
-::github{repo="CuB3y0nd/axium"}
+<GithubCard repo="CuB3y0nd/axium" />
 
 看看这道题用上 axium 后的实战效果：
 

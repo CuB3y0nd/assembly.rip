@@ -1,0 +1,39 @@
+---
+import { fetchGithubRepoData } from "@/utils/github";
+
+interface Props {
+	repo: string;
+}
+
+const { repo } = Astro.props;
+const data = await fetchGithubRepoData(repo);
+const avatarStyle = data.avatarUrl
+	? `background-image: url('${data.avatarUrl}'); background-color: transparent;`
+	: undefined;
+---
+
+<a
+	class:list={["card-github", "no-styling", { "fetch-error": !data.available }]}
+	href={`https://github.com/${data.repo}`}
+	target="_blank"
+	rel="noopener noreferrer"
+>
+	<div class="gc-titlebar">
+		<div class="gc-titlebar-left">
+			<div class="gc-owner">
+				<div class="gc-avatar" style={avatarStyle}></div>
+				<div class="gc-user">{data.owner}</div>
+			</div>
+			<div class="gc-divider">/</div>
+			<div class="gc-repo">{data.name}</div>
+		</div>
+		<div class="github-logo"></div>
+	</div>
+	<div class="gc-description">{data.description}</div>
+	<div class="gc-infobar">
+		<div class="gc-stars">{data.stars}</div>
+		<div class="gc-forks">{data.forks}</div>
+		<div class="gc-license">{data.license}</div>
+		<span class="gc-language">{data.language}</span>
+	</div>
+</a>

@@ -1,0 +1,453 @@
+---
+import I18nKey from "../i18n/i18nKey";
+import { i18n } from "../i18n/translation";
+import { getPostUrlBySlug } from "../utils/url-utils";
+
+interface Post {
+	slug: string;
+	data: {
+		title: string;
+		tags: string[];
+		category?: string | null;
+		published: Date;
+	};
+}
+
+interface Props {
+	sortedPosts: Post[];
+}
+
+interface ArchivePost {
+	title: string;
+	url: string;
+	tags: string[];
+	category: string;
+	published: string;
+	year: number;
+	formattedDate: string;
+}
+
+interface Group {
+	year: number;
+	posts: ArchivePost[];
+}
+
+interface HeatmapDay {
+	date: string;
+	count: number;
+}
+
+let { sortedPosts } = Astro.props;
+
+function formatDate(date: Date) {
+	const month = (date.getMonth() + 1).toString().padStart(2, "0");
+	const day = date.getDate().toString().padStart(2, "0");
+	return `${month}-${day}`;
+}
+
+function formatTag(tagList: string[]) {
+	return tagList.map((tag) => `#${tag}`).join(" ");
+}
+
+function buildGroups(posts: ArchivePost[]): Group[] {
+	const grouped = posts.reduce(
+		(acc, post) => {
+			if (!acc[post.year]) {
+				acc[post.year] = [];
+			}
+			acc[post.year].push(post);
+			return acc;
+		},
+		{} as Record<number, ArchivePost[]>,
+	);
+
+	return Object.keys(grouped)
+		.map((yearStr) => ({
+			year: Number.parseInt(yearStr, 10),
+			posts: grouped[Number.parseInt(yearStr, 10)],
+		}))
+		.sort((a, b) => b.year - a.year);
+}
+
+function buildHeatmap(posts: ArchivePost[]) {
+	const now = new Date();
+	const strictYearStart = new Date(now);
+	strictYearStart.setFullYear(now.getFullYear() - 1);
+	strictYearStart.setHours(0, 0, 0, 0);
+
+	const gridStartDate = new Date(strictYearStart);
+	gridStartDate.setDate(gridStartDate.getDate() - gridStartDate.getDay());
+	gridStartDate.setHours(0, 0, 0, 0);
+
+	const counts = posts.reduce(
+		(acc, post) => {
+			const published = new Date(post.published);
+			if (
+				published.getTime() >= strictYearStart.getTime() &&
+				published.getTime() <= now.getTime()
+			) {
+				const dateStr = published.toISOString().slice(0, 10);
+				acc[dateStr] = (acc[dateStr] || 0) + 1;
+			}
+			return acc;
+		},
+		{} as Record<string, number>,
+	);
+
+	const maxCount = Math.max(...Object.values(counts), 1);
+	const weeks: HeatmapDay[][] = [];
+	let currentWeek: HeatmapDay[] = [];
+	const current = new Date(gridStartDate);
+	const end = new Date(now);
+	end.setHours(23, 59, 59, 999);
+
+	while (current <= end) {
+		const dateStr = current.toISOString().slice(0, 10);
+		currentWeek.push({
+			date: dateStr,
+			count: counts[dateStr] || 0,
+		});
+
+		if (currentWeek.length === 7) {
+			weeks.push(currentWeek);
+			currentWeek = [];
+		}
+
+		current.setDate(current.getDate() + 1);
+	}
+
+	if (currentWeek.length > 0) {
+		while (currentWeek.length < 7) {
+			currentWeek.push({ date: "", count: -1 });
+		}
+		weeks.push(currentWeek);
+	}
+
+	const monthNames = [
+		"Jan",
+		"Feb",
+		"Mar",
+		"Apr",
+		"May",
+		"Jun",
+		"Jul",
+		"Aug",
+		"Sep",
+		"Oct",
+		"Nov",
+		"Dec",
+	];
+
+	const monthLabels: { label: string; weekIndex: number }[] = [];
+	let lastMonth = -1;
+	let lastWeekIndex = -1;
+
+	for (let i = 0; i < weeks.length; i++) {
+		if (weeks[i][0].date === "") continue;
+		const date = new Date(weeks[i][0].date);
+		const month = date.getMonth();
+		if (month !== lastMonth && i - lastWeekIndex >= 3) {
+			monthLabels.push({ label: monthNames[month], weekIndex: i });
+			lastMonth = month;
+			lastWeekIndex = i;
+		}
+	}
+
+	return {
+		maxCount,
+		monthLabels,
+		weeks,
+	};
+}
+
+function getOpacity(count: number, maxCount: number) {
+	if (count <= 0) return 0;
+	return 0.2 + (count / maxCount) * 0.8;
+}
+
+const archivePosts: ArchivePost[] = sortedPosts.map((post) => {
+	const published = new Date(post.data.published);
+	return {
+		title: post.data.title,
+		url: getPostUrlBySlug(post.slug),
+		tags: post.data.tags ?? [],
+		category: post.data.category ?? "",
+		published: published.toISOString(),
+		year: published.getFullYear(),
+		formattedDate: formatDate(published),
+	};
+});
+
+const groups = buildGroups(archivePosts);
+const heatmap = buildHeatmap(archivePosts);
+const archivePostsJson = JSON.stringify(archivePosts).replace(/</g, "\\u003c");
+const postCountLabel = i18n(I18nKey.postCount);
+const postsCountLabel = i18n(I18nKey.postsCount);
+---
+
+<div data-archive-panel>
+  <div class="card-base p-4 md:p-6 mb-4">
+    <div class="flex items-end justify-between mb-4 px-1 text-black/75 dark:text-white/75 font-bold">
+      <div class="flex items-center gap-2">
+        <svg viewBox="0 0 24 24" class="text-xl" aria-hidden="true" fill="none">
+          <path
+            fill="currentColor"
+            d="M5 22q-.825 0-1.412-.587T3 20V6q0-.825.588-1.412T5 4h1V3q0-.425.288-.712T7 2t.713.288T8 3v1h8V3q0-.425.288-.712T17 2t.713.288T18 3v1h1q.825 0 1.413.588T21 6v4.025q0 .425-.288.713t-.712.287t-.712-.288t-.288-.712V10H5v10h6q.425 0 .713.288T12 21t-.288.713T11 22zM5 8h14V6H5zm9 13v-1.65q0-.2.075-.387t.225-.338l5.225-5.2q.225-.225.5-.325t.55-.1q.3 0 .575.113t.5.337l.925.925q.2.225.313.5t.112.55t-.1.563t-.325.512l-5.2 5.2q-.15.15-.337.225T16.65 22H15q-.425 0-.712-.287T14 21m7.5-5.575l-.925-.925zm-6 5.075h.95l3.025-3.05l-.45-.475l-.475-.45l-3.05 3.025zm3.525-3.525l-.475-.45l.925.925z"
+          />
+        </svg>
+        <span class="text-base">Activity</span>
+      </div>
+      <div class="text-[12px] opacity-40">
+        Total published <span data-heatmap-total>{archivePosts.length}</span> posts
+      </div>
+    </div>
+
+    <div class="w-full">
+      <div
+        data-heatmap-scroll
+        class="overflow-x-auto hide-scrollbar scroll-smooth"
+      >
+        <div class="w-fit min-w-max pr-2">
+          <div class="flex h-5 ml-12 mb-1 relative text-[12px] text-black/40 dark:text-white/40 font-bold">
+            {heatmap.monthLabels.map((month) => (
+              <div class="absolute" style={`left: ${month.weekIndex * 18}px`}>
+                {month.label}
+              </div>
+            ))}
+          </div>
+
+          <div class="flex flex-row relative">
+            <div class="sticky left-0 z-20 flex flex-col justify-between w-12 pr-3 text-[12px] text-black/30 dark:text-white/30 font-bold py-[4px] h-[122px] shrink-0 text-right bg-[var(--card-bg)]">
+              <span></span>
+              <span>Mon</span>
+              <span></span>
+              <span>Wed</span>
+              <span></span>
+              <span>Fri</span>
+              <span></span>
+            </div>
+
+            <div class="flex flex-row gap-[4px]" data-heatmap-grid>
+              {heatmap.weeks.map((week) => (
+                <div class="flex flex-col gap-[4px]">
+                  {week.map((day) =>
+                    day.count === -1 ? (
+                      <div class="w-[14px] h-[14px]"></div>
+                    ) : (
+                      <div
+                        data-heatmap-day={day.date}
+                        class="w-[14px] h-[14px] rounded-[2px] transition-all duration-300 hover:ring-2 hover:ring-[var(--primary)] hover:ring-offset-1 hover:ring-offset-[var(--card-bg)]"
+                        style={`background-color: ${day.count === 0 ? "var(--btn-regular-bg)" : "var(--primary)"}; opacity: ${day.count === 0 ? 1 : getOpacity(day.count, heatmap.maxCount)}`}
+                        title={`${day.date}: ${day.count} ${day.count === 1 ? "post" : "posts"}`}
+                      ></div>
+                    ),
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end mt-3 gap-1.5 text-[12px] text-black/30 dark:text-white/30 font-bold pr-2">
+            <span>Less</span>
+            <div class="w-3 h-3 rounded-[1px] bg-[var(--btn-regular-bg)]"></div>
+            <div class="w-3 h-3 rounded-[1px] bg-[var(--primary)] opacity-20"></div>
+            <div class="w-3 h-3 rounded-[1px] bg-[var(--primary)] opacity-45"></div>
+            <div class="w-3 h-3 rounded-[1px] bg-[var(--primary)] opacity-70"></div>
+            <div class="w-3 h-3 rounded-[1px] bg-[var(--primary)] opacity-100"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-base px-8 py-6">
+    {groups.map((group) => (
+      <div data-archive-group>
+        <div class="flex flex-row w-full items-center h-[3.75rem]">
+          <div class="w-[15%] md:w-[10%] transition text-2xl font-bold text-right text-75">
+            {group.year}
+          </div>
+          <div class="w-[15%] md:w-[10%]">
+            <div
+              class="h-3 w-3 bg-none rounded-full outline outline-[var(--primary)] mx-auto
+                    -outline-offset-[2px] z-50 outline-3"
+            ></div>
+          </div>
+          <div class="w-[70%] md:w-[80%] transition text-left text-50">
+            <span data-group-count>{group.posts.length}</span>
+            <span data-group-count-label>{group.posts.length === 1 ? postCountLabel : postsCountLabel}</span>
+          </div>
+        </div>
+
+        {group.posts.map((post) => (
+          <a
+            href={post.url}
+            aria-label={post.title}
+            data-archive-post
+            data-tags={post.tags.join(",")}
+            data-category={post.category}
+            data-published={post.published}
+            class="group btn-plain !block h-10 w-full rounded-lg hover:text-[initial]"
+          >
+            <div class="flex flex-row justify-start items-center h-full">
+              <div class="w-[15%] md:w-[10%] transition text-sm text-right text-50">
+                {post.formattedDate}
+              </div>
+
+              <div class="w-[15%] md:w-[10%] relative dash-line h-full flex items-center">
+                <div
+                  class="transition-all mx-auto w-1 h-1 rounded group-hover:h-5
+                         bg-[oklch(0.5_0.05_var(--hue))] group-hover:bg-[var(--primary)]
+                         outline outline-4 z-50
+                         outline-[var(--card-bg)]
+                         group-hover:outline-[var(--btn-plain-bg-hover)]
+                         group-active:outline-[var(--btn-plain-bg-active)]"
+                ></div>
+              </div>
+
+              <div
+                class="w-[70%] md:max-w-[65%] md:w-[65%] text-left font-bold
+                       group-hover:translate-x-1 transition-all group-hover:text-[var(--primary)]
+                       text-75 pr-8 whitespace-nowrap text-ellipsis overflow-hidden"
+              >
+                {post.title}
+              </div>
+
+              <div
+                class="hidden md:block md:w-[15%] text-left text-sm transition
+                       whitespace-nowrap text-ellipsis overflow-hidden text-30"
+              >
+                {formatTag(post.tags)}
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+    ))}
+  </div>
+</div>
+
+<script is:inline type="application/json" id="archive-posts-data" set:html={archivePostsJson}></script>
+
+<script
+  is:inline
+  define:vars={{
+    postCountLabel,
+    postsCountLabel,
+  }}
+>
+  const archiveRoot = document.querySelector("[data-archive-panel]");
+  const archiveDataNode = document.querySelector("#archive-posts-data");
+
+  if (archiveRoot && archiveDataNode) {
+    const allPosts = JSON.parse(archiveDataNode.textContent || "[]");
+    const params = new URLSearchParams(window.location.search);
+    const selectedTags = params.getAll("tag");
+    const selectedCategories = params.getAll("category");
+    const showUncategorized = params.has("uncategorized");
+
+    const postRows = Array.from(
+      archiveRoot.querySelectorAll("[data-archive-post]"),
+    );
+    const groupRows = Array.from(
+      archiveRoot.querySelectorAll("[data-archive-group]"),
+    );
+    const heatmapDays = Array.from(
+      archiveRoot.querySelectorAll("[data-heatmap-day]"),
+    );
+    const totalPostsNode = archiveRoot.querySelector("[data-heatmap-total]");
+    const heatmapScroll = archiveRoot.querySelector("[data-heatmap-scroll]");
+
+    function updateHeatmap(filteredPosts) {
+      const now = new Date();
+      const strictYearStart = new Date(now);
+      strictYearStart.setFullYear(now.getFullYear() - 1);
+      strictYearStart.setHours(0, 0, 0, 0);
+
+      const counts = Object.create(null);
+      for (const post of filteredPosts) {
+        const published = new Date(post.published);
+        if (
+          published.getTime() >= strictYearStart.getTime() &&
+          published.getTime() <= now.getTime()
+        ) {
+          const dateStr = published.toISOString().slice(0, 10);
+          counts[dateStr] = (counts[dateStr] || 0) + 1;
+        }
+      }
+
+      const values = Object.values(counts);
+      const maxCount = values.length > 0 ? Math.max(...values) : 1;
+
+      for (const day of heatmapDays) {
+        const date = day.dataset.heatmapDay;
+        if (!date) continue;
+
+        const count = counts[date] || 0;
+        day.style.backgroundColor =
+          count === 0 ? "var(--btn-regular-bg)" : "var(--primary)";
+        day.style.opacity =
+          count === 0 ? "1" : String(0.2 + (count / maxCount) * 0.8);
+        day.title = `${date}: ${count} ${count === 1 ? "post" : "posts"}`;
+      }
+    }
+
+    function scrollHeatmapToEnd() {
+      if (!heatmapScroll) return;
+      const isOverflowing = heatmapScroll.scrollWidth > heatmapScroll.clientWidth;
+      if (isOverflowing) {
+        heatmapScroll.scrollLeft = heatmapScroll.scrollWidth;
+      }
+    }
+
+    function applyFilters() {
+      const filteredPosts = [];
+
+      for (const row of postRows) {
+        const tags = row.dataset.tags ? row.dataset.tags.split(",") : [];
+        const category = row.dataset.category || "";
+
+        const matchesTags =
+          selectedTags.length === 0 ||
+          tags.some((tag) => selectedTags.includes(tag));
+        const matchesCategories =
+          selectedCategories.length === 0 ||
+          (category && selectedCategories.includes(category));
+        const matchesUncategorized = !showUncategorized || !category;
+
+        const visible = matchesTags && matchesCategories && matchesUncategorized;
+        row.hidden = !visible;
+
+        if (visible) {
+          const published = row.dataset.published;
+          const post = allPosts.find((item) => item.published === published && item.url === row.getAttribute("href"));
+          if (post) filteredPosts.push(post);
+        }
+      }
+
+      for (const group of groupRows) {
+        const visiblePosts = group.querySelectorAll("[data-archive-post]:not([hidden])").length;
+        const countNode = group.querySelector("[data-group-count]");
+        const labelNode = group.querySelector("[data-group-count-label]");
+
+        if (countNode) countNode.textContent = String(visiblePosts);
+        if (labelNode) {
+          labelNode.textContent =
+            visiblePosts === 1 ? postCountLabel : postsCountLabel;
+        }
+
+        group.hidden = visiblePosts === 0;
+      }
+
+      if (totalPostsNode) {
+        totalPostsNode.textContent = String(filteredPosts.length);
+      }
+
+      updateHeatmap(filteredPosts);
+      scrollHeatmapToEnd();
+    }
+
+    applyFilters();
+    window.addEventListener("resize", scrollHeatmapToEnd, { passive: true });
+  }
+</script>

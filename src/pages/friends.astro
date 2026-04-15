@@ -1,5 +1,5 @@
 ---
-import { getEntry } from "astro:content";
+import { getEntry, render } from "astro:content";
 import Comment from "@components/comment/index.astro";
 import FriendCard from "@components/misc/FriendCard.astro";
 import Markdown from "@components/misc/Markdown.astro";
@@ -13,7 +13,7 @@ if (!friendsPost) {
 	throw new Error("Friends page content not found");
 }
 
-const { Content } = await friendsPost.render();
+const { Content } = await render(friendsPost);
 const { friends } = friendsPost.data;
 
 // 每次构建时随机排列

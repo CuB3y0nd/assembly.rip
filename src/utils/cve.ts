@@ -20,6 +20,27 @@ export interface CveData {
 	dates: { published: string; updated: string };
 }
 
+type BestCvssMetric = {
+	val: number;
+	ver: string;
+	sev: string;
+};
+
+const FETCH_TIMEOUT_MS = 8000;
+const cveRequestCache = new Map<string, Promise<CveData | null>>();
+
+async function fetchJson(url: string) {
+	const response = await fetch(url, {
+		signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+	});
+
+	if (!response.ok) {
+		throw new Error(`Request failed: ${response.status} ${url}`);
+	}
+
+	return response.json();
+}
+
 function smartFormat(str: string) {
 	if (!str || str.toLowerCase() === "n/a") return "";
 	return str
@@ -35,20 +56,32 @@ export async function fetchCveData(
 	id: string,
 	fallbackDesc = "",
 ): Promise<CveData | null> {
+	const cacheKey = `${id}\u0000${fallbackDesc}`;
+	const cached = cveRequestCache.get(cacheKey);
+	if (cached) {
+		return cached;
+	}
+
+	const request = loadCveData(id, fallbackDesc);
+	cveRequestCache.set(cacheKey, request);
+
+	return request;
+}
+
+async function loadCveData(
+	id: string,
+	fallbackDesc = "",
+): Promise<CveData | null> {
 	try {
-		const mitreResp = await fetch(`https://cveawg.mitre.org/api/cve/${id}`);
-		const mitreJson = await mitreResp.json();
+		const mitreJson = await fetchJson(`https://cveawg.mitre.org/api/cve/${id}`);
 
 		let nvdCve: NvdCve | null = null;
 		try {
-			const nvdResp = await fetch(
+			const nvdData = await fetchJson(
 				`https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=${id}`,
 			);
-			if (nvdResp.ok) {
-				const nvdData = await nvdResp.json();
-				if (nvdData.vulnerabilities?.length > 0)
-					nvdCve = nvdData.vulnerabilities[0].cve;
-			}
+			if (nvdData.vulnerabilities?.length > 0)
+				nvdCve = nvdData.vulnerabilities[0].cve;
 		} catch {
 			/* ignore */
 		}
@@ -66,8 +99,9 @@ export async function fetchCveData(
 		const dates = { published: "", updated: "" };
 
 		if (mitreJson.error === "CVE_RECORD_DNE") {
-			const idResp = await fetch(`https://cveawg.mitre.org/api/cve-id/${id}`);
-			const idJson = await idResp.json();
+			const idJson = await fetchJson(
+				`https://cveawg.mitre.org/api/cve-id/${id}`,
+			);
 			state = (idJson.state || "RESERVED").toUpperCase();
 			assigner = smartFormat(idJson.owning_cna || "");
 			affected = "Pending Disclosure";
@@ -132,7 +166,7 @@ export async function fetchCveData(
 			)?.value;
 			displayDesc = mitreDesc || nvdDesc || displayDesc;
 
-			let best: { val: number; ver: string; sev: string } | null = null;
+			let best: BestCvssMetric | undefined;
 			const updateBest = (val: number, ver: string, sev: string) => {
 				const curPow = Number.parseFloat(ver);
 				const bestPow = best ? Number.parseFloat(best.ver) : 0;

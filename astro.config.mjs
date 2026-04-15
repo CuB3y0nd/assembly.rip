@@ -1,12 +1,11 @@
 import sitemap from "@astrojs/sitemap";
-import svelte from "@astrojs/svelte";
 import mdx from '@astrojs/mdx';
-import tailwind from "@astrojs/tailwind";
 import { pluginCollapsibleSections } from '@expressive-code/plugin-collapsible-sections';
 import { pluginLineNumbers } from '@expressive-code/plugin-line-numbers';
 import swup from "@swup/astro";
 import expressiveCode from "astro-expressive-code";
 import icon from "astro-icon";
+import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "astro/config";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import rehypeComponents from "rehype-components";/* Render the custom directive content */
@@ -20,7 +19,6 @@ import remarkSectionize from "remark-sectionize";
 import { expressiveCodeConfig } from "./src/config.ts";
 import { pluginLanguageBadge } from "./src/plugins/expressive-code/language-badge.ts";
 import { AdmonitionComponent } from "./src/plugins/rehype-component-admonition.mjs";
-import { GithubCardComponent } from "./src/plugins/rehype-component-github-card.mjs";
 import { parseDirectiveNode } from "./src/plugins/remark-directive-rehype.js";
 import { remarkExcerpt } from "./src/plugins/remark-excerpt.js";
 import { remarkReadingTime } from "./src/plugins/remark-reading-time.mjs";
@@ -34,9 +32,6 @@ export default defineConfig({
   trailingSlash: "always",
 
   integrations: [
-    tailwind({
-      nesting: true,
-    }),
     swup({
       theme: false,
       animationClass: "transition-swup-", // see https://swup.js.org/options/#animationselector
@@ -88,7 +83,6 @@ export default defineConfig({
         }
       },
     }),
-    svelte(),
     mdx(),
     sitemap(),
   ],
@@ -110,7 +104,6 @@ export default defineConfig({
         rehypeComponents,
         {
           components: {
-            github: GithubCardComponent,
             note: (x, y) => AdmonitionComponent(x, y, "note"),
             tip: (x, y) => AdmonitionComponent(x, y, "tip"),
             important: (x, y) => AdmonitionComponent(x, y, "important"),
@@ -153,7 +146,17 @@ export default defineConfig({
   },
 
   vite: {
+    plugins: [tailwindcss()],
+    esbuild: {
+      target: "esnext",
+    },
+    server: {
+      headers: {
+        "Cache-Control": "no-store",
+      },
+    },
     build: {
+      target: "esnext",
       rollupOptions: {
         onwarn(warning, warn) {
           // temporarily suppress this warning
@@ -165,6 +168,11 @@ export default defineConfig({
           }
           warn(warning);
         },
+      },
+    },
+    optimizeDeps: {
+      esbuildOptions: {
+        target: "esnext",
       },
     },
   },

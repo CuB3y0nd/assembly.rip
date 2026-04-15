@@ -1,4 +1,7 @@
+@import "./giscus-base.css";
+
 main {
+  --hue: 250;
   --color-prettylights-syntax-comment: oklch(0.70 0.03 var(--hue));
   --color-prettylights-syntax-constant: oklch(0.75 0.10 calc(var(--hue) + 30));
   --color-prettylights-syntax-entity: oklch(0.75 0.12 calc(var(--hue) + 60));

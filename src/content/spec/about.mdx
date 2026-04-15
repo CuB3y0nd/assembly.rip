@@ -2,10 +2,11 @@
 title: About
 ---
 
-import TimelineProgress from "@/components/misc/TimelineProgress.svelte";
-import SpotifyNowPlaying from "@components/misc/SpotifyNowPlaying.svelte";
-import DiscordStatus from "@components/misc/DiscordStatus.svelte";
-import CveCard from "@components/misc/CveCard.svelte";
+import TimelineProgress from "@/components/misc/TimelineProgress.astro";
+import SpotifyNowPlaying from "@components/misc/SpotifyNowPlaying.astro";
+import DiscordStatus from "@components/misc/DiscordStatus.astro";
+import CveCard from "@components/misc/CveCard.astro";
+import GithubCard from "@components/misc/GithubCard.astro";
 
 # About
 
@@ -17,32 +18,31 @@ I'm a cybersecurity enthusiast, IoT security researcher and idealist who loves n
 
 - Roal: Retired Pwner & Researcher **[@RaptX](https://raptx.org/)**
 - E-Mail: `root -at- cubeyond -dot- net`
-- Discord: <code><DiscordStatus client:idle />CuB3y0nd#6307</code>
+- Discord: <code><DiscordStatus />CuB3y0nd#6307</code>
 - Matrix: `@cub3y0nd:matrix.org`
 - Public Key: <a href="/recipient.pub" download>Probably harmless.</a>
-- Now Playing: <SpotifyNowPlaying client:idle />
+- Now Playing: <SpotifyNowPlaying />
 
 ## CVEs
 
-<CveCard id="CVE-2024-25817" client:idle />
+<CveCard id="CVE-2024-25817" />
 
 <CveCard
   id="CVE-2025-60939"
   desc="Spotify Client Denial of Service vulnerability via a crafted network packet."
-  client:idle
 />
 
 ## Projects
 
-::github{repo="CuB3y0nd/1llusion"}
+<GithubCard repo="CuB3y0nd/1llusion" />
 
-::github{repo="CuB3y0nd/Exordium"}
+<GithubCard repo="CuB3y0nd/Exordium" />
 
-::github{repo="CuB3y0nd/Dynabox"}
+<GithubCard repo="CuB3y0nd/Dynabox" />
 
-::github{repo="CuB3y0nd/panix"}
+<GithubCard repo="CuB3y0nd/panix" />
 
-::github{repo="CuB3y0nd/axium"}
+<GithubCard repo="CuB3y0nd/axium" />
 
 ![](https://v6.gh-proxy.org/https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.8z6xri0pv0.avif)
 
@@ -55,4 +55,4 @@ I'm a cybersecurity enthusiast, IoT security researcher and idealist who loves n
 >
 > — Robert Herrick, _To the Virgins, to Make Much of Time_
 
-<TimelineProgress client:idle />
+<TimelineProgress />

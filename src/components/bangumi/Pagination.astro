@@ -101,7 +101,7 @@ const pageNumbers = generatePageNumbers(currentPage, totalPages);
 	</div>
 )}
 
-<script define:vars={{ itemsPerPage, sectionId, HIDDEN }}>
+<script is:inline define:vars={{ itemsPerPage, sectionId, HIDDEN }}>
 	(function() {
 		const pagination = document.querySelector(`.collections-pagination[data-pagination-section="${sectionId}"]`);
 		if (!pagination) return;

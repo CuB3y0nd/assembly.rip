@@ -1,0 +1,359 @@
+---
+import I18nKey from "@i18n/i18nKey";
+import { i18n } from "@i18n/translation";
+import { Icon } from "astro-icon/components";
+---
+
+<div data-search-root data-loading-label={`${i18n(I18nKey.search)}...`}>
+  <div
+    id="search-bar"
+    class="hidden lg:flex transition-all items-center h-11 mr-2 rounded-lg
+      bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06]
+      dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10"
+  >
+    <Icon
+      name="material-symbols:search"
+      class="absolute text-[1.25rem] pointer-events-none ml-3 transition my-auto text-black/30 dark:text-white/30"
+    />
+    <input
+      data-search-input="desktop"
+      placeholder={i18n(I18nKey.search)}
+      class="transition-all pl-10 text-sm bg-transparent outline-0
+         h-full w-40 active:w-60 focus:w-60 text-black/50 dark:text-white/50"
+    />
+  </div>
+
+  <button
+    aria-label="Search Panel"
+    id="search-switch"
+    data-search-toggle
+    class="btn-plain scale-animation lg:!hidden rounded-lg w-11 h-11 active:scale-90"
+  >
+    <Icon name="material-symbols:search" class="text-[1.25rem]" />
+  </button>
+
+  <div
+    id="search-panel"
+    class="float-panel float-panel-closed search-panel absolute md:w-[30rem]
+top-20 left-4 md:left-[unset] right-4 shadow-2xl rounded-2xl p-2"
+  >
+    <div
+      id="search-bar-inside"
+      class="flex relative lg:hidden transition-all items-center h-11 rounded-xl
+      bg-black/[0.04] hover:bg-black/[0.06] focus-within:bg-black/[0.06]
+      dark:bg-white/5 dark:hover:bg-white/10 dark:focus-within:bg-white/10"
+    >
+      <Icon
+        name="material-symbols:search"
+        class="absolute text-[1.25rem] pointer-events-none ml-3 transition my-auto text-black/30 dark:text-white/30"
+      />
+      <input
+        data-search-input="mobile"
+        placeholder={i18n(I18nKey.search)}
+        class="pl-10 absolute inset-0 text-sm bg-transparent outline-0
+               focus:w-60 text-black/50 dark:text-white/50"
+      />
+    </div>
+
+    <div data-search-status class="hidden px-3 py-2 text-sm text-50"></div>
+    <div data-search-results></div>
+  </div>
+</div>
+
+<script>
+type SearchResult = {
+	url: string;
+	meta: {
+		title: string;
+	};
+	excerpt: string;
+};
+
+const SEARCH_DEBOUNCE_MS = 150;
+const DEV_FAKE_RESULTS: SearchResult[] = [
+	{
+		url: "/",
+		meta: {
+			title: "This Is a Fake Search Result",
+		},
+		excerpt:
+			"Because the search cannot work in the <mark>dev</mark> environment.",
+	},
+	{
+		url: "/",
+		meta: {
+			title: "If You Want to Test the Search",
+		},
+		excerpt: "Try running <mark>pnpm build && pnpm preview</mark> instead.",
+	},
+];
+
+function createResultItem(item: SearchResult): HTMLAnchorElement {
+	const link = document.createElement("a");
+	link.href = item.url;
+	link.className =
+		"transition first-of-type:mt-2 lg:first-of-type:mt-0 group block rounded-xl text-lg px-3 py-2 hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)]";
+
+	const title = document.createElement("div");
+	title.className =
+		"transition text-90 inline-flex font-bold group-hover:text-[var(--primary)]";
+	title.textContent = item.meta.title;
+
+	const chevron = document.createElement("span");
+	chevron.className =
+		"transition text-[0.75rem] translate-x-1 my-auto text-[var(--primary)]";
+	chevron.textContent = "›";
+	title.append(chevron);
+
+	const excerpt = document.createElement("div");
+	excerpt.className = "transition text-sm text-50";
+	excerpt.innerHTML = item.excerpt;
+
+	link.append(title, excerpt);
+	return link;
+}
+
+function initSearch(root: Element): void {
+	if (!(root instanceof HTMLElement) || root.dataset.initialized === "true") {
+		return;
+	}
+	root.dataset.initialized = "true";
+
+	const desktopInput = root.querySelector('[data-search-input="desktop"]');
+	const mobileInput = root.querySelector('[data-search-input="mobile"]');
+	const toggleButton = root.querySelector("[data-search-toggle]");
+	const panel = root.querySelector("#search-panel");
+	const status = root.querySelector("[data-search-status]");
+	const resultsContainer = root.querySelector("[data-search-results]");
+	if (
+		!(desktopInput instanceof HTMLInputElement) ||
+		!(mobileInput instanceof HTMLInputElement) ||
+		!(toggleButton instanceof HTMLButtonElement) ||
+		!(panel instanceof HTMLElement) ||
+		!(status instanceof HTMLElement) ||
+		!(resultsContainer instanceof HTMLElement)
+	) {
+		return;
+	}
+
+	let initialized = false;
+	let pagefindLoaded = false;
+	let isSearching = false;
+	let searchTimer: number | undefined;
+	let searchRequestId = 0;
+	let keyword = "";
+	let results: SearchResult[] = [];
+	const loadingLabel = root.dataset.loadingLabel || "Search...";
+
+	const setPanelVisibility = (show: boolean, isDesktop: boolean): void => {
+		if (!isDesktop) {
+			return;
+		}
+		panel.classList.toggle("float-panel-closed", !show);
+	};
+
+	const setStatus = (message: string): void => {
+		status.textContent = message;
+		status.classList.toggle("hidden", !message);
+	};
+
+	const renderResults = (): void => {
+		resultsContainer.innerHTML = "";
+		for (const item of results) {
+			resultsContainer.append(createResultItem(item));
+		}
+	};
+
+	const syncInputs = (
+		value: string,
+		activeInput: HTMLInputElement,
+	): void => {
+		keyword = value;
+		if (activeInput !== desktopInput) {
+			desktopInput.value = value;
+		}
+		if (activeInput !== mobileInput) {
+			mobileInput.value = value;
+		}
+	};
+
+	const finishSearch = (isDesktop: boolean): void => {
+		renderResults();
+		if (isSearching) {
+			setStatus(loadingLabel);
+			return;
+		}
+		if (results.length === 0) {
+			setStatus("");
+		}
+		setPanelVisibility(results.length > 0, isDesktop);
+	};
+
+	const search = async (query: string, isDesktop: boolean): Promise<void> => {
+		if (!query) {
+			results = [];
+			isSearching = false;
+			setStatus("");
+			renderResults();
+			setPanelVisibility(false, isDesktop);
+			return;
+		}
+
+		if (!initialized) {
+			return;
+		}
+
+		isSearching = true;
+		setStatus(loadingLabel);
+		results = [];
+		renderResults();
+		const requestId = ++searchRequestId;
+
+		try {
+			let searchResults: SearchResult[] = [];
+			if (import.meta.env.PROD && pagefindLoaded && window.pagefind) {
+				const response = await window.pagefind.search(query);
+				searchResults = await Promise.all(
+					response.results.map((item) => item.data()),
+				);
+			} else if (import.meta.env.DEV) {
+				searchResults = DEV_FAKE_RESULTS;
+			}
+
+			if (requestId !== searchRequestId) {
+				return;
+			}
+
+			results = searchResults;
+		} catch (error) {
+			console.error("Search error:", error);
+			if (requestId === searchRequestId) {
+				results = [];
+				setPanelVisibility(false, isDesktop);
+			}
+		} finally {
+			if (requestId === searchRequestId) {
+				isSearching = false;
+				finishSearch(isDesktop);
+			}
+		}
+	};
+
+	const scheduleSearch = (query: string, isDesktop: boolean): void => {
+		window.clearTimeout(searchTimer);
+
+		const trimmed = query.trim();
+		if (!trimmed) {
+			results = [];
+			isSearching = false;
+			setStatus("");
+			renderResults();
+			setPanelVisibility(false, isDesktop);
+			return;
+		}
+
+		searchTimer = window.setTimeout(() => {
+			void search(trimmed, isDesktop);
+		}, SEARCH_DEBOUNCE_MS);
+	};
+
+	const initializeSearch = (): void => {
+		if (initialized) {
+			return;
+		}
+		initialized = true;
+		pagefindLoaded =
+			typeof window !== "undefined" &&
+			!!window.pagefind &&
+			typeof window.pagefind.search === "function";
+
+		if (keyword.trim()) {
+			void search(keyword.trim(), window.innerWidth >= 1024);
+		}
+	};
+
+	const handlePagefindReady = (): void => {
+		pagefindLoaded = true;
+		initializeSearch();
+	};
+	const handlePagefindLoadError = (): void => {
+		initializeSearch();
+	};
+
+	desktopInput.addEventListener("focus", () => {
+		scheduleSearch(desktopInput.value, true);
+	});
+	desktopInput.addEventListener("input", () => {
+		syncInputs(desktopInput.value, desktopInput);
+		scheduleSearch(desktopInput.value, true);
+	});
+
+	mobileInput.addEventListener("focus", () => {
+		scheduleSearch(mobileInput.value, false);
+	});
+	mobileInput.addEventListener("input", () => {
+		syncInputs(mobileInput.value, mobileInput);
+		scheduleSearch(mobileInput.value, false);
+	});
+
+	toggleButton.addEventListener("click", () => {
+		panel.classList.toggle("float-panel-closed");
+		if (!panel.classList.contains("float-panel-closed")) {
+			mobileInput.focus();
+			scheduleSearch(mobileInput.value, false);
+		}
+	});
+
+	if (import.meta.env.DEV) {
+		initializeSearch();
+		return;
+	}
+
+	if (window.pagefind) {
+		initializeSearch();
+	}
+
+	const fallbackTimer = window.setTimeout(() => {
+		initializeSearch();
+	}, 1500);
+
+	document.addEventListener("pagefindready", handlePagefindReady);
+	document.addEventListener("pagefindloaderror", handlePagefindLoadError);
+
+	window.addEventListener(
+		"beforeunload",
+		() => {
+			window.clearTimeout(searchTimer);
+			window.clearTimeout(fallbackTimer);
+			document.removeEventListener("pagefindready", handlePagefindReady);
+			document.removeEventListener("pagefindloaderror", handlePagefindLoadError);
+		},
+		{ once: true },
+	);
+}
+
+function initSearchComponents(): void {
+	document.querySelectorAll("[data-search-root]").forEach(initSearch);
+}
+
+if (document.readyState === "loading") {
+	document.addEventListener("DOMContentLoaded", initSearchComponents, {
+		once: true,
+	});
+} else {
+	initSearchComponents();
+}
+
+document.addEventListener("astro:page-load", initSearchComponents);
+</script>
+
+<style>
+  input:focus {
+    outline: 0;
+  }
+
+  .search-panel {
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+  }
+</style>

@@ -1,0 +1,174 @@
+---
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+---
+
+<span
+  data-discord-status
+  data-loading-label={i18n(I18nKey.spotifyLoading)}
+  data-online-label={i18n(I18nKey.discordOnline)}
+  data-idle-label={i18n(I18nKey.discordIdle)}
+  data-dnd-label={i18n(I18nKey.discordDnd)}
+  data-offline-label={i18n(I18nKey.discordOffline)}
+  class="discord-status-wrapper"
+  title={i18n(I18nKey.spotifyLoading)}
+>
+  <span class="status-indicator" style="--rgb: 128, 132, 142;">
+    <span class="glow-dynamic"></span>
+    <span class="glow-static"></span>
+    <span class="core"></span>
+  </span>
+</span>
+
+<script>
+type DiscordStatusValue = "online" | "idle" | "dnd" | "offline" | "loading";
+
+type DiscordApiResponse = {
+	success: boolean;
+	data?: {
+		discord_status?: DiscordStatusValue;
+	};
+};
+
+const STATUS_COLORS: Record<DiscordStatusValue, string> = {
+	online: "35, 165, 90",
+	idle: "240, 178, 50",
+	dnd: "242, 63, 67",
+	offline: "128, 132, 142",
+	loading: "128, 132, 142",
+};
+
+async function loadDiscordStatus(
+	root: HTMLElement,
+	statusIndicator: HTMLElement,
+): Promise<void> {
+	const labelMap: Record<DiscordStatusValue, string> = {
+		online: root.dataset.onlineLabel || "Online",
+		idle: root.dataset.idleLabel || "Idle",
+		dnd: root.dataset.dndLabel || "Do Not Disturb",
+		offline: root.dataset.offlineLabel || "Offline",
+		loading: root.dataset.loadingLabel || "Loading...",
+	};
+
+	let status: DiscordStatusValue = "offline";
+
+	try {
+		const response = await fetch("/api/discord.json");
+		if (!response.ok) {
+			throw new Error(`Discord status fetch failed: ${response.status}`);
+		}
+
+		const data = (await response.json()) as DiscordApiResponse;
+		if (data.success && data.data?.discord_status) {
+			status = data.data.discord_status;
+		}
+	} catch {
+		status = "offline";
+	}
+
+	root.title = labelMap[status];
+	statusIndicator.style.setProperty("--rgb", STATUS_COLORS[status]);
+}
+
+function initDiscordStatus(root: Element): void {
+	if (!(root instanceof HTMLElement) || root.dataset.initialized === "true") {
+		return;
+	}
+	root.dataset.initialized = "true";
+
+	const statusIndicator = root.querySelector(".status-indicator");
+	if (!(statusIndicator instanceof HTMLElement)) {
+		return;
+	}
+
+	void loadDiscordStatus(root, statusIndicator);
+	const intervalId = window.setInterval(() => {
+		if (!root.isConnected) {
+			window.clearInterval(intervalId);
+			return;
+		}
+		void loadDiscordStatus(root, statusIndicator);
+	}, 30000);
+}
+
+function initDiscordStatuses(): void {
+	document.querySelectorAll("[data-discord-status]").forEach(initDiscordStatus);
+}
+
+if (document.readyState === "loading") {
+	document.addEventListener("DOMContentLoaded", initDiscordStatuses, {
+		once: true,
+	});
+} else {
+	initDiscordStatuses();
+}
+
+document.addEventListener("astro:page-load", initDiscordStatuses);
+</script>
+
+<style>
+  .discord-status-wrapper {
+    display: inline-flex;
+    align-items: center;
+    vertical-align: middle;
+    cursor: help;
+    transform: translateY(-1px);
+    margin-right: 2px;
+  }
+
+  .status-indicator {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    transition: transform 0.3s ease;
+  }
+
+  .core {
+    width: 6px;
+    height: 6px;
+    background-color: rgba(var(--rgb), 0.7);
+    border-radius: 50%;
+    z-index: 3;
+    box-shadow: 0 0 2px rgba(var(--rgb), 0.4);
+  }
+
+  .glow-static {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: rgba(var(--rgb), 0.15);
+    border-radius: 50%;
+    filter: blur(2px);
+    z-index: 2;
+  }
+
+  .glow-dynamic {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(var(--rgb), 0.25);
+    border-radius: 50%;
+    filter: blur(3px);
+    z-index: 1;
+    animation: pulse-out 3s infinite cubic-bezier(0.4, 0, 0.6, 1);
+  }
+
+  @keyframes pulse-out {
+    0% {
+      transform: scale(0.5);
+      opacity: 0.5;
+    }
+
+    100% {
+      transform: scale(2.5);
+      opacity: 0;
+    }
+  }
+
+  .discord-status-wrapper:hover .status-indicator {
+    transform: scale(1.1);
+  }
+</style>

@@ -14,23 +14,19 @@ interface Props {
 const { filters, activeFilter, sectionId } = Astro.props;
 ---
 
-<div class="flex flex-wrap gap-1.5 mb-4">
+<div class="collections-filter-group" data-filter-root={sectionId}>
   {filters.map((filter) => (
     <button
-      class:list={[
-        "px-3 py-1 rounded-full text-xs font-medium transition-all duration-200",
-        {
-          "bg-[var(--primary)] text-white shadow-md": filter.value === activeFilter,
-          "bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600": filter.value !== activeFilter
-        }
-      ]}
+      class="collections-filter-button btn-regular h-7 text-[0.8125rem] px-2.5 rounded-lg"
       data-filter={filter.value}
-      data-section={sectionId}
+      data-filter-section={sectionId}
+      data-active={filter.value === activeFilter ? "true" : "false"}
+      aria-pressed={filter.value === activeFilter ? "true" : "false"}
       type="button"
     >
-      {filter.label}
+      <span>{filter.label}</span>
       {filter.count !== undefined && (
-        <span class="ml-1">({filter.count})</span>
+        <span class="collections-filter-count">{filter.count}</span>
       )}
     </button>
   ))}
@@ -38,40 +34,40 @@ const { filters, activeFilter, sectionId } = Astro.props;
 
 <script is:inline define:vars={{ sectionId }}>
   function initFilterControls() {
-    const filterButtons = document.querySelectorAll(`[data-section="${sectionId}"][data-filter]`);
+    const root = document.querySelector(`[data-filter-root="${sectionId}"]`);
+    if (!(root instanceof HTMLElement) || root.dataset.initialized === "true") {
+      return;
+    }
 
-    filterButtons.forEach(button => {
-      button.addEventListener('click', function() {
-        const filter = this.dataset.filter;
-        const currentSectionId = this.dataset.section;
+    root.dataset.initialized = "true";
 
-        // Update active filter button for this section
-        const sectionButtons = document.querySelectorAll(`[data-section="${currentSectionId}"][data-filter]`);
-        sectionButtons.forEach(btn => {
-          btn.classList.remove('bg-[var(--primary)]', 'text-white', 'shadow-md');
-          btn.classList.add('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200', 'dark:bg-gray-700', 'dark:text-gray-300', 'dark:hover:bg-gray-600');
-        });
+    root.addEventListener("click", (event) => {
+      const button = event.target instanceof Element
+        ? event.target.closest(`[data-filter-section="${sectionId}"][data-filter]`)
+        : null;
+      if (!(button instanceof HTMLButtonElement)) {
+        return;
+      }
 
-        this.classList.remove('bg-gray-100', 'text-gray-700', 'hover:bg-gray-200', 'dark:bg-gray-700', 'dark:text-gray-300', 'dark:hover:bg-gray-600');
-        this.classList.add('bg-[var(--primary)]', 'text-white', 'shadow-md');
-
-        // Filter items
-        const items = document.querySelectorAll(`[data-item-section="${currentSectionId}"]`);
-        items.forEach(item => {
-          const itemStatus = item.dataset.itemStatus;
-
-          if (filter === 'all' || itemStatus === filter) {
-            item.classList.remove('hidden');
-            item.style.display = 'block';
-          } else {
-            item.classList.add('hidden');
-            item.style.display = 'none';
-          }
-        });
-
-        // Update pagination
-        updatePagination(currentSectionId);
+      const filter = button.dataset.filter || "all";
+      const sectionButtons = root.querySelectorAll(`[data-filter-section="${sectionId}"][data-filter]`);
+      sectionButtons.forEach((btn) => {
+        const isActive = btn === button;
+        btn.setAttribute("data-active", String(isActive));
+        btn.setAttribute("aria-pressed", String(isActive));
       });
+
+      const items = document.querySelectorAll(`[data-item-section="${sectionId}"]`);
+      items.forEach((item) => {
+        const htmlItem = item;
+        const itemStatus = htmlItem.dataset.itemStatus;
+        const isVisible = filter === "all" || itemStatus === filter;
+
+        htmlItem.classList.toggle("hidden", !isVisible);
+        htmlItem.style.display = isVisible ? "block" : "none";
+      });
+
+      updatePagination(sectionId);
     });
   }
 
@@ -95,3 +91,59 @@ const { filters, activeFilter, sectionId } = Astro.props;
     initFilterControls();
   }
 </script>
+
+<style>
+  .collections-filter-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-bottom: 1rem;
+  }
+
+  .collections-filter-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-weight: 500;
+    transition:
+      background-color 150ms ease,
+      color 150ms ease,
+      box-shadow 150ms ease;
+  }
+
+  .collections-filter-button[data-active="true"] {
+    color: var(--primary);
+    background: var(--btn-regular-bg-hover);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--primary) 24%, transparent);
+  }
+
+  .collections-filter-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.15rem;
+    height: 1.15rem;
+    padding: 0 0.28rem;
+    border-radius: 0.45rem;
+    background: rgb(0 0 0 / 0.05);
+    color: inherit;
+    opacity: 0.76;
+    font-size: 0.67rem;
+    font-weight: 600;
+    line-height: 1;
+    transition: background-color 150ms ease, opacity 150ms ease;
+  }
+
+  .collections-filter-button[data-active="true"] .collections-filter-count {
+    background: color-mix(in oklab, var(--primary) 16%, transparent);
+    opacity: 0.92;
+  }
+
+  :global(.dark) .collections-filter-count {
+    background: rgb(255 255 255 / 0.08);
+  }
+
+  :global(.dark) .collections-filter-button[data-active="true"] {
+    color: var(--primary);
+  }
+</style>

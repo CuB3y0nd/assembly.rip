@@ -1,4 +1,4 @@
-@tailwind components;
+@reference "tailwindcss";
 
 @layer components {
   .card-base {
@@ -10,18 +10,41 @@
   .card-shadow {
     @apply drop-shadow-[0_2px_4px_rgba(0,0,0,0.005)]
   }
-  .expand-animation {
-    @apply relative before:ease-out before:transition active:bg-none hover:before:bg-[var(--btn-plain-bg-hover)] active:before:bg-[var(--btn-plain-bg-active)] z-0
-    before:absolute before:rounded-[inherit] before:inset-0 before:scale-[0.85] hover:before:scale-100 before:-z-10
-  }
   .link {
-    @apply transition rounded-md p-1 -m-1 expand-animation;
+    @apply transition rounded-md p-1 -m-1 relative z-0;
   }
   .link-lg {
-    @apply transition rounded-md p-1.5 -m-1.5 expand-animation;
+    @apply transition rounded-md p-1.5 -m-1.5 relative z-0;
+  }
+  .link::before,
+  .link-lg::before,
+  .btn-plain.scale-animation::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -10;
+    border-radius: inherit;
+    transform: scale(0.85);
+    background: transparent;
+    opacity: 1;
+    transition:
+      transform 150ms cubic-bezier(0, 0, 0.2, 1),
+      background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .link:hover::before,
+  .link-lg:hover::before,
+  .btn-plain.scale-animation:hover::before {
+    transform: scale(1);
+    background: var(--btn-plain-bg-hover);
+  }
+  .link:active::before,
+  .link-lg:active::before,
+  .btn-plain.scale-animation:active::before {
+    background: var(--btn-plain-bg-active);
   }
   .float-panel {
-    @apply top-[5.25rem] rounded-[var(--radius-large)] overflow-hidden bg-[var(--float-panel-bg)] transition shadow-xl dark:shadow-none
+    @apply top-[5.25rem] rounded-[var(--radius-large)] overflow-hidden bg-[var(--float-panel-bg)] transition shadow-xl;
   }
   .float-panel-closed {
     @apply -translate-y-1 opacity-0 pointer-events-none
@@ -35,24 +58,31 @@
     active:bg-[var(--btn-card-bg-active)]
   }
   .btn-card.disabled {
-    @apply pointer-events-none text-black/10 dark:text-white/10
+    @apply pointer-events-none text-black/10;
   }
   .btn-plain {
-    @apply transition relative flex items-center justify-center bg-none
-    text-black/75 hover:text-[var(--primary)] dark:text-white/75 dark:hover:text-[var(--primary)];
+    @apply transition relative z-0 flex items-center justify-center bg-none;
+    color: rgb(0 0 0 / 0.75);
+    &:hover {
+      color: var(--primary);
+    }
     &:not(.scale-animation) {
       @apply hover:bg-[var(--btn-plain-bg-hover)] active:bg-[var(--btn-plain-bg-active)]
     }
     &.scale-animation {
-      @apply expand-animation;
       &.current-theme-btn {
-        @apply before:scale-100 before:opacity-100 before:bg-[var(--btn-plain-bg-hover)] text-[var(--primary)]
+        color: var(--primary);
+      }
+      &.current-theme-btn::before {
+        transform: scale(1);
+        opacity: 1;
+        background: var(--btn-plain-bg-hover);
       }
     }
   }
   .btn-regular {
-    @apply transition flex items-center justify-center bg-[var(--btn-regular-bg)] hover:bg-[var(--btn-regular-bg-hover)] active:bg-[var(--btn-regular-bg-active)]
-    text-[var(--btn-content)] dark:text-white/75
+    @apply transition flex items-center justify-center bg-[var(--btn-regular-bg)] hover:bg-[var(--btn-regular-bg-hover)] active:bg-[var(--btn-regular-bg-active)];
+    color: var(--btn-content);
   }
 
   .link-underline {
@@ -78,19 +108,19 @@
   }
 
   .text-90 {
-    @apply text-black/90 dark:text-white/90
+    color: rgb(0 0 0 / 0.9);
   }
   .text-75 {
-    @apply text-black/75 dark:text-white/75
+    color: rgb(0 0 0 / 0.75);
   }
   .text-50 {
-    @apply text-black/50 dark:text-white/50
+    color: rgb(0 0 0 / 0.5);
   }
   .text-30 {
-    @apply text-black/30 dark:text-white/30
+    color: rgb(0 0 0 / 0.3);
   }
   .text-25 {
-    @apply text-black/25 dark:text-white/25
+    color: rgb(0 0 0 / 0.25);
   }
 
   .meta-icon {
@@ -98,18 +128,79 @@
     text-[var(--btn-content)] mr-2
   }
   .with-divider {
-    @apply before:content-['/'] before:ml-1.5 before:mr-1.5 before:text-[var(--meta-divider)] before:text-sm
-    before:font-medium before:first-of-type:hidden before:transition
+    transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .with-divider::before {
+    content: "/";
+    margin-left: 0.375rem;
+    margin-right: 0.375rem;
+    color: var(--meta-divider);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: color 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .with-divider:first-of-type::before {
+    display: none;
   }
 
   .btn-regular-dark {
-    @apply flex items-center justify-center
-    bg-[oklch(0.45_0.01_var(--hue))] hover:bg-[oklch(0.50_0.01_var(--hue))] active:bg-[oklch(0.55_0.01_var(--hue))]
-    dark:bg-[oklch(0.30_0.02_var(--hue))] dark:hover:bg-[oklch(0.35_0.03_var(--hue))] dark:active:bg-[oklch(0.40_0.03_var(--hue))]
+    @apply flex items-center justify-center bg-[oklch(0.45_0.01_var(--hue))] hover:bg-[oklch(0.50_0.01_var(--hue))] active:bg-[oklch(0.55_0.01_var(--hue))];
   }
   .btn-regular-dark.success {
-    @apply bg-[oklch(0.75_0.14_var(--hue))] dark:bg-[oklch(0.75_0.14_var(--hue))]
+    @apply bg-[oklch(0.75_0.14_var(--hue))];
   }
+}
+
+.dark .float-panel {
+  box-shadow: none;
+}
+
+.dark .btn-card.disabled {
+  color: rgb(255 255 255 / 0.1);
+}
+
+.dark .btn-plain {
+  color: rgb(255 255 255 / 0.75);
+}
+
+.dark .btn-plain:hover {
+  color: var(--primary);
+}
+
+.dark .btn-regular {
+  color: rgb(255 255 255 / 0.75);
+}
+
+.dark .text-90 {
+  color: rgb(255 255 255 / 0.9);
+}
+
+.dark .text-75 {
+  color: rgb(255 255 255 / 0.75);
+}
+
+.dark .text-50 {
+  color: rgb(255 255 255 / 0.5);
+}
+
+.dark .text-30 {
+  color: rgb(255 255 255 / 0.3);
+}
+
+.dark .text-25 {
+  color: rgb(255 255 255 / 0.25);
+}
+
+.dark .btn-regular-dark {
+  background: oklch(0.30 0.02 var(--hue));
+}
+
+.dark .btn-regular-dark:hover {
+  background: oklch(0.35 0.03 var(--hue));
+}
+
+.dark .btn-regular-dark:active {
+  background: oklch(0.40 0.03 var(--hue));
 }
 
 .custom-md img, #post-cover img {

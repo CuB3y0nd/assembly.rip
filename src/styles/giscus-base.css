@@ -1,3 +1,38 @@
+@import "./lxgw-bright-light-subset.css";
+
+:root {
+  --giscus-font-sans: "LXGW Bright Light", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Noto Sans CJK SC", "Source Han Sans SC", ui-sans-serif,
+    system-ui, sans-serif;
+  --giscus-font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular,
+    Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+html,
+body,
+main,
+.gsc-main,
+.gsc-comment-box-textarea,
+.gsc-comment-box-preview,
+.markdown-body,
+.gsc-comment-content,
+.gsc-reply-content {
+  font-family: var(--giscus-font-sans) !important;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit !important;
+}
+
+code,
+pre,
+.gsc-comment-box-textarea-extras {
+  font-family: var(--giscus-font-mono) !important;
+}
+
 .gsc-main {
   gap: 1rem !important;
 }

@@ -2,6 +2,7 @@
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
+import "../styles/app.css";
 
 import ConfigCarrier from "@components/ConfigCarrier.astro";
 import { expressiveCodeConfig, profileConfig, siteConfig } from "@/config";
@@ -19,7 +20,7 @@ import { defaultFavicons } from "../constants/icon";
 import type { Favicon } from "../types/config";
 import { pathsEqual, url } from "../utils/url-utils";
 import "katex/dist/katex.css";
-import VercelAnalytics from "../components/misc/VercelAnalytics.svelte";
+import VercelAnalytics from "../components/misc/VercelAnalytics.astro";
 
 interface Props {
 	title?: string;
@@ -162,7 +163,7 @@ const bannerOffset =
 
 		<link rel="alternate" type="application/rss+xml" title={profileConfig.name} href={`${Astro.site}rss.xml`}/>
 
-    <VercelAnalytics client:only="svelte" />
+    <VercelAnalytics />
 
 	</head>
 	<body class=" min-h-screen transition " class:list={[{"lg:is-home": isHomePage, "enable-banner": enableBanner, "has-sidebar": hasSidebar, "no-sidebar": !hasSidebar}]}
@@ -181,7 +182,7 @@ const bannerOffset =
 	'banner-height-home': `${BANNER_HEIGHT_HOME}vh`,
 	'banner-height': `${BANNER_HEIGHT}vh`,
 }}>
-@tailwind components;
+@reference "tailwindcss";
 @layer components {
 	.enable-banner.is-home #banner-wrapper {
 		@apply h-[var(--banner-height-home)] translate-y-[var(--banner-height-extend)]
@@ -295,6 +296,7 @@ function setClickOutsideToClose(panel: string, ignores: string[]) {
 	document.addEventListener("click", event => {
 		let panelDom = document.getElementById(panel);
 		let tDom = event.target;
+		if (!panelDom) return;
 		if (!(tDom instanceof Node)) return;		// Ensure the event target is an HTML Node
 		for (let ig of ignores) {
 			let ie = document.getElementById(ig)

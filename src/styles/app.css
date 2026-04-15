@@ -1,0 +1,15 @@
+@import "tailwindcss";
+@config "../../tailwind.config.cjs";
+@plugin "@tailwindcss/typography";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@import "./global.css";
+@import "./variables.css";
+@import "./main.css";
+@import "./markdown.css";
+@import "./markdown-extend.css";
+@import "./transition.css";
+@import "./scrollbar.css";
+@import "./photoswipe.css";
+@import "./expressive-code.css";
+@import "./image-grouping.css";

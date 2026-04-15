@@ -9,7 +9,7 @@ interface Props {
 }
 
 const { item } = Astro.props;
-const { data, meta } = item;
+const { data } = item;
 
 const getIconName = (type: string) => {
 	const iconMap: Record<string, string> = {
@@ -103,6 +103,13 @@ const creatorList =
 		(c) => c.name || `${c.lastName}${c.firstName ? `, ${c.firstName}` : ""}`,
 	) || [];
 
+const creatorSummary =
+	creatorList.length <= 2
+		? creatorList.join(", ")
+		: `${creatorList.slice(0, 2).join(", ")} +${creatorList.length - 2}`;
+const abstractNote = data.abstractNote?.replace(/\s+/g, " ").trim() || "";
+const sourceLabel = data.publisher || data.publicationTitle || "";
+
 const isPaper = [
 	"journalArticle",
 	"conferencePaper",
@@ -112,106 +119,271 @@ const isPaper = [
 	"thesis",
 ].includes(data.itemType);
 const href = isPaper ? data.url || item.links.alternate.href : undefined;
-const Container = href ? "a" : "div";
 ---
 
-<Container
-  href={href}
-  target={href ? "_blank" : undefined}
-  rel={href ? "noopener noreferrer nofollow" : undefined}
-  class:list={[
-    "group relative h-full flex flex-col p-[1px] rounded-2xl transition-all duration-500 min-h-[260px] sm:min-h-[240px]",
-    href ? "hover:scale-[1.01] cursor-pointer" : "cursor-default"
-  ]}
->
-  <!-- 中性阴影 (纯黑，无 Hue) -->
-  <div class="absolute inset-0 bg-black/10 dark:bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl blur-xl"></div>
+{href ? (
+	<a
+		href={href}
+		target="_blank"
+		rel="noopener noreferrer nofollow"
+		class="collection-card card-base group h-full flex flex-col min-h-[19.5rem] cursor-pointer"
+	>
+		<div class="collection-card-body">
+			<div class="collection-card-header">
+				<div class="collection-card-icon">
+					<Icon name={getIconName(data.itemType)} class="text-[1.3rem]" />
+				</div>
 
-  <!-- Main Card -->
-  <div class="relative flex-1 bg-white dark:bg-[oklch(0.28_0.02_var(--hue))] border border-gray-100 dark:border-white/10 rounded-2xl overflow-hidden flex flex-col p-5 shadow-sm group-hover:shadow-xl transition-all duration-500">
+				{data.date && <span class="collection-card-date">{data.date}</span>}
+			</div>
 
-    <!-- Watermark -->
-    <div class="absolute right-3 bottom-1 text-4xl font-black text-gray-300/30 dark:text-white/[0.05] pointer-events-none select-none italic tracking-tighter transition-all duration-700 group-hover:scale-110 uppercase whitespace-nowrap overflow-hidden text-right max-w-[80%]">
-      {getTypeLabel(data.itemType)}
-    </div>
+			<div class="collection-card-type">{getTypeLabel(data.itemType)}</div>
 
-    <!-- Top Row -->
-    <div class="flex items-center justify-between mb-4">
-      <!-- 类型图标跟随主题色 -->
-      <div class="p-2 rounded-lg bg-[var(--btn-regular-bg)] dark:bg-[var(--btn-regular-bg-hover)] text-[var(--primary)] transition-all duration-500 group-hover:-translate-y-1 group-hover:scale-110 shadow-sm group-hover:shadow-md">
-        <Icon name={getIconName(data.itemType)} class="text-2xl" />
-      </div>
-      {data.date && (
-        <span class="text-[10px] font-mono font-bold tracking-widest text-gray-400 dark:text-gray-300 bg-gray-50 dark:bg-white/5 px-2 py-1 rounded border border-gray-100 dark:border-white/5">
-          {data.date}
-        </span>
-      )}
-    </div>
+			<h3 class="collection-card-title">{data.title}</h3>
 
-    <h3 class="text-base font-bold text-gray-800 dark:text-gray-100 mb-4 line-clamp-3 leading-snug group-hover:text-[var(--primary)] transition-colors duration-300">
-      {data.title}
-    </h3>
+			{creatorSummary && <p class="collection-card-authors">{creatorSummary}</p>}
 
-    <div class="mt-auto relative z-10">
-      <div class="flex flex-wrap gap-2 mb-3">
-        {creatorList.slice(0, 3).map((name) => (
-          <span class="text-xs font-medium px-2.5 py-1 rounded-lg bg-gray-100/70 dark:bg-white/5 text-gray-600 dark:text-gray-300 border border-gray-200/50 dark:border-white/10 transition-colors group-hover:border-gray-300 dark:group-hover:border-white/20">
-            {name}
-          </span>
-        ))}
-        {creatorList.length > 3 && (
-          <!-- +? 标签跟随主题色 -->
-          <span class="text-xs font-medium px-2.5 py-1 rounded-lg bg-[var(--btn-regular-bg)] dark:bg-[var(--btn-regular-bg-hover)] text-[var(--primary)] border border-gray-200/50 dark:border-white/10 transition-all group-hover:border-gray-300 dark:group-hover:border-white/20">
-            +{creatorList.length - 3}
-          </span>
-        )}
-      </div>
+			<p class:list={["collection-card-summary", { "is-empty": !abstractNote }]}>
+				{abstractNote || i18n(I18nKey.zoteroNoAbstract)}
+			</p>
 
-      {(data.publisher || data.publicationTitle) && (
-        <div class="flex items-center gap-1.5 text-[10px] font-mono text-gray-400 dark:text-gray-300">
-          <Icon name="tabler:building" class="text-sm opacity-50" />
-          <span class="truncate italic">{data.publisher || data.publicationTitle}</span>
-        </div>
-      )}
-    </div>
+			<div class="collection-card-footer">
+				{sourceLabel ? (
+					<div class="collection-card-source">
+						<Icon name="tabler:building" class="text-[0.9rem] shrink-0" />
+						<span class="truncate">{sourceLabel}</span>
+					</div>
+				) : (
+					<span></span>
+				)}
 
-    <!-- Overlay (中性黑白配色) -->
-    <div class="absolute inset-0 z-30 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-opacity duration-300 ease-out flex flex-col overflow-hidden bg-white dark:bg-[oklch(0.32_0.02_var(--hue))] shadow-2xl">
-      <div class="flex-1 flex flex-col overflow-hidden scale-90 group-hover:scale-100 transition-transform duration-300 ease-out origin-center">
-        <div class="px-6 pt-6 pb-2 shrink-0">
-          <div class="flex items-center gap-3 mb-3">
-            <!-- 标题中性色 -->
-            <span class="text-xs font-black uppercase tracking-[0.3em] text-gray-900 dark:text-gray-100">{i18n(I18nKey.zoteroAbstract)}</span>
-            <div class="flex-1 h-[1px] bg-gray-200 dark:bg-white/10"></div>
-          </div>
-          <div class="h-[1px] w-full bg-gray-100 dark:bg-white/5"></div>
-        </div>
+				<div class="collection-card-link-hint">
+					<span>Open</span>
+					<Icon
+						name="material-symbols:arrow-outward-rounded"
+						class="text-[1rem]"
+					/>
+				</div>
+			</div>
+		</div>
+	</a>
+) : (
+	<div class="collection-card card-base h-full flex flex-col min-h-[19.5rem] cursor-default">
+		<div class="collection-card-body">
+			<div class="collection-card-header">
+				<div class="collection-card-icon">
+					<Icon name={getIconName(data.itemType)} class="text-[1.3rem]" />
+				</div>
 
-        <div class="flex-1 p-6 pt-2 overflow-y-auto no-scrollbar overscroll-contain isolation-auto touch-pan-y" style="will-change: transform, opacity; transform: translateZ(0);">
-          {data.abstractNote ? (
-            <p class="text-[13px] leading-relaxed text-gray-700 dark:text-gray-200 italic font-serif">
-              {data.abstractNote}
-            </p>
-          ) : (
-            <div class="h-full min-h-[100px] flex flex-col items-center justify-center text-gray-500 dark:text-gray-400 opacity-80">
-              <Icon name="tabler:note-off" class="text-3xl mb-2 shrink-0" />
-              <p class="text-[11px] font-mono uppercase tracking-widest text-center">{i18n(I18nKey.zoteroNoAbstract)}</p>
-            </div>
-          )}
-        </div>
+				{data.date && <span class="collection-card-date">{data.date}</span>}
+			</div>
 
-        <div class="px-6 pb-6 pt-2 shrink-0">
-          <div class="mt-2 pt-4 border-t border-gray-100 dark:border-white/10 flex justify-between items-center text-[9px] font-mono text-gray-400 dark:text-gray-300 uppercase tracking-widest">
-            <span>{getTypeLabel(data.itemType)} {i18n(I18nKey.zoteroData)}</span>
-            <span>Ref: {item.key}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</Container>
+			<div class="collection-card-type">{getTypeLabel(data.itemType)}</div>
+
+			<h3 class="collection-card-title">{data.title}</h3>
+
+			{creatorSummary && <p class="collection-card-authors">{creatorSummary}</p>}
+
+			<p class:list={["collection-card-summary", { "is-empty": !abstractNote }]}>
+				{abstractNote || i18n(I18nKey.zoteroNoAbstract)}
+			</p>
+
+			{sourceLabel && (
+				<div class="collection-card-footer">
+					<div class="collection-card-source">
+						<Icon name="tabler:building" class="text-[0.9rem] shrink-0" />
+						<span class="truncate">{sourceLabel}</span>
+					</div>
+				</div>
+			)}
+		</div>
+	</div>
+)}
 
 <style>
-  .no-scrollbar::-webkit-scrollbar { display: none; }
-  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+	.collection-card {
+		overflow: hidden;
+		border: 1px solid var(--line-color);
+		border-radius: calc(var(--radius-large) + 0.1rem);
+		box-shadow: 0 18px 40px -34px rgb(0 0 0 / 0.35);
+		transition:
+			transform 180ms ease,
+			border-color 180ms ease,
+			box-shadow 180ms ease;
+	}
+
+	.collection-card:hover {
+		transform: translateY(-2px);
+		border-color: color-mix(in oklab, var(--primary) 18%, var(--line-color));
+		box-shadow: 0 24px 48px -36px rgb(0 0 0 / 0.42);
+	}
+
+	.collection-card-body {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		gap: 0.55rem;
+		padding: 1.1rem;
+	}
+
+	.collection-card-header {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		margin-bottom: 0.9rem;
+	}
+
+	.collection-card-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		width: 2.35rem;
+		height: 2.35rem;
+		border-radius: 0.85rem;
+		background: var(--btn-regular-bg);
+		color: var(--primary);
+	}
+
+	.collection-card-date {
+		display: inline-flex;
+		align-items: center;
+		height: 1.8rem;
+		padding: 0 0.6rem;
+		border-radius: 0.65rem;
+		background: rgb(0 0 0 / 0.04);
+		color: rgb(0 0 0 / 0.42);
+		font-size: 0.72rem;
+		font-weight: 600;
+		line-height: 1;
+	}
+
+	.collection-card-type {
+		display: inline-flex;
+		align-self: flex-start;
+		align-items: center;
+		height: 1.8rem;
+		padding: 0 0.65rem;
+		border-radius: 0.65rem;
+		background: var(--btn-regular-bg);
+		color: var(--btn-content);
+		font-size: 0.75rem;
+		font-weight: 600;
+		line-height: 1;
+	}
+
+	.collection-card-title {
+		font-size: 1rem;
+		font-weight: 700;
+		line-height: 1.42;
+		color: rgb(0 0 0 / 0.82);
+		display: -webkit-box;
+		-webkit-line-clamp: 3;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.collection-card-authors {
+		font-size: 0.8rem;
+		line-height: 1.55;
+		color: rgb(0 0 0 / 0.46);
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.collection-card-summary {
+		font-size: 0.85rem;
+		line-height: 1.7;
+		color: rgb(0 0 0 / 0.62);
+		display: -webkit-box;
+		-webkit-line-clamp: 5;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
+	}
+
+	.collection-card-summary.is-empty {
+		font-style: italic;
+		color: rgb(0 0 0 / 0.38);
+	}
+
+	.collection-card-footer {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.75rem;
+		margin-top: auto;
+		padding-top: 1rem;
+		border-top: 1px solid var(--line-divider);
+	}
+
+	.collection-card-source {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		color: rgb(0 0 0 / 0.4);
+		font-size: 0.74rem;
+		font-weight: 500;
+	}
+
+	.collection-card-source span {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.collection-card-link-hint {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.18rem;
+		margin-left: auto;
+		flex-shrink: 0;
+		color: rgb(0 0 0 / 0.34);
+		font-size: 0.72rem;
+		font-weight: 600;
+		transition: color 180ms ease, transform 180ms ease;
+	}
+
+	.collection-card:hover .collection-card-link-hint {
+		color: var(--primary);
+		transform: translateX(1px);
+	}
+
+	:global(.dark) .collection-card {
+		box-shadow: none;
+	}
+
+	:global(.dark) .collection-card-title {
+		color: rgb(255 255 255 / 0.86);
+	}
+
+	:global(.dark) .collection-card-date {
+		background: rgb(255 255 255 / 0.06);
+		color: rgb(255 255 255 / 0.42);
+	}
+
+	:global(.dark) .collection-card-authors {
+		color: rgb(255 255 255 / 0.46);
+	}
+
+	:global(.dark) .collection-card-summary {
+		color: rgb(255 255 255 / 0.62);
+	}
+
+	:global(.dark) .collection-card-summary.is-empty {
+		color: rgb(255 255 255 / 0.34);
+	}
+
+	:global(.dark) .collection-card-source {
+		color: rgb(255 255 255 / 0.38);
+	}
+
+	:global(.dark) .collection-card-link-hint {
+		color: rgb(255 255 255 / 0.32);
+	}
 </style>

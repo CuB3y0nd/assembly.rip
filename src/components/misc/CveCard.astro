@@ -1,25 +1,15 @@
-<script lang="ts">
-import { onMount } from "svelte";
+---
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
 import type { Severity } from "@/types/cve";
 import { fetchCveData } from "@/utils/cve";
 
-export let id: string;
-export let desc = "";
+interface Props {
+	id: string;
+	desc?: string;
+}
 
-let loading = true;
-let state = "PENDING";
-let assigner = "";
-let affected = "";
-let displayDesc = desc;
-let cvssScore: number | null = null;
-let cvssVersion = "";
-let severity: Severity = "none";
-let cwes: string[] = [];
-let tags: string[] = [];
-let refCount = 0;
-let dates = { published: "", updated: "" };
+const { id, desc = "" } = Astro.props;
 
 const severityColors: Record<Severity, string> = {
 	critical: "#ef4444",
@@ -29,92 +19,77 @@ const severityColors: Record<Severity, string> = {
 	none: "#6b7280",
 };
 
-async function loadCveData() {
-	const data = await fetchCveData(id, desc);
-	if (data) {
-		state = data.state;
-		assigner = data.assigner;
-		affected = data.affected;
-		displayDesc = data.displayDesc;
-		cvssScore = data.cvssScore;
-		cvssVersion = data.cvssVersion;
-		severity = data.severity;
-		cwes = data.cwes;
-		tags = data.tags;
-		refCount = data.refCount;
-		dates = data.dates;
-	}
-	loading = false;
-}
-
-onMount(loadCveData);
-</script>
+const data = await fetchCveData(id, desc);
+const state = data?.state ?? "PENDING";
+const assigner = data?.assigner ?? "";
+const affected = data?.affected ?? "";
+const displayDesc = data?.displayDesc || desc;
+const cvssScore = data?.cvssScore ?? null;
+const cvssVersion = data?.cvssVersion ?? "";
+const severity = data?.severity ?? "none";
+const cwes = data?.cwes ?? [];
+const tags = data?.tags ?? [];
+const refCount = data?.refCount ?? 0;
+const dates = data?.dates ?? { published: "", updated: "" };
+---
 
 <div class="cve-anchor">
   <a
-    href="https://www.cve.org/CVERecord?id={id}"
+    href={`https://www.cve.org/CVERecord?id=${id}`}
     target="_blank"
+    rel="noopener noreferrer"
     class="cve-card-main"
-    class:loading
   >
     <div class="inner-layout">
-      <!-- Data Column -->
       <div class="data-pane">
         <div class="title-line">
           <span class="cve-id">{id}</span>
           <div class="tags-row">
-            {#if state === "RESERVED"}<span class="badge rsvd">{i18n(I18nKey.cveReserved)}</span
-              >{/if}
-            {#each cwes as cwe}<span class="badge cwe">{cwe}</span>{/each}
-            {#each tags as tag}<span class="badge tag-{tag.toLowerCase()}"
-                >{tag}</span
-              >{/each}
+            {state === "RESERVED" && <span class="badge rsvd">{i18n(I18nKey.cveReserved)}</span>}
+            {cwes.map((cwe) => <span class="badge cwe">{cwe}</span>)}
+            {tags.map((tag) => (
+              <span class={`badge tag-${tag.toLowerCase()}`}>{tag}</span>
+            ))}
           </div>
         </div>
 
         <p class="description">
-          {displayDesc ||
-            (loading
-              ? i18n(I18nKey.cveAggregating)
-              : i18n(I18nKey.cveReservedInfo))}
+          {displayDesc || i18n(I18nKey.cveReservedInfo)}
         </p>
 
         <div class="metadata-line">
           <div class="meta-box">
-            <span class="label">{i18n(I18nKey.cveProduct)}</span><span class="value bold"
-              >{affected || (loading ? "..." : i18n(I18nKey.cveNone))}</span
-            >
+            <span class="label">{i18n(I18nKey.cveProduct)}</span>
+            <span class="value bold">{affected || i18n(I18nKey.cveNone)}</span>
           </div>
           <div class="meta-box">
-            <span class="label">{i18n(I18nKey.cveAssigner)}</span><span class="value"
-              >{assigner || (loading ? "..." : i18n(I18nKey.cveNone))}</span
-            >
+            <span class="label">{i18n(I18nKey.cveAssigner)}</span>
+            <span class="value">{assigner || i18n(I18nKey.cveNone)}</span>
           </div>
           <div class="meta-box">
-            <span class="label">{i18n(I18nKey.cvePublished)}</span><span class="value"
-              >{dates.published || (loading ? "..." : i18n(I18nKey.cveNone))}</span
-            >
+            <span class="label">{i18n(I18nKey.cvePublished)}</span>
+            <span class="value">{dates.published || i18n(I18nKey.cveNone)}</span>
           </div>
           <div class="meta-box">
-            <span class="label">{i18n(I18nKey.cveUpdated)}</span><span class="value"
-              >{dates.updated || (loading ? "..." : i18n(I18nKey.cveNone))}</span
-            >
+            <span class="label">{i18n(I18nKey.cveUpdated)}</span>
+            <span class="value">{dates.updated || i18n(I18nKey.cveNone)}</span>
           </div>
-          {#if refCount > 0}<div class="ref-counter">{refCount} {i18n(I18nKey.cveRefs)}</div>{/if}
+          {refCount > 0 && <div class="ref-counter">{refCount} {i18n(I18nKey.cveRefs)}</div>}
         </div>
       </div>
 
-      <!-- Score Column -->
-      <div class="score-pane" style="--sev-color: {severityColors[severity]}">
-        {#if state === "RESERVED" && cvssScore === null}
+      <div class="score-pane" style={`--sev-color: ${severityColors[severity]}`}>
+        {state === "RESERVED" && cvssScore === null ? (
           <div class="rsvd-title">{i18n(I18nKey.cveReserved)}</div>
-        {:else}
-          <div class="cvss-v">CVSS {cvssVersion || "N/A"}</div>
-          <div class="cvss-n">
-            {cvssScore !== null ? cvssScore.toFixed(1) : "--"}
-          </div>
-          <div class="cvss-l">{severity.toUpperCase()}</div>
-        {/if}
+        ) : (
+          <>
+            <div class="cvss-v">CVSS {cvssVersion || "N/A"}</div>
+            <div class="cvss-n">
+              {cvssScore !== null ? cvssScore.toFixed(1) : "--"}
+            </div>
+            <div class="cvss-l">{severity.toUpperCase()}</div>
+          </>
+        )}
       </div>
     </div>
   </a>
@@ -125,7 +100,7 @@ onMount(loadCveData);
     margin: 2.5rem 0;
     width: 100%;
     display: flex;
-    padding: 12px; /* Reserved space for hover shadow */
+    padding: 12px;
     box-sizing: border-box;
   }
 
@@ -225,29 +200,29 @@ onMount(loadCveData);
     border-color: rgba(245, 158, 11, 0.3);
     background: rgba(245, 158, 11, 0.04);
   }
+
   .cwe {
     color: var(--primary);
     border-color: rgba(var(--primary-rgb), 0.2);
     background: rgba(var(--primary-rgb), 0.04);
   }
+
   .tag-exploit {
     color: #ef4444;
     border-color: rgba(239, 68, 68, 0.2);
     background: rgba(239, 68, 68, 0.04);
   }
+
   .tag-poc {
     color: #8b5cf6;
     border-color: rgba(139, 92, 246, 0.2);
     background: rgba(139, 92, 246, 0.04);
   }
+
   .tag-advisory {
     color: #0ea5e9;
     border-color: rgba(14, 165, 233, 0.2);
     background: rgba(14, 165, 233, 0.04);
-  }
-  .type-badge {
-    color: var(--text-50);
-    background: var(--btn-regular-bg);
   }
 
   .description {
@@ -256,7 +231,7 @@ onMount(loadCveData);
     color: var(--text-75);
     margin: 0;
     display: -webkit-box;
-    -line-clamp: 2;
+    -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
     flex-grow: 1;
@@ -275,18 +250,21 @@ onMount(loadCveData);
     flex-direction: column;
     gap: 0.2rem;
   }
+
   .label {
     font-size: 0.55rem;
     font-weight: 850;
     color: var(--text-30);
     letter-spacing: 0.06em;
   }
+
   .value {
     font-size: 0.85rem;
     font-weight: 700;
     color: var(--text-50);
     font-family: var(--font-mono);
   }
+
   .value.bold {
     color: var(--text-75);
     font-weight: 850;
@@ -322,6 +300,7 @@ onMount(loadCveData);
     color: var(--text-30);
     margin-bottom: 0.4rem;
   }
+
   .cvss-n {
     font-family: var(--font-mono);
     font-size: 3rem;
@@ -330,6 +309,7 @@ onMount(loadCveData);
     color: var(--sev-color);
     letter-spacing: -0.05em;
   }
+
   .cvss-l {
     font-size: 0.85rem;
     font-weight: 900;
@@ -337,6 +317,7 @@ onMount(loadCveData);
     color: var(--sev-color);
     letter-spacing: 0.05em;
   }
+
   .rsvd-title {
     font-family: var(--font-mono);
     font-size: 1.4rem;
@@ -345,19 +326,16 @@ onMount(loadCveData);
     text-align: center;
   }
 
-  .loading {
-    opacity: 0.6;
-    pointer-events: none;
-  }
-
   @media (max-width: 768px) {
     .inner-layout {
       grid-template-columns: 1fr;
     }
+
     .data-pane {
       border-right: none;
       border-bottom: 2px solid var(--line-color);
     }
+
     .score-pane {
       flex-direction: row;
       justify-content: center;
@@ -366,9 +344,11 @@ onMount(loadCveData);
       padding: 1.25rem 1.5rem;
       min-height: 5rem;
     }
+
     .cvss-v {
       margin-bottom: 0;
     }
+
     .cvss-l {
       margin-top: 0;
     }

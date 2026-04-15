@@ -1,0 +1,115 @@
+---
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+---
+
+<span
+  data-spotify-now-playing
+  data-loading-label={i18n(I18nKey.spotifyLoading)}
+  data-refreshing-label={i18n(I18nKey.spotifyRefreshing)}
+  data-empty-label={i18n(I18nKey.spotifyNoSong)}
+  aria-live="polite"
+>
+  <span data-spotify-content class="now-playing">{i18n(I18nKey.spotifyLoading)}</span>
+</span>
+
+<script>
+type SpotifyPlayer = {
+	isPlaying: boolean;
+	songUrl?: string;
+	title?: string;
+	artist?: string;
+};
+
+function renderMessage(
+	container: HTMLElement,
+	text: string,
+	className = "now-playing",
+): void {
+	const span = document.createElement("span");
+	span.className = className;
+	span.textContent = text;
+	container.replaceChildren(span);
+}
+
+function renderPlayer(container: HTMLElement, player: SpotifyPlayer): void {
+	if (player.isPlaying && player.songUrl && player.title && player.artist) {
+		const link = document.createElement("a");
+		link.className = "now-playing";
+		link.href = player.songUrl;
+		link.textContent = `${player.title} - ${player.artist}`;
+		container.replaceChildren(link);
+		return;
+	}
+
+	renderMessage(
+		container,
+		container.parentElement?.dataset.emptyLabel ||
+			"No song at the moment — enjoying the silence.",
+	);
+}
+
+async function loadPlayer(root: HTMLElement, initial: boolean): Promise<void> {
+	const content = root.querySelector("[data-spotify-content]");
+	if (!(content instanceof HTMLElement)) {
+		return;
+	}
+
+	if (!initial) {
+		renderMessage(
+			content,
+			root.dataset.refreshingLabel || "Refreshing...",
+			"loading-indicator",
+		);
+	}
+
+	try {
+		const response = await fetch("/api/spotify.json");
+		if (!response.ok) {
+			throw new Error(`Spotify fetch failed: ${response.status}`);
+		}
+
+		const player = (await response.json()) as SpotifyPlayer;
+		renderPlayer(content, player);
+	} catch {
+		renderMessage(
+			content,
+			root.dataset.emptyLabel || "No song at the moment — enjoying the silence.",
+		);
+	}
+}
+
+function initSpotifyNowPlaying(root: Element): void {
+	if (!(root instanceof HTMLElement) || root.dataset.initialized === "true") {
+		return;
+	}
+	root.dataset.initialized = "true";
+
+	void loadPlayer(root, true);
+	const intervalId = window.setInterval(() => {
+		if (!root.isConnected) {
+			window.clearInterval(intervalId);
+			return;
+		}
+		void loadPlayer(root, false);
+	}, 30000);
+}
+
+function initSpotifyNowPlayingComponents(): void {
+	document
+		.querySelectorAll("[data-spotify-now-playing]")
+		.forEach(initSpotifyNowPlaying);
+}
+
+if (document.readyState === "loading") {
+	document.addEventListener(
+		"DOMContentLoaded",
+		initSpotifyNowPlayingComponents,
+		{ once: true },
+	);
+} else {
+	initSpotifyNowPlayingComponents();
+}
+
+document.addEventListener("astro:page-load", initSpotifyNowPlayingComponents);
+</script>

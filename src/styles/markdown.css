@@ -1,4 +1,4 @@
-@import "./main.css";
+@reference "tailwindcss";
 
 .custom-md {
 	h1 {
@@ -12,26 +12,41 @@
 	h5,
 	h6 {
 		.anchor {
-			@apply transition -m-0.5 ml-[0.2ch] p-0.5 select-none opacity-0 no-underline !important;
+			@apply transition -m-0.5 ml-[0.2ch] p-0.5 select-none opacity-0 no-underline;
 
 			.anchor-icon {
-				@apply mx-[0.45ch] !important;
+				@apply mx-[0.45ch];
 			}
 		}
 
 		&:hover {
 			.anchor {
-				@apply opacity-100 !important;
+				@apply opacity-100;
 			}
 		}
 	}
 
 	a:not(.no-styling) {
-		@apply relative bg-none link font-medium text-[var(--primary)]
+		@apply transition rounded-md p-1 -m-1 relative z-0 bg-none font-medium text-[var(--primary)]
     underline decoration-[var(--link-underline)] decoration-1 decoration-dashed underline-offset-4;
     box-decoration-break: clone;
     -webkit-box-decoration-break: clone;
     display: inline-block;
+
+		&::before {
+			content: "";
+			position: absolute;
+			inset: 0;
+			z-index: -10;
+			border-radius: inherit;
+			transform: scale(0.85);
+			background: transparent;
+			opacity: 1;
+			transition:
+				transform 150ms cubic-bezier(0, 0, 0.2, 1),
+				background-color 150ms cubic-bezier(0.4, 0, 0.2, 1),
+				opacity 150ms cubic-bezier(0.4, 0, 0.2, 1);
+		}
 
 		&:hover,
 		&:active {
@@ -39,6 +54,15 @@
       background: var(--btn-plain-bg-hover);
       border-bottom: 1px dashed var(--link-hover);
       text-decoration: none;
+		}
+
+		&:hover::before {
+			transform: scale(1);
+			background: var(--btn-plain-bg-hover);
+		}
+
+		&:active::before {
+			background: var(--btn-plain-bg-active);
 		}
 	}
 

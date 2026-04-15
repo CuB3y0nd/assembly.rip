@@ -1,0 +1,221 @@
+---
+import I18nKey from "@/i18n/i18nKey";
+import { i18n } from "@/i18n/translation";
+---
+
+<div data-timeline-root class="timeline-pending">
+  <ul>
+    <li>
+      {i18n(I18nKey.timelineTodayIs)}
+      <span data-timeline-value="dayOfYear" class="time-number">--</span>
+      {i18n(I18nKey.timelineDayOf)}
+      <span data-timeline-value="curYear" class="time-number">----</span>
+    </li>
+    <li>
+      {i18n(I18nKey.timelineCenturyProgress)}
+      <span
+        data-timeline-value="centuryProg"
+        class="time-number time-number-percent"
+        >--</span
+      >
+    </li>
+    <li>
+      {i18n(I18nKey.timelineYearProgress)}
+      <span
+        data-timeline-value="yearProg"
+        class="time-number time-number-percent"
+        >--</span
+      >
+    </li>
+    <li>
+      {i18n(I18nKey.timelineDayProgress)}
+      <span
+        data-timeline-value="dayProg"
+        class="time-number time-number-percent"
+        >--</span
+      >
+    </li>
+    <hr />
+    <div class="timeline-center">
+      <div class="timeline-pledge">
+        <a href="https://www.foreverblog.cn/blog/7063.html">
+          「{i18n(I18nKey.timelineTenYearPledge)}」
+        </a>
+        {i18n(I18nKey.timelineFulfilled)}
+        <span
+          data-timeline-value="blogProg"
+          class="time-number time-number-percent"
+          >--</span
+        >
+      </div>
+      <span class="time-number timeline-waiting">
+        {i18n(I18nKey.timelineWaitingForYou)}
+      </span>
+    </div>
+  </ul>
+</div>
+
+<script>
+const MS_PER_DAY = 24 * 60 * 60 * 1000;
+const UPDATE_INTERVAL = 100;
+const BLOG_START_DATE = new Date("2025-10-01T00:00:00");
+const BLOG_END_DATE = new Date("2035-10-01T00:00:00");
+
+function calculateProgress() {
+	const now = new Date();
+	const curYear = now.getFullYear();
+
+	const startYear = new Date(curYear, 0, 1).getTime();
+	const endYear = new Date(curYear + 1, 0, 1).getTime();
+	const yearProg = ((now.getTime() - startYear) / (endYear - startYear)) * 100;
+
+	const startDay = new Date(
+		curYear,
+		now.getMonth(),
+		now.getDate(),
+	).getTime();
+	const endDay = new Date(
+		curYear,
+		now.getMonth(),
+		now.getDate() + 1,
+	).getTime();
+	const dayProg = ((now.getTime() - startDay) / (endDay - startDay)) * 100;
+
+	const dayOfYear =
+		Math.floor(
+			(Date.UTC(curYear, now.getMonth(), now.getDate()) -
+				Date.UTC(curYear, 0, 1)) /
+				MS_PER_DAY,
+		) + 1;
+
+	const centuryStart = new Date(2000, 0, 1).getTime();
+	const centuryEnd = new Date(2100, 0, 1).getTime();
+	const centuryProg =
+		((now.getTime() - centuryStart) / (centuryEnd - centuryStart)) * 100;
+
+	const blogTotal = BLOG_END_DATE.getTime() - BLOG_START_DATE.getTime();
+	const blogElapsed = now.getTime() - BLOG_START_DATE.getTime();
+	const blogProg = Math.max(0, (blogElapsed / blogTotal) * 100);
+
+	return {
+		curYear,
+		dayOfYear,
+		yearProg,
+		dayProg,
+		centuryProg,
+		blogProg,
+	};
+}
+
+function formatPercent(value: number): string {
+	return Number.isFinite(value) ? `${value.toFixed(5)}%` : "0.00000%";
+}
+
+function initTimeline(root: Element): void {
+	if (!(root instanceof HTMLElement) || root.dataset.initialized === "true") {
+		return;
+	}
+	root.dataset.initialized = "true";
+
+	const dayOfYearElement = root.querySelector(
+		'[data-timeline-value="dayOfYear"]',
+	);
+	const curYearElement = root.querySelector('[data-timeline-value="curYear"]');
+	const centuryProgElement = root.querySelector(
+		'[data-timeline-value="centuryProg"]',
+	);
+	const yearProgElement = root.querySelector(
+		'[data-timeline-value="yearProg"]',
+	);
+	const dayProgElement = root.querySelector('[data-timeline-value="dayProg"]');
+	const blogProgElement = root.querySelector(
+		'[data-timeline-value="blogProg"]',
+	);
+
+	if (
+		!(dayOfYearElement instanceof HTMLElement) ||
+		!(curYearElement instanceof HTMLElement) ||
+		!(centuryProgElement instanceof HTMLElement) ||
+		!(yearProgElement instanceof HTMLElement) ||
+		!(dayProgElement instanceof HTMLElement) ||
+		!(blogProgElement instanceof HTMLElement)
+	) {
+		return;
+	}
+
+	let intervalId: number | undefined;
+
+	const render = (): void => {
+		if (!root.isConnected) {
+			if (intervalId !== undefined) {
+				window.clearInterval(intervalId);
+			}
+			return;
+		}
+
+		const progress = calculateProgress();
+		dayOfYearElement.textContent = String(progress.dayOfYear);
+		curYearElement.textContent = String(progress.curYear);
+		centuryProgElement.textContent = formatPercent(progress.centuryProg);
+		yearProgElement.textContent = formatPercent(progress.yearProg);
+		dayProgElement.textContent = formatPercent(progress.dayProg);
+		blogProgElement.textContent = formatPercent(progress.blogProg);
+
+		root.classList.remove("timeline-pending");
+		root.classList.add("timeline-ready");
+	};
+
+	render();
+	intervalId = window.setInterval(render, UPDATE_INTERVAL);
+}
+
+function initTimelines(): void {
+	document.querySelectorAll("[data-timeline-root]").forEach(initTimeline);
+}
+
+if (document.readyState === "loading") {
+	document.addEventListener("DOMContentLoaded", initTimelines, { once: true });
+} else {
+	initTimelines();
+}
+
+document.addEventListener("astro:page-load", initTimelines);
+</script>
+
+<style>
+  .timeline-pending {
+    opacity: 0;
+  }
+
+  .timeline-ready {
+    opacity: 1;
+    transition: opacity 120ms ease-out;
+  }
+
+  .timeline-center {
+    text-align: center;
+  }
+
+  .timeline-pledge {
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .time-number {
+    display: inline-block;
+    font-feature-settings: "tnum";
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    color: var(--primary);
+    min-width: 2.5em;
+    text-align: center;
+  }
+
+  .time-number-percent {
+    min-width: 6.75em;
+  }
+
+  .timeline-waiting {
+    font-size: 0.95rem;
+  }
+</style>

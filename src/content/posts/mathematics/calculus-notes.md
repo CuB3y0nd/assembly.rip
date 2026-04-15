@@ -29,12 +29,10 @@ $$
 
 ---
 
-例：已知 $
-f( x) =\begin{cases}
+例：已知 $f( x) =\begin{cases}
 2x & x\neq 5\\
 x & x=5
-\end{cases}，
-$ 证明 $\displaystyle \lim _{x\rightarrow 5} f( x) =10$
+\end{cases}$，证明 $\displaystyle \lim _{x\rightarrow 5} f( x) =10$
 
 根据定义，给定任意 $\varepsilon (\varepsilon  >0)$，有 $\delta ( \delta  >0)$。因此，我们本质上是要找到一个 $\delta =function\ of\ \varepsilon $ 的函数。
 

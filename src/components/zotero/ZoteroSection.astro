@@ -79,7 +79,10 @@ const filters = [
 const defaultFilter = "all";
 ---
 
-<div class:list={["zotero-section", { "hidden": !isActive }]} data-section={sectionId}>
+<div
+  class:list={["zotero-section", { "hidden": !isActive }]}
+  data-collections-section={sectionId}
+>
   {items.length > 0 ? (
     <>
       <FilterControls

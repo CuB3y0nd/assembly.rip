@@ -13,41 +13,44 @@ export interface BangumiConfig {
 	};
 }
 
+const FETCH_TIMEOUT_MS = 8000;
+
+function hasBangumiConfig(config: BangumiConfig) {
+	return config.username.trim() !== "" && config.apiUrl.trim() !== "";
+}
+
 export async function fetchBangumiData(
 	config: BangumiConfig,
 	subjectType: number,
 ): Promise<UserSubjectCollection[]> {
+	if (!hasBangumiConfig(config)) {
+		return [];
+	}
+
 	try {
 		const { limit, delay, maxTotal } = config.pagination;
 		let offset = 0;
 		let allData: UserSubjectCollection[] = [];
 		let hasMore = true;
 
-		console.log(
-			`[Bangumi] 开始获取用户 ${config.username} 的 subjectType ${subjectType} 数据...`,
-		);
-
 		while (hasMore) {
 			if (maxTotal > 0 && allData.length >= maxTotal) {
-				console.log(`[Bangumi] 已达到最大获取限制 ${maxTotal}，停止获取`);
 				break;
 			}
 
 			const url = `${config.apiUrl}/v0/users/${config.username}/collections?subject_type=${subjectType}&limit=${limit}&offset=${offset}`;
-
-			console.log(`[Bangumi] 正在获取数据: ${url} (已获取: ${allData.length})`);
 
 			const response = await fetch(url, {
 				headers: {
 					"User-Agent": "CuB3y0nd/assembly.rip",
 					Accept: "application/json",
 				},
+				signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
 			});
 
 			if (!response.ok) {
 				console.warn(
-					`[Bangumi] 无法获取数据 (状态码: ${response.status}):`,
-					url,
+					`[Bangumi] ${subjectType} fetch failed: ${response.status}`,
 				);
 				break;
 			}
@@ -71,10 +74,9 @@ export async function fetchBangumiData(
 			}
 		}
 
-		console.log(`[Bangumi] 总共获取到 ${allData.length} 条数据`);
 		return allData;
 	} catch (error) {
-		console.error("[Bangumi] 获取数据时出错:", error);
+		console.warn(`[Bangumi] ${subjectType} fetch error:`, error);
 		return [];
 	}
 }
