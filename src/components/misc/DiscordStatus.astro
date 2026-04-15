@@ -1,24 +1,29 @@
 ---
 import I18nKey from "@/i18n/i18nKey";
 import { i18n } from "@/i18n/translation";
+
+interface Props {
+	label?: string;
+}
+
+const { label } = Astro.props;
 ---
 
-<span
-  data-discord-status
-  data-loading-label={i18n(I18nKey.spotifyLoading)}
-  data-online-label={i18n(I18nKey.discordOnline)}
-  data-idle-label={i18n(I18nKey.discordIdle)}
-  data-dnd-label={i18n(I18nKey.discordDnd)}
-  data-offline-label={i18n(I18nKey.discordOffline)}
-  class="discord-status-wrapper"
-  title={i18n(I18nKey.spotifyLoading)}
+<span class="discord-status-inline"><span
+	data-discord-status
+	data-loading-label={i18n(I18nKey.spotifyLoading)}
+	data-online-label={i18n(I18nKey.discordOnline)}
+	data-idle-label={i18n(I18nKey.discordIdle)}
+	data-dnd-label={i18n(I18nKey.discordDnd)}
+	data-offline-label={i18n(I18nKey.discordOffline)}
+	class="discord-status-wrapper"
+	title={i18n(I18nKey.spotifyLoading)}
 >
-  <span class="status-indicator" style="--rgb: 128, 132, 142;">
-    <span class="glow-dynamic"></span>
-    <span class="glow-static"></span>
-    <span class="core"></span>
-  </span>
-</span>
+	<span class="status-indicator" style="--rgb: 128, 132, 142;">
+		<span class="glow-dynamic"></span>
+		<span class="glow-static"></span>
+		<span class="core"></span>
+	</span></span>{label !== undefined ? <span class="discord-status-label">{label}</span> : <span class="discord-status-label"><slot /></span>}</span>
 
 <script>
 type DiscordStatusValue = "online" | "idle" | "dnd" | "offline" | "loading";
@@ -107,13 +112,26 @@ document.addEventListener("astro:page-load", initDiscordStatuses);
 </script>
 
 <style>
+  .discord-status-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 1px;
+    vertical-align: middle;
+    line-height: inherit;
+  }
+
+  .discord-status-label {
+    display: inline-block;
+    line-height: inherit;
+    transform: translateY(-1px);
+  }
+
   .discord-status-wrapper {
     display: inline-flex;
     align-items: center;
     vertical-align: middle;
     cursor: help;
-    transform: translateY(-1px);
-    margin-right: 2px;
+    margin-right: 0;
   }
 
   .status-indicator {
@@ -121,14 +139,14 @@ document.addEventListener("astro:page-load", initDiscordStatuses);
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 16px;
-    height: 16px;
+    width: 12px;
+    height: 12px;
     transition: transform 0.3s ease;
   }
 
   .core {
-    width: 6px;
-    height: 6px;
+    width: 5px;
+    height: 5px;
     background-color: rgba(var(--rgb), 0.7);
     border-radius: 50%;
     z-index: 3;
@@ -137,8 +155,8 @@ document.addEventListener("astro:page-load", initDiscordStatuses);
 
   .glow-static {
     position: absolute;
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     background-color: rgba(var(--rgb), 0.15);
     border-radius: 50%;
     filter: blur(2px);

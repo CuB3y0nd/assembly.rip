@@ -4,17 +4,18 @@ import { i18n } from "@/i18n/translation";
 ---
 
 <span
-  data-spotify-now-playing
-  data-loading-label={i18n(I18nKey.spotifyLoading)}
-  data-refreshing-label={i18n(I18nKey.spotifyRefreshing)}
-  data-empty-label={i18n(I18nKey.spotifyNoSong)}
+  data-lastfm-now-playing
+  data-loading-label={i18n(I18nKey.lastfmLoading)}
+  data-refreshing-label={i18n(I18nKey.lastfmRefreshing)}
+  data-empty-label={i18n(I18nKey.lastfmNoSong)}
+  data-error-label={i18n(I18nKey.lastfmUnavailable)}
   aria-live="polite"
 >
-  <span data-spotify-content class="now-playing">{i18n(I18nKey.spotifyLoading)}</span>
+  <span data-lastfm-content class="now-playing">{i18n(I18nKey.lastfmLoading)}</span>
 </span>
 
 <script>
-type SpotifyPlayer = {
+type LastfmPlayer = {
 	isPlaying: boolean;
 	songUrl?: string;
 	title?: string;
@@ -32,7 +33,7 @@ function renderMessage(
 	container.replaceChildren(span);
 }
 
-function renderPlayer(container: HTMLElement, player: SpotifyPlayer): void {
+function renderPlayer(container: HTMLElement, player: LastfmPlayer): void {
 	if (player.isPlaying && player.songUrl && player.title && player.artist) {
 		const link = document.createElement("a");
 		link.className = "now-playing";
@@ -50,7 +51,7 @@ function renderPlayer(container: HTMLElement, player: SpotifyPlayer): void {
 }
 
 async function loadPlayer(root: HTMLElement, initial: boolean): Promise<void> {
-	const content = root.querySelector("[data-spotify-content]");
+	const content = root.querySelector("[data-lastfm-content]");
 	if (!(content instanceof HTMLElement)) {
 		return;
 	}
@@ -64,22 +65,26 @@ async function loadPlayer(root: HTMLElement, initial: boolean): Promise<void> {
 	}
 
 	try {
-		const response = await fetch("/api/spotify.json");
+		const response = await fetch("/api/lastfm.json");
 		if (!response.ok) {
-			throw new Error(`Spotify fetch failed: ${response.status}`);
+			renderMessage(
+				content,
+				root.dataset.errorLabel || "Last.fm is currently unavailable.",
+			);
+			return;
 		}
 
-		const player = (await response.json()) as SpotifyPlayer;
+		const player = (await response.json()) as LastfmPlayer;
 		renderPlayer(content, player);
 	} catch {
 		renderMessage(
 			content,
-			root.dataset.emptyLabel || "No song at the moment — enjoying the silence.",
+			root.dataset.errorLabel || "Last.fm is currently unavailable.",
 		);
 	}
 }
 
-function initSpotifyNowPlaying(root: Element): void {
+function initLastfmNowPlaying(root: Element): void {
 	if (!(root instanceof HTMLElement) || root.dataset.initialized === "true") {
 		return;
 	}
@@ -95,21 +100,19 @@ function initSpotifyNowPlaying(root: Element): void {
 	}, 30000);
 }
 
-function initSpotifyNowPlayingComponents(): void {
-	document
-		.querySelectorAll("[data-spotify-now-playing]")
-		.forEach(initSpotifyNowPlaying);
+function initLastfmNowPlayingComponents(): void {
+	document.querySelectorAll("[data-lastfm-now-playing]").forEach(initLastfmNowPlaying);
 }
 
 if (document.readyState === "loading") {
 	document.addEventListener(
 		"DOMContentLoaded",
-		initSpotifyNowPlayingComponents,
+		initLastfmNowPlayingComponents,
 		{ once: true },
 	);
 } else {
-	initSpotifyNowPlayingComponents();
+	initLastfmNowPlayingComponents();
 }
 
-document.addEventListener("astro:page-load", initSpotifyNowPlayingComponents);
+document.addEventListener("astro:page-load", initLastfmNowPlayingComponents);
 </script>

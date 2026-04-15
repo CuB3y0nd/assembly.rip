@@ -117,6 +117,13 @@ export const en: Translation = {
 	[Key.spotifyLoading]: "Loading...",
 	[Key.spotifyRefreshing]: "Refreshing...",
 	[Key.spotifyNoSong]: "No song at the moment — enjoying the silence.",
+	[Key.spotifyUnavailable]: "Spotify is currently unavailable.",
+
+	// Last.fm
+	[Key.lastfmLoading]: "Loading...",
+	[Key.lastfmRefreshing]: "Refreshing...",
+	[Key.lastfmNoSong]: "No song at the moment — enjoying the silence.",
+	[Key.lastfmUnavailable]: "Last.fm is currently unavailable.",
 
 	// Discord
 	[Key.discordOnline]: "Online",

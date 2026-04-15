@@ -114,6 +114,13 @@ enum I18nKey {
 	spotifyLoading = "spotifyLoading",
 	spotifyRefreshing = "spotifyRefreshing",
 	spotifyNoSong = "spotifyNoSong",
+	spotifyUnavailable = "spotifyUnavailable",
+
+	// Last.fm
+	lastfmLoading = "lastfmLoading",
+	lastfmRefreshing = "lastfmRefreshing",
+	lastfmNoSong = "lastfmNoSong",
+	lastfmUnavailable = "lastfmUnavailable",
 
 	// Discord
 	discordOnline = "discordOnline",
