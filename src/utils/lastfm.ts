@@ -44,14 +44,19 @@ function getImageUrl(track: LastfmTrack): string | undefined {
 	const preferredOrder = ["extralarge", "large", "medium", "small"];
 	for (const size of preferredOrder) {
 		const match = images.find(
-			(image) => image.size === size && typeof image["#text"] === "string" && image["#text"],
+			(image) =>
+				image.size === size &&
+				typeof image["#text"] === "string" &&
+				image["#text"],
 		);
 		if (match?.["#text"]) {
 			return match["#text"];
 		}
 	}
 
-	return images.find((image) => typeof image["#text"] === "string" && image["#text"])?.["#text"];
+	return images.find(
+		(image) => typeof image["#text"] === "string" && image["#text"],
+	)?.["#text"];
 }
 
 export interface LastfmNowPlaying {
@@ -79,8 +84,12 @@ export async function getNowPlaying(): Promise<LastfmNowPlaying | null> {
 
 	if (!response.ok) {
 		const message =
-			typeof payload.message === "string" ? payload.message : "Unknown Last.fm error";
-		throw new Error(`Last.fm recent tracks request failed (${response.status}): ${message}`);
+			typeof payload.message === "string"
+				? payload.message
+				: "Unknown Last.fm error";
+		throw new Error(
+			`Last.fm recent tracks request failed (${response.status}): ${message}`,
+		);
 	}
 
 	if (isErrorResponse(payload)) {
