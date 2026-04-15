@@ -3,7 +3,7 @@ title: "Write-ups: System Security (Kernel Security) series (Completed)"
 published: 2025-12-19
 updated: 2026-01-07
 description: "Write-ups for pwn.college kernel exploitation series."
-image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.pfs8v4jqs.avif"
+image: "https://v6.gh-proxy.org/https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.pfs8v4jqs.avif"
 tags: ["Pwn", "Write-ups", "Kernel"]
 category: "Write-ups"
 draft: false
@@ -96,7 +96,7 @@ ssize_t __fastcall device_read(file *file, char *buffer, size_t length, loff_t *
 最后庆祝一下人生中第一道 kernel（
 
 <center>
-  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.lw6yu8lcj.avif" alt="" />
+  <img src="https://v6.gh-proxy.org/https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.lw6yu8lcj.avif" alt="" />
 </center>
 
 ## Exploit
@@ -962,7 +962,7 @@ int load_flag()
 看看这道题用上 axium 后的实战效果：
 
 <center>
-  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.96a83lkt89.avif" alt="" />
+  <img src="https://v6.gh-proxy.org/https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.96a83lkt89.avif" alt="" />
 </center>
 
 ## Exploit
@@ -1081,7 +1081,7 @@ __pid_t load_flag()
 ```
 
 <center>
-  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.232coxtja2.avif" alt="" />
+  <img src="https://v6.gh-proxy.org/https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.232coxtja2.avif" alt="" />
 </center>
 
 ## Exploit

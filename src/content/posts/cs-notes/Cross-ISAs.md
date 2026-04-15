@@ -3,7 +3,7 @@ title: "The Cross-ISAs Notebook"
 published: 2026-01-07
 updated: 2026-01-07
 description: "Common ISAs speedrun notebook."
-image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6m47vyn1pe.avif"
+image: "https://v6.gh-proxy.org/https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.6m47vyn1pe.avif"
 tags: ["Cross-ISA"]
 category: "Notes"
 draft: false

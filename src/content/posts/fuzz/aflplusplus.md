@@ -3,7 +3,7 @@ title: "The Fuzzy Notebook"
 published: 2026-02-07
 updated: 2026-02-09
 description: "AFL++ learning notes."
-image: "https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.mldvs2ca.avif"
+image: "https://v6.gh-proxy.org/https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.mldvs2ca.avif"
 tags: ["Fuzz", "Notes"]
 category: "Notes"
 draft: false
@@ -12,13 +12,13 @@ draft: false
 # Prologue
 
 <center>
-  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.6ikt5mc3b5.avif" alt="" />
+  <img src="https://v6.gh-proxy.org/https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.6ikt5mc3b5.avif" alt="" />
 </center>
 
 次日，群名从 `Pwn Squad` 变成了 `Lost Squad`。
 
 <center>
-  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.mlder7db.avif" alt="" />
+  <img src="https://v6.gh-proxy.org/https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.mlder7db.avif" alt="" />
 </center>
 
 我们不知道这是否是更好的选择，但我想，我们绝不差尝试的勇气。
@@ -155,8 +155,8 @@ afl-fuzz -i inputs -o out/ -- ./test
 刚跑几秒就出了 6 个 crash，但是全都是栈溢出，之后大概在 1min 左右，把 abort 的 crash 路径也找到了，可以看到是第九个样本：
 
 <center>
-  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.41ykrv2y1c.avif" alt="" />
-  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.pfuxhp6cy.avif" alt="" />
+  <img src="https://v6.gh-proxy.org/https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.41ykrv2y1c.avif" alt="" />
+  <img src="https://v6.gh-proxy.org/https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.pfuxhp6cy.avif" alt="" />
 </center>
 
 可以在 `out/default/crashes` 中找到这 10 个可以触发崩溃的输入。
@@ -228,7 +228,7 @@ int main() {
 4. `\n`，`EOF`
 
 <center>
-  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.3ns513tseu.avif" alt="" />
+  <img src="https://v6.gh-proxy.org/https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.3ns513tseu.avif" alt="" />
 </center>
 
 根据 Exercise 1 的要求，我们使用如下脚本生成 5 个 seeds：
@@ -245,7 +245,7 @@ done
 然后跑 `afl-fuzz -i seeds -o out/ -m 0 -- ./build/simple_crash`，刚跑一秒就把三个 crash 都找到了：
 
 <center>
-  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.et14gm2kg.avif" alt="" />
+  <img src="https://v6.gh-proxy.org/https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.et14gm2kg.avif" alt="" />
 </center>
 
 可以看到第一个对上了 Case 2，第二个对上了 Case 1，第三个对上了 Case 3。
@@ -304,7 +304,7 @@ export UBSAN_OPTIONS=abort_on_error=1:print_stacktrace=1
 我使用的 input 是随机生成的 200 字节长 De Bruijn Sequence，实际上沿用 Exercise 1 的 seeds 应该也可以。
 
 <center>
-  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.58hw1s7oeh.avif" alt="" />
+  <img src="https://v6.gh-proxy.org/https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.58hw1s7oeh.avif" alt="" />
 </center>
 
 观察跑出来的几个 crashes, 发现全都符合 `ffl` 的行为，多的 `f` 被 `h` 抵消。
@@ -361,7 +361,7 @@ int main(int argc, char **argv) {
 先测试 `choose_color`，如果输入纯数字就会崩：
 
 <center>
-  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.4qrudewa3s.avif" alt="" />
+  <img src="https://v6.gh-proxy.org/https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.4qrudewa3s.avif" alt="" />
 </center>
 
 但这里多了一个 `\x20`，即空格导致的崩溃，是我没想到的，研究研究。
@@ -411,7 +411,7 @@ void Specs::min_airspeed() {
 这里发现第二个 crash 有点奇怪：
 
 <center>
-  <img src="https://cdn.cubeyond.net/gh/CuB3y0nd/picx-images-hosting@master/.8vnfprhcx0.avif" alt="" />
+  <img src="https://v6.gh-proxy.org/https://github.com/CuB3y0nd/picx-images-hosting/raw/master/.8vnfprhcx0.avif" alt="" />
 </center>
 
 这是因为 `>>` 在读取数字的时候也有特殊的规则，它会自动拆分数字。即 `1-3113\x09` 被拆分为 `1` 和 `-3113` 两部分，被拆开的那部分会留在输入缓冲区等待下一次读取的时候发出去，所以这里触发的逻辑是先判断 `speed < 100` 重新读取，然后发送负数触发 abort 。
