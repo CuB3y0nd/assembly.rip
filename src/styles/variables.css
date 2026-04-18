@@ -52,10 +52,20 @@
   --admonitions-color-warning: oklch(0.7 0.14 60);
   --admonitions-color-caution: oklch(0.6 0.2 25);
   --toc-badge-bg: oklch(0.89 0.05 var(--hue));
+  --toc-badge-text: oklch(0.48 0.08 var(--hue));
   --toc-btn-hover: oklch(0.926 0.015 var(--hue));
   --toc-btn-active: oklch(0.9 0.015 var(--hue));
+  --toc-open-bg: var(--btn-regular-bg-hover);
+  --toc-active-bg: var(--btn-regular-bg-active);
   --toc-width: calc((100vw - var(--page-width)) / 2 - 1rem);
   --toc-item-active: oklch(0.7 0.13 var(--hue));
+  --toc-active-badge-text: white;
+  --toc-heading-text: rgba(0, 0, 0, 0.48);
+  --toc-text: rgba(0, 0, 0, 0.62);
+  --toc-text-muted: rgba(0, 0, 0, 0.4);
+  --toc-rail-color: rgba(0, 0, 0, 0.12);
+  --toc-open-shadow: rgba(0, 0, 0, 0.08);
+  --toc-active-shadow: rgba(0, 0, 0, 0.12);
 }
 
 :root.dark {
@@ -91,8 +101,18 @@
   --admonitions-color-important: oklch(0.75 0.14 310);
   --admonitions-color-warning: oklch(0.75 0.14 60);
   --admonitions-color-caution: oklch(0.65 0.2 25);
-  --toc-badge-bg: var(--btn-regular-bg);
-  --toc-btn-hover: oklch(0.22 0.02 var(--hue));
-  --toc-btn-active: oklch(0.25 0.02 var(--hue));
-  --toc-item-active: oklch(0.35 0.07 var(--hue));
+  --toc-badge-bg: oklch(0.34 0.03 var(--hue));
+  --toc-badge-text: rgba(255, 255, 255, 0.86);
+  --toc-btn-hover: oklch(0.3 0.028 var(--hue));
+  --toc-btn-active: oklch(0.36 0.032 var(--hue));
+  --toc-open-bg: color-mix(in oklab, var(--btn-regular-bg-hover) 72%, var(--card-bg));
+  --toc-active-bg: color-mix(in oklab, var(--btn-regular-bg-active) 78%, var(--card-bg));
+  --toc-item-active: oklch(0.74 0.11 var(--hue));
+  --toc-active-badge-text: oklch(0.2 0.015 var(--hue));
+  --toc-heading-text: rgba(255, 255, 255, 0.5);
+  --toc-text: rgba(255, 255, 255, 0.78);
+  --toc-text-muted: rgba(255, 255, 255, 0.54);
+  --toc-rail-color: rgba(255, 255, 255, 0.16);
+  --toc-open-shadow: rgba(0, 0, 0, 0.16);
+  --toc-active-shadow: rgba(0, 0, 0, 0.24);
 }
