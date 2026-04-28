@@ -23,8 +23,7 @@ for (const heading of headings) {
 
 const maxLevel = siteConfig.toc.depth;
 const filteredHeadings = headings.filter(
-	(heading) =>
-		heading.depth >= minDepth && heading.depth < minDepth + maxLevel,
+	(heading) => heading.depth >= minDepth && heading.depth < minDepth + maxLevel,
 );
 
 const tocTree: TocNode[] = [];
@@ -37,10 +36,7 @@ for (const heading of filteredHeadings) {
 		order: [],
 	};
 
-	while (
-		parents.length &&
-		parents[parents.length - 1].depth >= heading.depth
-	) {
+	while (parents.length && parents[parents.length - 1].depth >= heading.depth) {
 		parents.pop();
 	}
 

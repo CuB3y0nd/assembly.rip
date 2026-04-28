@@ -78,9 +78,9 @@ export const profileConfig: ProfileConfig = {
 			url: "https://github.com/CuB3y0nd",
 		},
 		{
-			name: "RedQueen",
-			icon: "mingcute:discord-line",
-			url: "https://discord.gg/nP2gFZKFgm",
+			name: "Steam",
+			icon: "tabler:brand-steam",
+			url: "https://steamcommunity.com/profiles/76561199115946478/",
 		},
 	],
 };
