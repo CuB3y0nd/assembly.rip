@@ -20,11 +20,11 @@
     "preinstall": "npx only-allow pnpm"
   },
   "dependencies": {
-    "@astrojs/check": "^0.9.8",
-    "@astrojs/mdx": "^5.0.3",
+    "@astrojs/check": "^0.9.9",
+    "@astrojs/mdx": "^5.0.4",
     "@astrojs/rss": "^4.0.18",
     "@astrojs/sitemap": "^3.7.2",
-    "@astrojs/vercel": "^10.0.4",
+    "@astrojs/vercel": "^10.0.6",
     "@chinese-fonts/lxgwwenkaibright": "^2.0.0",
     "@expressive-code/core": "^0.41.7",
     "@expressive-code/plugin-collapsible-sections": "^0.41.7",
@@ -34,13 +34,13 @@
     "@iconify-json/fa6-brands": "^1.2.6",
     "@iconify-json/fa6-regular": "^1.2.4",
     "@iconify-json/fa6-solid": "^1.2.4",
-    "@iconify-json/material-symbols": "^1.2.66",
+    "@iconify-json/material-symbols": "^1.2.69",
     "@iconify-json/mingcute": "^1.2.7",
     "@iconify-json/tabler": "^1.2.33",
     "@swup/astro": "^1.8.0",
     "@tailwindcss/typography": "^0.5.19",
     "@vercel/analytics": "^2.0.1",
-    "astro": "6.1.6",
+    "astro": "6.1.10",
     "astro-expressive-code": "^0.41.7",
     "astro-icon": "^1.1.5",
     "giscus": "^1.6.0",
@@ -62,21 +62,21 @@
     "remark-github-admonitions-to-directives": "^1.0.5",
     "remark-math": "^6.0.0",
     "remark-sectionize": "^2.1.0",
-    "sanitize-html": "^2.17.2",
+    "sanitize-html": "^2.17.3",
     "sharp": "^0.34.5",
     "typescript": "^5.9.3",
     "unist-util-visit": "^5.1.0"
   },
   "devDependencies": {
     "@astrojs/ts-plugin": "^1.10.7",
-    "@biomejs/biome": "2.4.12",
+    "@biomejs/biome": "2.4.13",
     "@rollup/plugin-yaml": "^4.1.2",
-    "@tailwindcss/vite": "^4.2.2",
+    "@tailwindcss/vite": "^4.2.4",
     "@types/markdown-it": "^14.1.2",
     "@types/mdast": "^4.0.4",
     "@types/sanitize-html": "^2.16.1",
     "node-gyp": "^12.2.0",
-    "tailwindcss": "^4.2.2"
+    "tailwindcss": "^4.2.4"
   },
   "packageManager": "pnpm@9.14.4"
 }
